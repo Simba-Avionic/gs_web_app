@@ -1,31 +1,30 @@
 <script>
-    import mysvg from "./assets/gs2.svg"
-    import GS from "./GS.svelte"
-
-    import SVG from "./assets/gs.svg"
+    import SVG from "./assets/gs2.svg"
 
     function changeColor() {
-      // You can manipulate the SVG elements dynamically using JavaScript
-      const svg = document.querySelector('.my-svg svg');
-      const paths = svg.querySelectorAll('path'); // Select all path elements
+      const svg = document.querySelector('svg');
+      const paths = svg.querySelectorAll('path');
       paths.forEach(path => {
-        path.style.fill = 'red'; // Change fill color to red on click
+        console.log(path.id);
+
+        if (path.id === 'oxidizer' || path.id === 'fuel')
+        {
+            path.style.fill = "url(#gradient_green)";
+        }
+        else if (path.id === 'valve1' || path.id === 'valve2')
+        {
+            path.style.stroke = "url(#gradient_red)";
+        }
+
       });
     }
+
 </script>
 
-<div>
-    <!-- <img src={mysvg} alt="gs">  -->
-    <SVG width=1000 />
-    <!-- {@html GS} -->
+
+<div on:click={changeColor}>
+    <SVG width=70vw />
 </div>
 
 <style>
-    img {
-        width: 50vw;
-    }
-    .svg {
-        width: 50vw;
-    }
-
 </style>
