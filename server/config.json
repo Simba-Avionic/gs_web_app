@@ -1,0 +1,31 @@
+{
+    "topics": [
+        {
+            "name": "tanking",
+            "msg": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "valve1"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "valve2"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "decouple"
+                }
+            ]
+        }
+    ],
+    "sensors": [
+
+    ],
+    "servos": [
+
+    ]
+}
