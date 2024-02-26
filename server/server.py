@@ -6,6 +6,9 @@ from std_msgs.msg import Int32
 import threading
 from contextlib import asynccontextmanager
 
+from routes.read import read_router
+from routes.write import write_router
+
 subscriber = None
 
 @asynccontextmanager
@@ -23,6 +26,9 @@ async def lifespan(app: FastAPI):
     shutdown()
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(read_router)
+app.include_router(write_router)
+
 
 app.add_middleware(
     CORSMiddleware,
