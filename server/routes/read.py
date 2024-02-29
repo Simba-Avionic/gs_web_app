@@ -3,7 +3,7 @@ from loguru import logger
 
 from schemas import ListBucketResponse
 from influx import (
-    InfluxWaveClient,
+    InfluxClient,
     InfluxNotAvailableException,
     BucketNotFoundException,
     BadQueryException,
@@ -32,7 +32,7 @@ read_router = APIRouter(prefix="/read")
 
 
 @read_router.get(
-    "/{bucket}/query",
+    "/query",
     summary="Queries a bucket's contents.",
     responses={
         200: {"description": "Successfully Queried Bucket."},
@@ -41,18 +41,13 @@ read_router = APIRouter(prefix="/read")
         503: {"description": "InfluxDB Not Available"},
     },
 )
-async def query_bucket(
-    r: Request, bucket: str, location: str = "", min_height: float = -1.0
+async def query(
+    r: Request, location: str = "", min_height: float = -1.0, time_range: int = 10
 ) -> ListBucketResponse:
-    logger.debug(f"Querying {bucket=} with {location=} and {min_height}")
-    ic = InfluxWaveClient(
-        env_values.get('BUCKET_NAME'),
-        env_values.get('INFLUXDB_TOKEN'), 
-        env_values.get('ORGANISATION'), 
-        f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
-    )
+    logger.debug(f"Querying {location=} and {min_height} and {time_range}")
+    ic = InfluxClient()
     try:
-        records = await ic.read_wave_height(location=location, min_height=min_height)
+        records = await ic.read_wave_height(location=location, min_height=min_height, time_range=time_range)
     except (
         InfluxNotAvailableException,
         BucketNotFoundException,
@@ -63,11 +58,11 @@ async def query_bucket(
             detail=e.DESCRIPTION,
         )
     logger.debug(f"Records fetched {records=}")
-    return ListBucketResponse(bucket=bucket, records=records)
+    return ListBucketResponse(records=records)
 
 
 @read_router.get(
-    "/{bucket}/list",
+    "/list",
     summary="List's a bucket's contents.",
     responses={
         200: {"description": "Successfully Listed Bucket."},
@@ -75,14 +70,9 @@ async def query_bucket(
         503: {"description": "InfluxDB Not Available"},
     },
 )
-async def list_bucket(r: Request, bucket: str) -> ListBucketResponse:
-    logger.debug(f"Listing {bucket=}")
-    ic = InfluxWaveClient(
-        env_values.get('BUCKET_NAME'),
-        env_values.get('INFLUXDB_TOKEN'), 
-        env_values.get('ORGANISATION'), 
-        f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
-    )
+async def list_bucket(r: Request) -> ListBucketResponse:
+    logger.debug(f"Listing ...")
+    ic = InfluxClient()
     try:
         records = await ic.list_wave_heights()
     except (
@@ -94,4 +84,4 @@ async def list_bucket(r: Request, bucket: str) -> ListBucketResponse:
             status_code=e.STATUS_CODE,
             detail=e.DESCRIPTION,
         )
-    return ListBucketResponse(bucket=bucket, records=records)
+    return ListBucketResponse(records=records)

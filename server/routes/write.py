@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from loguru import logger
 from schemas import InsertWaveHeightRequest, InsertWaveHeightResponse
 from influx import (
-    InfluxWaveClient,
+    InfluxClient,
     InfluxNotAvailableException,
     BucketNotFoundException,
     BadQueryException,
@@ -25,7 +25,7 @@ write_router = APIRouter(prefix="/write")
 
 
 @write_router.post(
-    "/{bucket}/insert",
+    "/insert",
     summary="Insert data into a bucket.",
     responses={
         201: {"description": "Successfully Inserted Into Bucket."},
@@ -34,16 +34,9 @@ write_router = APIRouter(prefix="/write")
         503: {"description": "InfluxDB Not Available"},
     },
 )
-async def insert_bucket(
-    r: InsertWaveHeightRequest, bucket: str
-) -> InsertWaveHeightResponse:
-    logger.debug(f"Insert data into {bucket=}")
-    ic = InfluxWaveClient(
-        env_values.get('BUCKET_NAME'), 
-        env_values.get('INFLUXDB_TOKEN'), 
-        env_values.get('ORGANISATION'), 
-        f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
-    )
+async def insert_bucket(r: InsertWaveHeightRequest) -> InsertWaveHeightResponse:
+    logger.debug(f"Inserted data!")
+    ic = InfluxClient()
     try:
         await ic.record_wave_height(r.location, r.height)
     except (
@@ -55,5 +48,5 @@ async def insert_bucket(
             status_code=e.STATUS_CODE,
             detail=e.DESCRIPTION,
         )
-    logger.debug(f"Inserted data into {bucket=} with {r.location=} and {r.height=}")
-    return InsertWaveHeightResponse(bucket=bucket, location=r.location, height=r.height)
+    logger.debug(f"Inserted data: {r.location=} and {r.height=}")
+    return InsertWaveHeightResponse(location=r.location, height=r.height)

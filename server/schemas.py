@@ -50,13 +50,11 @@ class InsertWaveHeightRequest(BaseModel):
 
 
 class InsertWaveHeightResponse(BaseModel):
-    bucket: str = Field(description="Name of the requested bucket")
     location: str = Field(description="Location of the recorded wave")
     height: float = Field(description="Height of the recorded wave")
 
 
 class ListBucketResponse(BaseModel):
-    bucket: str = Field(description="Name of the requested bucket")
     records: List[InfluxWaveRecord] = Field(
-        description="Contents of the requested bucket"
+        description="Contents of the simba bucket"
     )

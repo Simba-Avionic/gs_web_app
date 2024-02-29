@@ -1,5 +1,5 @@
 <script>
-    import SVG from "./assets/gs2.svg"
+    import SVG from "./assets/gs2.svg";
 
     function changeColor() {
       const svg = document.querySelector('svg');
@@ -25,16 +25,17 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:click={changeColor} id="svg-container">
-    <SVG width=70vw />
+    <SVG width=70vw/>
     <div id="div-elem">
-        Some text!
+        ROCKET
     </div>
     <div id="div-elem2">
-        Some text!
+        GROUND SEGMENT
     </div>
 </div>
 
 <style>
+
     #svg-container {
         position: relative;
         width: 70vw;
@@ -54,7 +55,7 @@
     #div-elem2 {
       position: absolute;
       top: 5%;
-      left: 10%;
+      left: 50%;
       width: 35%;
       height: 50%;
       border-radius: 1vw;

@@ -18,7 +18,7 @@ a bucket doesn't exist. The last being the `BadQueryException` which
 will get raised if there's an error in our queries.
 
 With our exceptions out of the way, we can build our InfluxDB interface.
-The `InfluxWaveClient` will be initialized with a bucket, a token, an
+The `InfluxClient` will be initialized with a bucket, a token, an
 organization, and a url. The bucket will be used when reading/inserting
 data into InfluxDB. The URL, token, and organization will be used to connect
 to the right InfluxDB instance. The client provides a few "public" methods
@@ -45,7 +45,8 @@ the data point in the database. The `_query` method uses InfluxDB's
 of the records returned from the `query_api` into the pydantic model 
 we discussed above in step 1.
 """
-
+from dotenv import dotenv_values
+ENV_PATH = "./database/.env"
 
 class InfluxNotAvailableException(Exception):
     STATUS_CODE = 503
@@ -62,16 +63,20 @@ class BadQueryException(Exception):
     DESCRIPTION = "Bad Query."
 
 
-class InfluxWaveClient:
+class InfluxClient:
     """A restricted client which implements an interface
     to query the wave-related data from the Influx database
     """
 
     MEASUREMENT_NAME: str = "surf_heights"
 
-    def __init__(self, bucket: str, token: str, org: str, url: str) -> None:
-        self.bucket = bucket
-        self._client = InfluxDBClient(url=url, token=token, org=org)
+    def __init__(self) -> None:
+        env_values = dotenv_values(ENV_PATH)
+        self.bucket = env_values.get('BUCKET_NAME')
+        self.org = env_values.get('ORGANISATION')
+        self.token = env_values.get('INFLUXDB_TOKEN')
+        self.url = f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
+        self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
 
     async def record_wave_height(self, location: str, height: float) -> None:
         """Records a new wave height for a given location
@@ -85,14 +90,14 @@ class InfluxWaveClient:
         """
         location = location.lower()
         p = (
-            Point(InfluxWaveClient.MEASUREMENT_NAME)
+            Point(InfluxClient.MEASUREMENT_NAME)
             .tag("location", location)
             .field("height", height)
         )
         await self._insert(p)
 
     async def read_wave_height(
-        self, location: str = "", min_height: float = -1.0
+        self, location: str = "", min_height: float = -1.0, time_range: int = 10
     ) -> List[InfluxWaveRecord]:
         """Reads a wave height given a specific
 
@@ -104,8 +109,8 @@ class InfluxWaveClient:
             res (List[InfluxWaveRecord]): The datapoints that match this filter
         """
         query = f'from(bucket:"{self.bucket}")\
-            |> range(start: -10m) \
-            |> filter(fn:(r) => r._measurement == "{InfluxWaveClient.MEASUREMENT_NAME}")'
+            |> range(start: -{time_range}m) \
+            |> filter(fn:(r) => r._measurement == "{InfluxClient.MEASUREMENT_NAME}")'
         if location:
             location = location.lower()
             query += f'|> filter(fn:(r) => r.location == "{location}")'
@@ -133,9 +138,10 @@ class InfluxWaveClient:
         Returns:
             res (Any): Results from the write_api
         """
+        print(self.bucket, self.org)
         write_api = self._client.write_api(write_options=SYNCHRONOUS)
         try:
-            res = write_api.write(bucket=self.bucket, record=p)
+            res = write_api.write(bucket=self.bucket, org=self.org, record=p)
         except NewConnectionError:
             raise InfluxNotAvailableException()
         except ApiException as e:
@@ -151,7 +157,7 @@ class InfluxWaveClient:
         """Queries the InfluxDB with the provided query string
 
         Arguments:
-            query (str): The raw query string to pass to InfluxSB
+            query (str): The raw query string to pass to InfluxDB
 
         Returns:
             res (List[InfluxWaveRecord]): A list of waves that match the query
