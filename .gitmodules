@@ -1,0 +1,3 @@
+[submodule "interfaces/gs_interfaces"]
+	path = interfaces/gs_interfaces
+	url = https://github.com/Simba-Avionic/gs_interfaces
