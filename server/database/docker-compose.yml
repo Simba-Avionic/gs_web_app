@@ -21,20 +21,6 @@ services:
     networks:
       - net
 
-  # python-app:
-  #   container_name: python-app
-  #   privileged: true
-  #   build: 
-  #     context: ./python
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     - influxdb
-  #   networks:
-  #     - net
-  #   volumes:
-  #   - /dev:/dev
-
 networks:
   net:
 

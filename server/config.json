@@ -1,31 +1,143 @@
 {
     "topics": [
         {
-            "name": "tanking",
-            "msg": [
+            "topic_name": "tanking/load_cells",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "load_cell_1"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "load_cell_2"
+                }
+            ]
+        },
+        {
+            "topic_name": "tanking/valves/servos",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
                 },
                 {
                     "type": "uint8",
-                    "val_name": "valve1"
+                    "val_name": "servo1_position"
                 },
                 {
                     "type": "uint8",
-                    "val_name": "valve2"
+                    "val_name": "servo2_position"
+                }
+            ]
+        },
+        {
+            "topic_name": "tanking/valves/sensors",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
                 },
                 {
-                    "type": "bool",
-                    "val_name": "decouple"
+                    "type": "uint8",
+                    "val_name": "temperature"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "temperature_raspberry"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "pressure"
+                }
+            ]
+        },
+        {
+            "topic_name": "control_panel/switches",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                }
+            ]
+        },
+        {
+            "topic_name": "tanking/commands",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                }
+            ]
+        },
+        {
+            "topic_name": "radiolink/telemetry",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                }
+            ]
+        },
+        {
+            "topic_name": "radio_433/telemetry",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "RSSI [dB]",
+                    "val_name": "float"
+                },
+                {
+                    "type": "RSSI_remote [dB]",
+                    "val_name": "float"
+                },
+                {
+                    "type": "noise",
+                    "val_name": "float"
+                }
+            ]
+        },
+        {
+            "topic_name": "rocket/telemetry",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                }
+            ]
+        },
+        {
+            "topic_name": "rocket/status",
+            "msg_type": "",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
                 }
             ]
         }
-    ],
-    "sensors": [
-
-    ],
-    "servos": [
-
     ]
 }
