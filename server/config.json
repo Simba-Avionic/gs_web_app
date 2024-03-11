@@ -2,7 +2,7 @@
     "topics": [
         {
             "topic_name": "tanking/load_cells",
-            "msg_type": "",
+            "msg_type": "LoadCells",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -21,7 +21,7 @@
         },
         {
             "topic_name": "tanking/valves/servos",
-            "msg_type": "",
+            "msg_type": "ValveServos",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -40,7 +40,7 @@
         },
         {
             "topic_name": "tanking/valves/sensors",
-            "msg_type": "",
+            "msg_type": "ValveSensors",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -63,7 +63,7 @@
         },
         {
             "topic_name": "control_panel/switches",
-            "msg_type": "",
+            "msg_type": "ControlPanelSwitches",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -74,7 +74,7 @@
         },
         {
             "topic_name": "tanking/commands",
-            "msg_type": "",
+            "msg_type": "TankingCmds",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -85,7 +85,7 @@
         },
         {
             "topic_name": "radiolink/telemetry",
-            "msg_type": "",
+            "msg_type": "RadiolinkTelemetry",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -96,7 +96,7 @@
         },
         {
             "topic_name": "radio_433/telemetry",
-            "msg_type": "",
+            "msg_type": "433Telemetry",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -119,7 +119,7 @@
         },
         {
             "topic_name": "rocket/telemetry",
-            "msg_type": "",
+            "msg_type": "RocketTelemetry",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -130,7 +130,7 @@
         },
         {
             "topic_name": "rocket/status",
-            "msg_type": "",
+            "msg_type": "RocketStatus",
             "interval": 1000,
             "msg_fields": [
                 {
