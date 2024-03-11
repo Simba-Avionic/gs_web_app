@@ -96,7 +96,7 @@
         },
         {
             "topic_name": "radio_433/telemetry",
-            "msg_type": "433Telemetry",
+            "msg_type": "Telemetry433",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -104,16 +104,16 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "RSSI [dB]",
-                    "val_name": "float"
+                    "type": "float32",
+                    "val_name": "RSSI"
                 },
                 {
-                    "type": "RSSI_remote [dB]",
-                    "val_name": "float"
+                    "type": "float32",
+                    "val_name": "RSSI_remote"
                 },
                 {
-                    "type": "noise",
-                    "val_name": "float"
+                    "type": "float32",
+                    "val_name": "noise"
                 }
             ]
         },
