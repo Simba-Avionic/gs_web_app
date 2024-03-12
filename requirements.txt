@@ -3,3 +3,4 @@ uvicorn
 influxdb_client
 loguru
 python-dotenv
+asyncio
