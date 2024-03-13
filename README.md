@@ -1,5 +1,5 @@
-# Web app
-It's simple app that we will work upon in creating bigger mission control system.
+# Mission Control App
+Responsible for displaying current state of a rocket and the whole ground segment system.
 
 
 ## Setup
