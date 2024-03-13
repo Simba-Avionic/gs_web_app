@@ -1,0 +1,19 @@
+{
+    "topics": [
+        {
+            "topic_name": "number",
+            "msg_type": "Int32",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "load_cell_2"
+                }
+            ]
+        }
+    ]
+}

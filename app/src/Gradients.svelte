@@ -23,11 +23,11 @@
 
 
             <linearGradient id="gradient_orange" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#ff3300">
-                <animate attributeName="stop-color" values="#ff3300; #ff1199; #ff3300" dur="2s" repeatCount="indefinite" />
+                <stop offset="0%" stop-color="#FFA500">
+                <animate attributeName="stop-color" values="#FFA500; #ffa199; #FFA500" dur="2s" repeatCount="indefinite" />
                 </stop>
-                <stop offset="100%" stop-color="#ff1111">
-                <animate attributeName="stop-color" values="#ff1111; #ff9977; #ff1111" dur="2s" repeatCount="indefinite" />
+                <stop offset="100%" stop-color="#ffa111">
+                <animate attributeName="stop-color" values="#ffa111; #ffa977; #ffa111" dur="2s" repeatCount="indefinite" />
                 </stop>
             </linearGradient>
       </svg>

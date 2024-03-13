@@ -6,7 +6,7 @@
 
 <main>
   <Dashboard />
-  <DisplayNumber />
+  <!-- <DisplayNumber /> -->
   <Gradients />
 </main>
 
