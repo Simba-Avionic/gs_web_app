@@ -1,12 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from rclpy import init, shutdown, spin
+from rclpy import init, shutdown
 from contextlib import asynccontextmanager
 import json
 from classes.topic_handler import TopicHandler
-
-from routes.read import read_router
-from routes.write import write_router
 
 CONFIG = None
 CONFIG_PATH = "test_config.json"
@@ -14,9 +11,8 @@ TOPICS = []
 
 def load_main_config(path_to_conf):
     global CONFIG
-    f = open(path_to_conf)
-    CONFIG = json.load(f)
-    f.close()
+    with open(path_to_conf, "r") as f:
+        CONFIG = json.load(f)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +20,6 @@ async def lifespan(app: FastAPI):
     load_main_config(CONFIG_PATH)
 
     for msg in CONFIG["topics"]:
-        # print(msg)
         try:
             th = TopicHandler(msg)
             app.include_router(th.router)
@@ -33,10 +28,10 @@ async def lifespan(app: FastAPI):
             print(f"Couldn't create/start TopicHandler for {msg['msg_type']}", e)
     yield
     shutdown()
-
+    for topic in TOPICS:
+        topic.thread.join()
+ 
 app = FastAPI(lifespan=lifespan)
-app.include_router(read_router)
-app.include_router(write_router)
 
 app.add_middleware(
     CORSMiddleware,
