@@ -47,7 +47,8 @@ class TopicHandler:
                     # yield f"data: {msg}\n\n"
                     yield msg
             
-        await asyncio.sleep(self.interval/2000)
+                await asyncio.sleep(self.interval/1000)
+        
         return EventSourceResponse(event_generator(), media_type="text/event-stream")
     
     async def query(self, r: Request, time_range: int = 10):
