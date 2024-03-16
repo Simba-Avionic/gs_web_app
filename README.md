@@ -1,12 +1,16 @@
 # Mission Control App
 Responsible for displaying current state of a rocket and the whole ground segment system.
 
+## Prerequisites
+- ROS2 distro e.g. Humble (https://docs.ros.org/en/humble/Installation.html)
+- Docker (https://docs.docker.com/engine/install/)
 
 ## Setup
-0. Install ROS2 distro e.g. Humble (https://docs.ros.org/en/humble/Installation.html)
-1. Create python virtual environment `python3 -m venv venv`
-2. Install required packages `pip install -r requirements.txt`
-3. Go to **app** directory and run `npm install`
+0. Create python virtual environment `python3 -m venv venv`
+1. Install required packages `pip install -r requirements.txt`
+2. Go to **app** directory and run `npm install`<br>
+
+
 *(If you don't have ROS2 distro installed you won't be able to run the server)*
 
 ## Launching the app
