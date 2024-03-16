@@ -28,12 +28,20 @@ class TopicHandler:
         
         self.thread = threading.Thread(target=spin, args=(self.receiver,))
         self.thread.start()
+
+        self.last_timestamp = None
+        self.curr_msg = None
         
 
     async def return_msg(self, r: Request):
         
         # TODO: check for new messages
         def new_messages():
+            self.curr_msg = self.receiver.get_msg()
+            if self.curr_msg == None:
+                return False
+            # if self.curr_msg.header.stamp == self.last_timestamp:
+            #     return False
             return True
 
         async def event_generator():
@@ -42,11 +50,12 @@ class TopicHandler:
                     break
                 
                 if new_messages():
-                    msg = self.receiver.get_msg()
-                    self.tmp_msg = msg
-                    # yield f"data: {msg}\n\n"
-                    yield msg
-            
+                    # self.curr_msg = self.receiver.get_msg()
+                    # self.curr_timestamp = self.curr_msg.header.stamp
+                    yield self.curr_msg.data
+                    self.curr_msg = None
+                else:
+                    yield None            
                 await asyncio.sleep(self.interval/1000)
         
         return EventSourceResponse(event_generator(), media_type="text/event-stream")

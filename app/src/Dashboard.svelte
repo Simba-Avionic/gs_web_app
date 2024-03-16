@@ -123,11 +123,6 @@
       ctx.stroke();
     }
 
-    function drawLegend() {
-      ctx.font = '12px Arial';
-      ctx.fillStyle = 'black';
-      ctx.fillText('Sine Wave Animation', 10, 20);
-    }
 
     // Start the animation
     animate();
@@ -148,32 +143,32 @@
   <div id="rocket-info">
     <h3>ROCKET</h3>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 1:</span>
       <span class="rocket-field-value">{latestNumber/4.0}</span>
     </div>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 2:</span>
       <span class="rocket-field-value">{latestNumber/2.0}</span>
     </div>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 3:</span>
       <span class="rocket-field-value">{latestNumber/4.0}</span>
     </div>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 4:</span>
       <span class="rocket-field-value">{latestNumber/2.0}</span>
     </div>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 5:</span>
       <span class="rocket-field-value">{latestNumber/4.0}</span>
     </div>
     <div class="rocket-field">
-      <div class="rocket-status-indicator green-grad"></div>
+      <div class="rocket-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="rocket-field-text">Field 6:</span>
       <span class="rocket-field-value">{latestNumber/2.0}</span>
     </div>
@@ -182,17 +177,17 @@
   <div id="gs-info">
     <h3>GROUND SEGMENT</h3>
     <div class="gs-field">
-      <div class="gs-status-indicator green-grad"></div>
+      <div class="gs-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="gs-field-text">Field 2:</span>
       <span class="gs-field-value">{latestNumber}</span>
     </div>
     <div class="gs-field">
-      <div class="gs-status-indicator green-grad"></div>
+      <div class="gs-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="gs-field-text">Field 3:</span>
       <span class="gs-field-value">{latestNumber}</span>
     </div>
     <div class="gs-field">
-      <div class="gs-status-indicator green-grad"></div>
+      <div class="gs-status-indicator {latestNumber != 'None' || null ? 'green-status' : 'red-status'}"></div>
       <span class="gs-field-text">Field 5:</span>
       <span class="gs-field-value">{latestNumber}</span>
       <canvas id="myCanvas" width="100" height="50"></canvas>
@@ -307,11 +302,23 @@
     color: whitesmoke; /* Text color */
   }
 
-  .green-grad {
+  .green-status{
     background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
     background-size: 400% 400%;
-    animation: gradientAnimation 10s ease infinite;
+    animation: gradientAnimation 3s ease infinite;
 }
+
+.orange-status {
+    background: linear-gradient(45deg, orange, yellow);
+    background-size: 200% 200%;
+    animation: orangeGradientAnimation 3s ease infinite;
+  }
+
+  .red-status {
+    background: linear-gradient(45deg, red, pink);
+    background-size: 200% 200%;
+    animation: redGradientAnimation 3s ease infinite;
+  }
 
 @keyframes gradientAnimation {
     0% {

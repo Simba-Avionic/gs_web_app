@@ -16,8 +16,8 @@ class TopicReceiver(Node):
         self.last_msg_timestamp = None
 
     def msg_callback(self, msg):
-        self.latest_msg = msg.data
-        self.save_msg(msg.data)
+        self.latest_msg = msg
+        self.save_msg(msg)
 
     def get_msg(self):
         return self.latest_msg
