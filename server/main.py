@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from rclpy import init, shutdown
 from contextlib import asynccontextmanager
@@ -6,7 +7,7 @@ import json
 from classes.topic_handler import TopicHandler
 
 CONFIG = None
-CONFIG_PATH = "test_config.json"
+CONFIG_PATH = "config.json"
 TOPICS = []
 
 def load_main_config(path_to_conf):
@@ -40,6 +41,10 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+@app.get("/config")
+async def get_config():
+    return JSONResponse(content=CONFIG)
 
 if __name__ == "__main__":
     import uvicorn

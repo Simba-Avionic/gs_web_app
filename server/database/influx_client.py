@@ -20,28 +20,15 @@ class InfluxClient:
         self.url = f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
 
-    """
-    async def record_wave_height(self, location: str, height: float) -> None:
-        location = location.lower()
+    
+    async def insert_data(self, msg_data) -> None:
+        # for field in msg_data["msg_fields"]:
         p = (
-            Point(InfluxClient.MEASUREMENT_NAME)
-            .tag("location", location)
-            .field("height", height)
+            Point(msg_data['topic_name'])
+            .tag("msg_type", msg_data['msg_type'])
+            .field("msg", msg_data)
         )
         await self._insert(p)
-
-    async def read_wave_height(
-        self, location: str = "", min_height: float = -1.0, time_range: int = 10
-    ) -> List[InfluxWaveRecord]:
-        query = f'from(bucket:"{self.bucket}")\
-            |> range(start: -{time_range}m) \
-            |> filter(fn:(r) => r._measurement == "{InfluxClient.MEASUREMENT_NAME}")'
-        if location:
-            location = location.lower()
-            query += f'|> filter(fn:(r) => r.location == "{location}")'
-        if min_height > 0:
-            query += f'|> filter(fn:(r) => r._field >= "{min_height}")'
-        return await self._query(query)
 
     async def _insert(self, p: Point) -> Any:
         print(self.bucket, self.org)
@@ -58,7 +45,8 @@ class InfluxClient:
             raise InfluxNotAvailableException()
         logger.info(f"{res=}")
         return res
-
+    
+    """
     async def _query(self, query: str = "") -> List[InfluxWaveRecord]:
         logger.debug(f"Running {query=}")
         query_api = self._client.query_api()
@@ -81,4 +69,18 @@ class InfluxClient:
                 res.append(r)
         logger.debug(f"Query returned {len(res)} records")
         return res
+    """
+    """
+    async def read_wave_height(
+        self, location: str = "", min_height: float = -1.0, time_range: int = 10
+    ) -> List[InfluxWaveRecord]:
+        query = f'from(bucket:"{self.bucket}")\
+            |> range(start: -{time_range}m) \
+            |> filter(fn:(r) => r._measurement == "{InfluxClient.MEASUREMENT_NAME}")'
+        if location:
+            location = location.lower()
+            query += f'|> filter(fn:(r) => r.location == "{location}")'
+        if min_height > 0:
+            query += f'|> filter(fn:(r) => r._field >= "{min_height}")'
+        return await self._query(query)
     """
