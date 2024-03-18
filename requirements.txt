@@ -4,3 +4,7 @@ influxdb_client
 loguru
 python-dotenv
 asyncio
+sse_starlette
+empy==3.3.4
+lark
+catkin-pkg
