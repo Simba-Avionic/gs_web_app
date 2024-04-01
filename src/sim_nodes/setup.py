@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'sim_node1 = sim_nodes.sim_node1:main',
+            'sim_valve_sensors_pub = sim_nodes.sim_valve_sensors_pub:main',
         ],
     },
 )
