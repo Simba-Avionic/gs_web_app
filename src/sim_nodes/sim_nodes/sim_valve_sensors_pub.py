@@ -14,7 +14,7 @@ class SimValveSensorsPubNode(Node):
 
     def timer_callback(self):
         # Generate random valves sensors data
-        temperature_celsius = random.randint(20, 30) # normally this would be fed from sensor
+        temperature_celsius = random.randint(20, 30) # normally these would be fed from sensor
         temperature_rasp_celsius = random.randint(20, 30) # if it's kelvin msg has to be of greater type than uint8
         pressure_bar = random.randint(1,244) # arbitrary values, not really realistic :)
 

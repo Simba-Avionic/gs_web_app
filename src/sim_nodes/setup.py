@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'sim_valve_sensors_pub = sim_nodes.sim_valve_sensors_pub:main',
+            'sim_valve_servos_pub = sim_nodes.sim_valve_servos_pub:main',
+            'sim_load_cells = sim_nodes.sim_load_cells:main',
         ],
     },
 )
