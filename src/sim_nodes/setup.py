@@ -23,6 +23,7 @@ setup(
             'sim_valve_sensors_pub = sim_nodes.sim_valve_sensors_pub:main',
             'sim_valve_servos_pub = sim_nodes.sim_valve_servos_pub:main',
             'sim_load_cells = sim_nodes.sim_load_cells:main',
+            'sim_mr_general_publisher = sim_nodes.sim_mr_general_publisher:main',
         ],
     },
 )
