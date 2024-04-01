@@ -24,6 +24,8 @@ setup(
             'sim_valve_servos_pub = sim_nodes.sim_valve_servos_pub:main',
             'sim_load_cells = sim_nodes.sim_load_cells:main',
             'sim_mr_general_publisher = sim_nodes.sim_mr_general_publisher:main',
+            'sim_radio_433_pub = sim_nodes.sim_radio_433_pub:main',
+            'sim_rocket_telemetry_pub = sim_nodes.sim_rocket_telemetry_pub:main',
         ],
     },
 )
