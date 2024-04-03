@@ -14,9 +14,9 @@ class SimRocketTelemetryPubNode(Node):
 
     def timer_callback(self):
         # Generate random valves sensors data
-        temperature_celsius = random.randint(10, 60) # normally these would be fed from sensor
+        temperature_celsius = random.uniform(10, 60) # normally these would be fed from sensor
         altitude_m = random.uniform(0,1000) 
-        pressure_hpascal = random.uniform(1000,3000) # arbitrary values, not really realistic :)
+        pressure_hpascal = random.uniform(1000,3000) # arbitrary values
         velocity_m_s = random.uniform(0, 300)
         acceleration_m_s_squared = random.uniform(-10,10)
 
