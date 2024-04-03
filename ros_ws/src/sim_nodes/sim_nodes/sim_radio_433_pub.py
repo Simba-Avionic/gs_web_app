@@ -7,7 +7,7 @@ from std_msgs.msg import Header
 
 class SimRadio433PubNode(Node):
     def __init__(self):
-        super().__init__('simulated_valve_sensors_pub')
+        super().__init__('sim_radio_433_pub')
         self.publisher_ = self.create_publisher(Telemetry433, 'radio_433/telemetry', 10)
         timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) # callback called during spin
