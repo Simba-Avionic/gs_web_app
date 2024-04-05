@@ -2,5 +2,5 @@
 	path = interfaces/gs_interfaces
 	url = https://github.com/Simba-Avionic/gs_interfaces
 [submodule "gs_interfaces"]
-	path = gs_interfaces/gs_interfaces
+	path = gs_interfaces
 	url = https://github.com/Simba-Avionic/gs_interfaces.git
