@@ -1,5 +1,6 @@
 # Assumes that submodule gs_interfaces is present
 cd "$(dirname "$0")"
+cd ..
 colcon build 
 
 PACKAGE_NAME="sim_nodes"
