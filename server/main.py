@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
             app.include_router(th.router)
             TOPICS.append(th)
         except Exception as e:
-            print(f"Couldn't create/start TopicHandler for {msg['msg_type']}", e)
+            print(f"Couldn't create/start TopicHandler for {msg['msg_type']}:", e)
     yield
     shutdown()
     for topic in TOPICS:

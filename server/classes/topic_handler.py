@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 from classes.topic_receiver import TopicReceiver
 import threading
-from rclpy import spin
+from rclpy import spin, executors
 from sse_starlette.sse import EventSourceResponse
 import asyncio
 
@@ -28,8 +28,13 @@ class TopicHandler:
         
         self.ic = InfluxClient()
         
-        self.thread = threading.Thread(target=spin, args=(self.receiver,))
-        self.thread.start()
+        self.executor = executors.MultiThreadedExecutor()
+        self.executor.add_node(self.receiver)
+        self.executor_thread = threading.Thread(target=self.executor.spin, daemon=True)
+        self.executor_thread.start()
+
+        # self.thread = threading.Thread(target=spin, args=(self.receiver,))
+        # self.thread.start()
 
         self.last_timestamp = None
         self.curr_msg = None
@@ -40,8 +45,8 @@ class TopicHandler:
         # TODO: check for new messages
         def new_messages():
             self.curr_msg = self.receiver.get_msg()
-            if self.curr_msg == None:
-                return False
+            # if self.curr_msg == None:
+            #     return False
             # if self.curr_msg.header.stamp == self.last_timestamp:
             #     return False
             return True
@@ -51,7 +56,7 @@ class TopicHandler:
                 if await r.is_disconnected():
                     break
                 if new_messages():
-                    yield self.curr_msg.data
+                    yield self.curr_msg
                 else:
                     yield None            
                 await asyncio.sleep(self.interval/1000)

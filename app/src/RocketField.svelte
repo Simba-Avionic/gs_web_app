@@ -1,26 +1,35 @@
 <script>
-    import { onMount } from "svelte";
+  import { onMount } from "svelte";
 
-    export let topic;
-    let latestNumber;
+  export let topic;
+  let telem_data;
 
-    const evtSource = new EventSource(
-        `http://localhost:8000/${topic.topic_name}`);
-    
-    evtSource.onmessage = function (event) {
-        latestNumber = event.data;
-    };
+  const evtSource = new EventSource(
+    `http://localhost:8000/${topic.topic_name}`,
+  );
 
+  evtSource.onmessage = function (event) {
+    telem_data = JSON.parse(event.data);
+    // console.log(telem_data);
+  };
 </script>
 
 <div class="rocket-field">
   <div
-    class="rocket-status-indicator {latestNumber != 'None' || null
+    class="rocket-status-indicator {telem_data != 'None' ||
+    null ||
+    NaN ||
+    undefined
       ? 'green-status'
       : 'red-status'}"
   ></div>
   <span class="rocket-field-text">{topic.topic_name}</span>
-  <span class="rocket-field-value">{latestNumber / 4.0}</span>
+  {#each topic.msg_fields as field}
+    {#if telem_data != undefined && field.val_name !== "header"}
+      <span class="rocket-field-value">{telem_data[field.val_name]}</span>
+    {/if}
+  {/each}
+  
 </div>
 
 <style>

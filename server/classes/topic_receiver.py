@@ -1,5 +1,7 @@
 from rclpy.node import Node
 import gs_interfaces.msg
+from rosidl_runtime_py import message_to_ordereddict
+import json
 
 class TopicReceiver(Node):
     def __init__(self, msg_type: str, topic_name: str, interval: int, msg_fields):
@@ -14,7 +16,8 @@ class TopicReceiver(Node):
         self.last_msg_timestamp = None
 
     def msg_callback(self, msg):
-        self.latest_msg = msg
+        deserialized_msg = message_to_ordereddict(msg)
+        self.latest_msg = json.dumps(deserialized_msg)
 
     def get_msg(self):
         return self.latest_msg

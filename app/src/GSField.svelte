@@ -1,25 +1,26 @@
 <script>
+    import { onMount } from "svelte";
     export let topic;
-    let latestNumber;
+    let telem_data;
 
     const evtSource = new EventSource(
         `http://localhost:8000/${topic.topic_name}`);
     
     evtSource.onmessage = function (event) {
-        latestNumber = event.data;
+      telem_data = JSON.parse(event.data)
+        // console.log(event);
     };
-
 
 </script>
 
 <div class="gs-field">
   <div
-    class="gs-status-indicator {latestNumber != 'None' || null
+    class="gs-status-indicator {telem_data != 'None' || null || NaN || undefined
       ? 'green-status'
       : 'red-status'}"
   ></div>
   <span class="gs-field-text">{topic.topic_name}</span>
-  <span class="gs-field-value">{latestNumber}</span>
+  <span class="gs-field-value">{telem_data}</span>
 </div>
 
 <style>
