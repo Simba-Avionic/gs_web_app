@@ -2,7 +2,7 @@ import rclpy
 
 from rclpy.node import Node
 from gs_interfaces.msg import RocketTelemetry, RocketStatus
-
+from rclpy import spin, executors
 
 class SimRocketStatusNode(Node):
     def __init__(self):
@@ -30,6 +30,7 @@ class SimRocketStatusNode(Node):
     def publish_load_cells(self):
         rocket_status_msg = RocketStatus() # init
         rocket_status_msg.is_alive = self.is_alive
+        rocket_status_msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(rocket_status_msg)

@@ -2,7 +2,7 @@ import rclpy
 
 from rclpy.node import Node
 from gs_interfaces.msg import ControlPanelSwitches, TankingCmds, RadioTelemetry
-
+from rclpy import spin, executors
 
 class MrGeneralPublisherNode(Node):
     def __init__(self):
@@ -17,6 +17,10 @@ class MrGeneralPublisherNode(Node):
         msg1 = ControlPanelSwitches() 
         msg2 = TankingCmds()
         msg3 = RadioTelemetry()
+
+        msg1.header.stamp = self.get_clock().now().to_msg()
+        msg2.header.stamp = self.get_clock().now().to_msg()
+        msg3.header.stamp = self.get_clock().now().to_msg()
 
         # Populate message
         self.publisher_cp_switches.publish(msg1)

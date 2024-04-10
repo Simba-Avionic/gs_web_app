@@ -84,8 +84,8 @@
             ]
         },
         {
-            "topic_name": "radiolink/telemetry",
-            "msg_type": "RadiolinkTelemetry",
+            "topic_name": "tanking/commands",
+            "msg_type": "TankingControl",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -125,6 +125,34 @@
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "altitude"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "latitude"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "longitude"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "velocity"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "pressure"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "acceleration"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "temperature"
                 }
             ]
         },
@@ -136,6 +164,10 @@
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "is_alive"
                 }
             ]
         }

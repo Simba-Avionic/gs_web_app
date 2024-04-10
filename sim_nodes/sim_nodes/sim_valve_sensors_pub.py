@@ -3,7 +3,7 @@ import random
 
 from rclpy.node import Node
 from gs_interfaces.msg import ValveSensors
-
+from rclpy import spin, executors
 
 class SimValveSensorsPubNode(Node):
     def __init__(self):
@@ -22,6 +22,7 @@ class SimValveSensorsPubNode(Node):
         msg.temperature = temperature_celsius
         msg.temperature_raspberry = temperature_rasp_celsius
         msg.pressure = pressure_bar
+        msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(msg)

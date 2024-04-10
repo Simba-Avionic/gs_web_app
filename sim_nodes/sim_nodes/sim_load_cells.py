@@ -33,6 +33,7 @@ class SimLoadCellsNode(Node):
         load_cells_msg = LoadCells() # init
         load_cells_msg.load_cell_1 = self.load_cell_1
         load_cells_msg.load_cell_2 = self.load_cell_2
+        load_cells_msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(load_cells_msg)

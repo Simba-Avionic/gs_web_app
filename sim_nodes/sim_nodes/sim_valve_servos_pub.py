@@ -3,6 +3,7 @@ import random
 
 from rclpy.node import Node
 from gs_interfaces.msg import ValveServos
+from rclpy import executors
 
 
 class SimValveServosPubNode(Node):
@@ -21,6 +22,7 @@ class SimValveServosPubNode(Node):
         msg = ValveServos()  # Initialize message
         msg.servo1_position = servo1_pos
         msg.servo2_position = servo2_pos
+        msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(msg)

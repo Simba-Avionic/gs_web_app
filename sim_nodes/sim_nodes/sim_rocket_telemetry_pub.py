@@ -3,7 +3,7 @@ import random
 
 from rclpy.node import Node
 from gs_interfaces.msg import RocketTelemetry
-
+from rclpy import spin, executors
 
 class SimRocketTelemetryPubNode(Node):
     def __init__(self):
@@ -26,7 +26,8 @@ class SimRocketTelemetryPubNode(Node):
         msg.altitude = altitude_m
         msg.pressure = pressure_hpascal
         msg.velocity = velocity_m_s
-        msg.acceleration = acceleration_m_s_squared 
+        msg.acceleration = acceleration_m_s_squared
+        msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(msg)

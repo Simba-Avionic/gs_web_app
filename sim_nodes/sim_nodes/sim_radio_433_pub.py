@@ -4,6 +4,7 @@ import random
 from rclpy.node import Node
 from gs_interfaces.msg import Telemetry433
 from std_msgs.msg import Header
+from rclpy import spin, executors
 
 class SimRadio433PubNode(Node):
     def __init__(self):
@@ -23,6 +24,7 @@ class SimRadio433PubNode(Node):
         msg.rssi = rssi
         msg.rssi_remote = rssi_remote
         msg.noise = noise
+        msg.header.stamp = self.get_clock().now().to_msg()
 
         # Populate your message
         self.publisher_.publish(msg)
