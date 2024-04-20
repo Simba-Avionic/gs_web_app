@@ -29,11 +29,11 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "uint8",
+                    "type": "uint16",
                     "val_name": "servo1_position"
                 },
                 {
-                    "type": "uint8",
+                    "type": "uint16",
                     "val_name": "servo2_position"
                 }
             ]
@@ -48,15 +48,15 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "uint8",
+                    "type": "float32",
                     "val_name": "temperature"
                 },
                 {
-                    "type": "uint8",
+                    "type": "float32",
                     "val_name": "temperature_raspberry"
                 },
                 {
-                    "type": "uint8",
+                    "type": "float32",
                     "val_name": "pressure"
                 }
             ]
@@ -105,11 +105,11 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "RSSI"
+                    "val_name": "rssi"
                 },
                 {
                     "type": "float32",
-                    "val_name": "RSSI_remote"
+                    "val_name": "rssi_remote"
                 },
                 {
                     "type": "float32",

@@ -1,7 +1,7 @@
 import rclpy
 
 from rclpy.node import Node
-from gs_interfaces.msg import ControlPanelSwitches, TankingCmds, RadioTelemetry
+from gs_interfaces.msg import ControlPanelSwitches, TankingCmds, RadiolinkTelemetry
 from rclpy import spin, executors
 
 class MrGeneralPublisherNode(Node):
@@ -9,14 +9,14 @@ class MrGeneralPublisherNode(Node):
         super().__init__('sim_mr_general_publisher')
         self.publisher_cp_switches = self.create_publisher(ControlPanelSwitches, 'control_panel/switches', 10)
         self.publisher_tanking_cmds = self.create_publisher(TankingCmds, 'tanking/commands', 10)
-        self.publisher_radiolink_telemetry = self.create_publisher(RadioTelemetry, 'radiolink/telemetry', 10)
+        self.publisher_radiolink_telemetry = self.create_publisher(RadiolinkTelemetry, 'radiolink/telemetry', 10)
         timer_period = 5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) 
 
     def timer_callback(self):
         msg1 = ControlPanelSwitches() 
         msg2 = TankingCmds()
-        msg3 = RadioTelemetry()
+        msg3 = RadiolinkTelemetry()
 
         msg1.header.stamp = self.get_clock().now().to_msg()
         msg2.header.stamp = self.get_clock().now().to_msg()
