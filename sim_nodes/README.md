@@ -4,7 +4,7 @@ An overview of working with ROS2, assuming ROS2 is properly set up on your syste
 
 ## In a Nutshell
 - The typical workflow for running already created nodes is encapsulated in the `run_all_sim_nodes.sh` script.
-- To run all simulation nodes simultaneously, execute `./run_all_sim_nodes.sh`.
+- To run all simulation nodes simultaneously, execute `./run_all_sim_nodes.sh` (note that if one node is failing it won't stop other nodes from running but you will get error notification in console).
 - The `gs_web_app` directory is treated as a ROS2 workspace. As of 05/04, we don't maintain a separate `/src` folder for packages.
 
 ## Typical Package/Nodes Development Workflow
