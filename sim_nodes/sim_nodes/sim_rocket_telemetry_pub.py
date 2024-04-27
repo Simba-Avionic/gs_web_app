@@ -4,11 +4,12 @@ import random
 from rclpy.node import Node
 from gs_interfaces.msg import RocketTelemetry
 from rclpy import spin, executors
+from gs_ros2_utils import get_node_name
 
 class SimRocketTelemetryPubNode(Node):
     def __init__(self):
         super().__init__('sim_rocket_telemetry_pub')
-        self.publisher_ = self.create_publisher(RocketTelemetry, 'rocket/telemetry', 10)
+        self.publisher_ = self.create_publisher(RocketTelemetry, get_node_name(RocketTelemetry.__name__), 10)
         timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) # callback called during spin
 

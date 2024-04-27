@@ -1,7 +1,7 @@
 # Assumes that submodule gs_interfaces is present
 cd "$(dirname "$0")"
 cd ..
-colcon build 
+colcon build  # --cmake-clean-cache # sometimes help if changing script doesn't seem to do anything
 
 PACKAGE_NAME="sim_nodes"
 # List of nodes (executable names)
