@@ -5,11 +5,12 @@ from rclpy.node import Node
 from gs_interfaces.msg import Telemetry433
 from std_msgs.msg import Header
 from rclpy import spin, executors
+from gs_ros2_utils import get_node_name
 
 class SimRadio433PubNode(Node):
     def __init__(self):
         super().__init__('sim_radio_433_pub')
-        self.publisher_ = self.create_publisher(Telemetry433, 'radio_433/telemetry', 10)
+        self.publisher_ = self.create_publisher(Telemetry433, get_node_name(Telemetry433.__name__), 10)
         timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) # callback called during spin
 

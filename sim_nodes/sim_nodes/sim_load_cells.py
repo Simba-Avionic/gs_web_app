@@ -2,6 +2,7 @@ import rclpy
 
 from rclpy.node import Node
 from gs_interfaces.msg import ValveServos, LoadCells
+from gs_ros2_utils import get_node_name
 
 
 class SimLoadCellsNode(Node):
@@ -14,7 +15,7 @@ class SimLoadCellsNode(Node):
 
         # load cells values change based on valve servos values
         self.servo_subscriber = self.create_subscription(
-            ValveServos, 'tanking/valves/servos', self.servo_callback, 10
+            ValveServos, get_node_name(ValveServos.__name__), self.servo_callback, 10
         )
 
         self.publisher_ = self.create_publisher(LoadCells, 'tanking/load_cells', 10)

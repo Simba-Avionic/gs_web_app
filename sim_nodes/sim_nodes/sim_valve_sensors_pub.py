@@ -4,11 +4,12 @@ import random
 from rclpy.node import Node
 from gs_interfaces.msg import ValveSensors
 from rclpy import spin, executors
+from gs_ros2_utils import get_node_name
 
 class SimValveSensorsPubNode(Node):
     def __init__(self):
         super().__init__('simulated_valve_sensors_pub')
-        self.publisher_ = self.create_publisher(ValveSensors, 'tanking/valves/sensors', 10)
+        self.publisher_ = self.create_publisher(ValveSensors, get_node_name(ValveSensors.__name__), 10)
         timer_period = 1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) # callback called during spin
 

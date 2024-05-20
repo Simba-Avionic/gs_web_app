@@ -1,11 +1,13 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 package_name = 'sim_nodes'
+
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=find_packages(exclude=['test']),
+    packages=[package_name, "gs_ros2_utils"],# all packages in sim_nodes package + appended ones
+    package_dir={"gs_ros2_utils":"../gs_ros2_utils"},
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),

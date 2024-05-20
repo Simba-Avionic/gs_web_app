@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from gs_interfaces.msg import RocketTelemetry, RocketStatus
 from rclpy import spin, executors
+from gs_ros2_utils import get_node_name
 
 class SimRocketStatusNode(Node):
     def __init__(self):
@@ -11,7 +12,7 @@ class SimRocketStatusNode(Node):
 
         # rocket status is based on rocket telemetry values hence subscription
         self.servo_subscriber = self.create_subscription(
-            RocketTelemetry, 'rocket/telemetry', self.rtelemetry_callback, 10
+            RocketTelemetry, get_node_name(RocketTelemetry.__name__), self.rtelemetry_callback, 10
         )
 
         self.publisher_ = self.create_publisher(RocketStatus, 'rocket/status', 10)

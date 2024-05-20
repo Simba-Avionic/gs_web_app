@@ -3,12 +3,14 @@ import rclpy
 from rclpy.node import Node
 from gs_interfaces.msg import ControlPanelSwitches, TankingCmds, RadiolinkTelemetry
 from rclpy import spin, executors
+from gs_ros2_utils import get_node_name
 
 class MrGeneralPublisherNode(Node):
     def __init__(self):
         super().__init__('sim_mr_general_publisher')
-        self.publisher_cp_switches = self.create_publisher(ControlPanelSwitches, 'control_panel/switches', 10)
-        self.publisher_tanking_cmds = self.create_publisher(TankingCmds, 'tanking/commands', 10)
+        self.publisher_cp_switches = self.create_publisher(
+            ControlPanelSwitches, get_node_name(ControlPanelSwitches.__name__), 10)
+        self.publisher_tanking_cmds = self.create_publisher(TankingCmds, get_node_name(TankingCmds.__name__), 10)
         self.publisher_radiolink_telemetry = self.create_publisher(RadiolinkTelemetry, 'radiolink/telemetry', 10)
         timer_period = 5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback) 
