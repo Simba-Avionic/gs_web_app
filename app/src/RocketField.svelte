@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import {rosTimeToFormattedTime} from "./Utils.svelte";
 
   export let topic;
   let telem_data;
@@ -16,20 +17,27 @@
 
 <div class="rocket-field">
   <div
-    class="rocket-status-indicator {telem_data != 'None' ||
-    null ||
-    NaN ||
-    undefined
+    class="rocket-status-indicator {telem_data != 'None' || null || NaN || undefined
       ? 'green-status'
       : 'red-status'}"
   ></div>
-  <span class="rocket-field-text">{topic.topic_name}</span>
-  {#each topic.msg_fields as field}
-    {#if telem_data != undefined && field.val_name !== "header"}
-      <span class="rocket-field-value">{telem_data[field.val_name]}</span>
+  <div class="rocket-field-content">
+    <span class="rocket-field-text">{String(topic.topic_name)}</span>
+    {#if telem_data != undefined}
+      <span class="timestamp">{
+      rosTimeToFormattedTime(telem_data.header.stamp.sec, 
+        telem_data.header.stamp.nanosec)
+      }</span>
+      {#each topic.msg_fields as field}
+        {#if field.val_name !== "header"}
+          <div class="rocket-field-value">
+            <span>{field.val_name}:</span>
+            <span>{telem_data[field.val_name] + " " + field.unit}</span>
+          </div>
+        {/if}
+      {/each}
     {/if}
-  {/each}
-  
+  </div>
 </div>
 
 <style>
@@ -37,7 +45,8 @@
     white-space: nowrap;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    /* align-items: center; */
     padding: 10px;
     border-bottom: 1px solid #eee; /* Add border to the bottom of each field */
     text-align: left;
@@ -65,6 +74,21 @@
 
   .rocket-field-value {
     color: whitesmoke; /* Text color */
+  }
+
+  .rocket-field-content {
+    flex: 1;
+  }
+
+  .rocket-field-value span:first-child {
+    font-weight: bold;
+    margin-right: 4px;
+  }
+
+  .timestamp {
+    margin-left: 8px; /* Add spacing between topic name and timestamp */
+    color: #aaa; /* Adjust timestamp color */
+    font-size: 0.8em;
   }
 
   .green-status {

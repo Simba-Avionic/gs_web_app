@@ -1,55 +1,96 @@
 <script>
-    import { onMount } from "svelte";
-    export let topic;
-    let telem_data;
+  import { onMount } from "svelte";
+  import { rosTimeToFormattedTime } from "./Utils.svelte";
 
-    const evtSource = new EventSource(
-        `http://localhost:8000/${topic.topic_name}`);
-    
-    evtSource.onmessage = function (event) {
-      telem_data = JSON.parse(event.data)
-        // console.log(event);
-    };
+  export let topic;
+  let telem_data;
 
+  const evtSource = new EventSource(
+    `http://localhost:8000/${topic.topic_name}`
+  );
+
+  evtSource.onmessage = function (event) {
+    telem_data = JSON.parse(event.data);
+    if (topic.topic_name === "radio_433/telemetry" ||   
+        topic.topic_name === "tanking/commands")
+    {
+      console.log(telem_data);
+    }
+
+  };
 </script>
 
 <div class="gs-field">
   <div
-    class="gs-status-indicator {telem_data != 'None' || null || NaN || undefined
+    class="gs-status-indicator {
+      telem_data !== 'None' && 
+      telem_data !== null && 
+      telem_data !==  undefined
       ? 'green-status'
       : 'red-status'}"
   ></div>
-  <span class="gs-field-text">{topic.topic_name}</span>
-  <span class="gs-field-value">{telem_data}</span>
+  <div class="gs-field-content">
+    <span class="gs-field-text">{String(topic.topic_name)}</span>
+    {#if telem_data != undefined}
+      <span class="timestamp">{rosTimeToFormattedTime(
+          telem_data.header.stamp.sec,
+          telem_data.header.stamp.nanosec
+        )}</span>
+      {#each topic.msg_fields as field}
+        {#if field.val_name !== "header"}
+          <div class="gs-field-value">
+            <span>{field.val_name}:</span>
+            <span>{telem_data[field.val_name] + " " + field.unit}</span>
+          </div>
+        {/if}
+      {/each}
+    {/if}
+  </div>
 </div>
 
 <style>
   .gs-field {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     padding: 12px;
-    border-bottom: 1px solid #eee; /* Add border to the bottom of each field */
+    border-bottom: 1px solid #eee;
     text-align: left;
   }
 
+  .gs-field-content {
+    flex: 1;
+  }
+
   .gs-field:last-child {
-    border-bottom: none; /* Remove border from the last field */
+    border-bottom: none;
   }
 
   .gs-field-text {
     flex: 0.2;
-    color: #fff; /* Text color */
+    color: #fff;
   }
 
   .gs-status-indicator {
-    width: 16px; /* Adjust width as needed */
-    height: 16px; /* Adjust height as needed */
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     margin-right: 16px;
   }
 
   .gs-field-value {
-    color: whitesmoke; /* Text color */
+    color: whitesmoke;
+    margin-top: 8px;
+  }
+
+  .gs-field-value span:first-child {
+    font-weight: bold;
+    margin-right: 4px;
+  }
+
+  .timestamp {
+    margin-left: 8px; /* Add spacing between topic name and timestamp */
+    color: #aaa; /* Adjust timestamp color */
+    font-size: 0.8em;
   }
 
   .green-status {

@@ -4,6 +4,7 @@
             "topic_name": "tanking/load_cells",
             "msg_type": "LoadCells",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -11,11 +12,13 @@
                 },
                 {
                     "type": "int32",
-                    "val_name": "load_cell_1"
+                    "val_name": "load_cell_1",
+                    "unit": "kg"
                 },
                 {
                     "type": "int32",
-                    "val_name": "load_cell_2"
+                    "val_name": "load_cell_2",
+                    "unit": "kg"
                 }
             ]
         },
@@ -23,6 +26,7 @@
             "topic_name": "tanking/valves/servos",
             "msg_type": "ValveServos",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -30,11 +34,13 @@
                 },
                 {
                     "type": "uint16",
-                    "val_name": "servo1_position"
+                    "val_name": "servo1_position",
+                    "unit": "%"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "servo2_position"
+                    "val_name": "servo2_position",
+                    "unit": "%"
                 }
             ]
         },
@@ -42,6 +48,7 @@
             "topic_name": "tanking/valves/sensors",
             "msg_type": "ValveSensors",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -49,15 +56,18 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "temperature"
+                    "val_name": "temperature",
+                    "unit": "°C"
                 },
                 {
                     "type": "float32",
-                    "val_name": "temperature_raspberry"
+                    "val_name": "temperature_raspberry",
+                    "unit": "°C"
                 },
                 {
                     "type": "float32",
-                    "val_name": "pressure"
+                    "val_name": "pressure",
+                    "unit": "bar"
                 }
             ]
         },
@@ -65,6 +75,7 @@
             "topic_name": "control_panel/switches",
             "msg_type": "ControlPanelSwitches",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -76,17 +87,7 @@
             "topic_name": "tanking/commands",
             "msg_type": "TankingCmds",
             "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                }
-            ]
-        },
-        {
-            "topic_name": "tanking/commands",
-            "msg_type": "TankingControl",
-            "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -98,6 +99,7 @@
             "topic_name": "radio_433/telemetry",
             "msg_type": "Telemetry433",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -105,15 +107,18 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "rssi"
+                    "val_name": "rssi",
+                    "unit": "dB"
                 },
                 {
                     "type": "float32",
-                    "val_name": "rssi_remote"
+                    "val_name": "rssi_remote",
+                    "unit": "dB"
                 },
                 {
                     "type": "float32",
-                    "val_name": "noise"
+                    "val_name": "noise",
+                    "unit": "dB"
                 }
             ]
         },
@@ -121,6 +126,7 @@
             "topic_name": "rocket/telemetry",
             "msg_type": "RocketTelemetry",
             "interval": 1000,
+            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -128,31 +134,38 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "altitude"
+                    "val_name": "altitude",
+                    "unit": "m"
                 },
                 {
                     "type": "float32",
-                    "val_name": "latitude"
+                    "val_name": "latitude",
+                    "unit": ""
                 },
                 {
                     "type": "float32",
-                    "val_name": "longitude"
+                    "val_name": "longitude",
+                    "unit": ""
                 },
                 {
                     "type": "float32",
-                    "val_name": "velocity"
+                    "val_name": "velocity",
+                    "unit": "m/s"
                 },
                 {
                     "type": "float32",
-                    "val_name": "pressure"
+                    "val_name": "pressure",
+                    "unit": "bar"
                 },
                 {
                     "type": "float32",
-                    "val_name": "acceleration"
+                    "val_name": "acceleration",
+                    "unit": "m/s^2"
                 },
                 {
                     "type": "float32",
-                    "val_name": "temperature"
+                    "val_name": "temperature",
+                    "unit": "°C"
                 }
             ]
         },
@@ -160,6 +173,7 @@
             "topic_name": "rocket/status",
             "msg_type": "RocketStatus",
             "interval": 1000,
+            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -167,7 +181,8 @@
                 },
                 {
                     "type": "bool",
-                    "val_name": "is_alive"
+                    "val_name": "is_alive",
+                    "unit": ""
                 }
             ]
         }

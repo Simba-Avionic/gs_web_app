@@ -8,3 +8,5 @@ sse_starlette
 empy==3.3.4
 lark
 catkin-pkg
+numpy
+pyyaml

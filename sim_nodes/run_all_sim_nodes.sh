@@ -10,7 +10,7 @@ NODES=("sim_valve_sensors_pub" "sim_valve_servos_pub" "sim_load_cells" "sim_mr_g
 
 
 echo "Sourcing ROS environment..."
-source ~/../../opt/ros/humble/setup.bash  # you might have to change it if different path
+source /opt/ros/humble/setup.bash  # you might have to change it if different path
 
 echo "Sourcing your custom workspace environment..."
 source install/setup.bash

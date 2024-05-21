@@ -6,6 +6,8 @@
   import RocketField from "./RocketField.svelte"
 
   let topics = [];
+  let gs_topics = [];
+  let rocket_topics = [];
 
   function changeColor() {
     const svg = document.querySelector("svg");
@@ -90,6 +92,10 @@
     const response = await fetch("http://localhost:8000/config");
     const data = await response.json();
     topics = data.topics;
+
+    rocket_topics = topics.filter(topic => topic.place === 'rocket');
+    gs_topics = topics.filter(topic => topic.place === 'gs');
+
     console.log(topics);
   }
   onMount(fetchData);
@@ -102,14 +108,14 @@
 
   <div id="rocket-info">
     <h3>ROCKET</h3>
-    {#each topics as topic}
+    {#each rocket_topics as topic}
       <RocketField {topic}/>
     {/each}
   </div>
 
   <div id="gs-info">
     <h3>GROUND SEGMENT</h3>
-    {#each topics as topic}
+    {#each gs_topics as topic}
       <GsField {topic}/>
     {/each}
   </div>
@@ -141,13 +147,14 @@
     top: 5%;
     left: 60%;
     width: 50%;
-    height: 60%;
+    height: 70%;
     border-radius: 1vw;
     border: 1px solid #eee;
     background-color: #242424;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    overflow-y: scroll;
   }
 
   @keyframes dash {
