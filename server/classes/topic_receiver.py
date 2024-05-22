@@ -12,12 +12,16 @@ class TopicReceiver(Node):
         self.subscription = self.create_subscription(
             getattr(gs_interfaces.msg, msg_type), topic_name, self.msg_callback, interval)
         
-        self.latest_msg = None
+        self.json_msg = None
+        self.deserialized_msg = None
         self.last_msg_timestamp = None
 
     def msg_callback(self, msg):
-        deserialized_msg = message_to_ordereddict(msg)
-        self.latest_msg = json.dumps(deserialized_msg)
+        self.deserialized_msg = message_to_ordereddict(msg)
+        self.json_msg = json.dumps(self.deserialized_msg)
 
     def get_msg(self):
-        return self.latest_msg
+        return self.json_msg
+    
+    def get_dict_msg(self):
+        return self.deserialized_msg

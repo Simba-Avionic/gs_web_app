@@ -7,7 +7,7 @@ import json
 from classes.topic_handler import TopicHandler
 
 CONFIG = None
-CONFIG_PATH = "config.json"
+CONFIG_PATH = "../config.json"
 TOPICS = []
 
 def load_main_config(path_to_conf):

@@ -1,18 +1,19 @@
-from influxdb_client import InfluxDBClient, Point
+from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
 from typing import List, Any
 from loguru import logger
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
-
+from datetime import datetime
 from dotenv import dotenv_values
-ENV_PATH = "./database/.env"
+import json
 
+ENV_PATH = "database/.env"
 
 class InfluxClient:
 
-    def __init__(self) -> None:
+    def __init__(self, msg_type: str, topic_name: str, msg_fields: dict) -> None:
         env_values = dotenv_values(ENV_PATH)
         self.bucket = env_values.get('BUCKET_NAME')
         self.org = env_values.get('ORGANISATION')
@@ -20,18 +21,25 @@ class InfluxClient:
         self.url = f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
 
+        self.msg_type = msg_type
+        self.topic_name = topic_name
+        self.msg_fields = msg_fields
     
-    async def insert_data(self, msg_data) -> None:
-        # for field in msg_data["msg_fields"]:
-        p = (
-            Point(msg_data['topic_name'])
-            .tag("msg_type", msg_data['msg_type'])
-            .field("msg", msg_data)
-        )
-        await self._insert(p)
+    def insert_data(self, msg_data) -> None:
+        p = Point(self.msg_type)
+        try:
+            for key, val in msg_data.items():
+                if key == 'header':
+                    # const milliseconds = secs * 1000 + nsecs / 1000000;
+                    stamp = val['stamp']['sec'] * 1000 + val['stamp']['nanosec'] / 1000000
+                    p.time(int(stamp), WritePrecision.MS)
+                else:
+                    p.field(key, val)
+            self._insert(p)
+        except Exception as e:
+            logger.exception(e)
 
-    async def _insert(self, p: Point) -> Any:
-        print(self.bucket, self.org)
+    def _insert(self, p: Point) -> Any:
         write_api = self._client.write_api(write_options=SYNCHRONOUS)
         try:
             res = write_api.write(bucket=self.bucket, org=self.org, record=p)
@@ -43,7 +51,7 @@ class InfluxClient:
             if e.status and e.status == 404:
                 raise BucketNotFoundException()
             raise InfluxNotAvailableException()
-        logger.info(f"{res=}")
+        logger.debug(f"{p}")
         return res
     
     """
@@ -69,8 +77,6 @@ class InfluxClient:
                 res.append(r)
         logger.debug(f"Query returned {len(res)} records")
         return res
-    """
-    """
     async def read_wave_height(
         self, location: str = "", min_height: float = -1.0, time_range: int = 10
     ) -> List[InfluxWaveRecord]:

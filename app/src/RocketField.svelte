@@ -32,7 +32,11 @@
         {#if field.val_name !== "header"}
           <div class="rocket-field-value">
             <span>{field.val_name}:</span>
-            <span>{telem_data[field.val_name] + " " + field.unit}</span>
+            {#if field.type.includes("float")}
+              <span>{parseFloat(telem_data[field.val_name].toFixed(2)) + " " + field.unit}</span>
+            {:else}
+              <span>{telem_data[field.val_name] + " " + field.unit}</span>
+            {/if}
           </div>
         {/if}
       {/each}

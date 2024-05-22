@@ -20,7 +20,7 @@
         path.id === "oxidizer" ||
         path.id === "fuel" ||
         path.id === "skrzynka_tankowanie" ||
-        path.id === "skrzynka_mc" ||
+        // path.id === "skrzynka_mc" ||
         path.id === "tenso1" ||
         path.id === "tenso2" ||
         path.id === "computer" ||
@@ -40,7 +40,7 @@
     rects.forEach((path) => {
       if (
         path.id === "skrzynka_tankowanie" ||
-        path.id === "skrzynka_mc" ||
+        // path.id === "skrzynka_mc" ||
         path.id === "tenso1" ||
         path.id === "tenso2"
       ) {
@@ -70,21 +70,21 @@
   onMount(() => {
     let index = 0;
     const paths1 = document.querySelectorAll("#_433_signal path");
-    const paths2 = document.querySelectorAll("#radiolinia_signal_rx path");
+    // const paths2 = document.querySelectorAll("#radiolinia_signal_rx path");
     const paths3 = document.querySelectorAll("#radiolinia_signal_tx path");
 
     paths1.forEach((path) => {
       path.style.stroke = "url(#gradient_red)";
     });
-    paths2.forEach((path) => {
-      path.style.stroke = "url(#gradient_green)";
-    });
+    // paths2.forEach((path) => {
+    //   path.style.stroke = "url(#gradient_green)";
+    // });
     paths3.forEach((path) => {
       path.style.stroke = "url(#gradient_orange)";
     });
 
     animatePath(paths1, index);
-    animatePath(paths2, index);
+    // animatePath(paths2, index);
     animatePath(paths3, index);
   });
 
@@ -145,9 +145,9 @@
   #gs-info {
     position: absolute;
     top: 5%;
-    left: 60%;
-    width: 50%;
-    height: 70%;
+    left: 70%;
+    width: 40%;
+    height: 95%;
     border-radius: 1vw;
     border: 1px solid #eee;
     background-color: #242424;

@@ -1,23 +1,38 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { rosTimeToFormattedTime } from "./Utils.svelte";
 
   export let topic;
   let telem_data;
+  let evtSource;
 
-  const evtSource = new EventSource(
-    `http://localhost:8000/${topic.topic_name}`
-  );
+  onMount(() => {
+    evtSource = new EventSource(
+      `http://localhost:8000/${topic.topic_name}`
+    );
 
-  evtSource.onmessage = function (event) {
-    telem_data = JSON.parse(event.data);
-    if (topic.topic_name === "radio_433/telemetry" ||   
-        topic.topic_name === "tanking/commands")
-    {
-      console.log(telem_data);
-    }
+    evtSource.onmessage = function (event) {
+      telem_data = JSON.parse(event.data);
+      if (topic.topic_name === "radio_433/telemetry" ||   
+          topic.topic_name === "tanking/commands")
+      {
+        console.log(telem_data);
+      }};
 
-  };
+    evtSource.onerror = (error) => {
+      console.error('GS EventSource failed:', error);
+    };
+
+    return () => {
+      evtSource.close();
+    };
+  });
+
+onDestroy(() => {
+    if (evtSource) {
+      evtSource.close();
+}});
+
 </script>
 
 <div class="gs-field">
@@ -40,7 +55,11 @@
         {#if field.val_name !== "header"}
           <div class="gs-field-value">
             <span>{field.val_name}:</span>
-            <span>{telem_data[field.val_name] + " " + field.unit}</span>
+            {#if field.type.includes("float")}
+              <span>{parseFloat(telem_data[field.val_name].toFixed(2)) + " " + field.unit}</span>
+            {:else}
+              <span>{telem_data[field.val_name] + " " + field.unit}</span>
+            {/if}
           </div>
         {/if}
       {/each}

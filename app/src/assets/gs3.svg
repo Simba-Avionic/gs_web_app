@@ -74,8 +74,8 @@
                 <rect id="tenso2" class="cls-8" y="786.33" width="43.98" height="14.14" rx="7.07" />
                 <rect id="tenso1" class="cls-8" x="52" y="786.33" width="43.98" height="14.14"
                     rx="7.07" />
-                <rect id="skrzynka_mc" class="cls-8" x="1007.69" y="701.45" width="126.75"
-                    height="55.67" rx="7.07" />
+                <!-- <rect id="skrzynka_mc" class="cls-8" x="1007.69" y="701.45" width="126.75"
+                    height="55.67" rx="7.07" /> -->
                 <g id="radiolinia_signal_tx">
                     <path id="_1-2" data-name="1" class="cls-7" d="M699,722a10,10,0,0,1,0,14.14" />
                     <path id="_2-2" data-name="2" class="cls-7"
@@ -86,7 +86,7 @@
                     <path id="_5-2" data-name="5" class="cls-7"
                         d="M727.12,693.93a50,50,0,0,1,0,70.71" />
                 </g>
-                <g id="radiolinia_signal_rx">
+                <!-- <g id="radiolinia_signal_rx">
                     <path id="_1-3" data-name="1" class="cls-7"
                         d="M989.57,736.36a10,10,0,0,1,0-14.15" />
                     <path id="_2-3" data-name="2" class="cls-7"
@@ -97,7 +97,7 @@
                         d="M968.63,757.3a40,40,0,0,1,0-56.57" />
                     <path id="_5-3" data-name="5" class="cls-7"
                         d="M961.47,764.46a50,50,0,0,1,0-70.71" />
-                </g>
+                </g> -->
             </g>
         </g>
     </g>
