@@ -32,6 +32,7 @@ class SimRocketStatusNode(Node):
         rocket_status_msg = RocketStatus() # init
         rocket_status_msg.is_alive = self.is_alive
         rocket_status_msg.header.stamp = self.get_clock().now().to_msg()
+        rocket_status_msg.header.frame_id = "RocketStatus"
 
         # Populate your message
         self.publisher_.publish(rocket_status_msg)

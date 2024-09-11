@@ -185,6 +185,18 @@
                     "unit": ""
                 }
             ]
+        },
+        {
+            "topic_name": "radiolink/telemetry",
+            "msg_type": "RadiolinkTelemetry",
+            "interval": 1000,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                }
+            ]
         }
     ]
 }

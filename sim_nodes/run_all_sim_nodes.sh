@@ -8,7 +8,6 @@ PACKAGE_NAME="sim_nodes"
 NODES=("sim_valve_sensors_pub" "sim_valve_servos_pub" "sim_load_cells" "sim_mr_general_publisher" "sim_radio_433_pub" "sim_rocket_telemetry_pub" "sim_rocket_status")
 
 
-
 echo "Sourcing ROS environment..."
 source /opt/ros/humble/setup.bash  # you might have to change it if different path
 
@@ -18,6 +17,7 @@ source install/setup.bash
 
 for NODE in "${NODES[@]}"; do
     ros2 run $PACKAGE_NAME $NODE &
+    sleep 5
 done
 
 wait

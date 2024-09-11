@@ -28,7 +28,12 @@ class SimRocketTelemetryPubNode(Node):
         msg.pressure = pressure_hpascal
         msg.velocity = velocity_m_s
         msg.acceleration = acceleration_m_s_squared
+
+        msg.latitude = random.uniform(54.50889, 54.55889)
+        msg.longitude = random.uniform(18.50188, 18.55188)
+
         msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "RocketTelemetry"
 
         # Populate your message
         self.publisher_.publish(msg)

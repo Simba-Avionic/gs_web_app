@@ -21,7 +21,7 @@ class SimRadio433PubNode(Node):
         noise = random.uniform(-90, 0)
 
         msg = Telemetry433()  # Initialize message
-        msg.header.frame_id = 'dupa'
+        msg.header.frame_id = 'Telemetry433'
         msg.rssi = rssi
         msg.rssi_remote = rssi_remote
         msg.noise = noise

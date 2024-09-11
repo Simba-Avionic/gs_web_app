@@ -1,14 +1,28 @@
+import rclpy
+import json
+import signal
+import sys
+
+from time import sleep
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from rclpy import init, shutdown
-from contextlib import asynccontextmanager
-import json
 from classes.topic_handler import TopicHandler
 
 CONFIG = None
 CONFIG_PATH = "../config.json"
-TOPICS = []
+TOPICS = []  # Global variable to keep track of TopicHandler instances
+
+def shutdown():
+    global TOPICS
+    for topic in TOPICS:
+        topic.stop()  # Ensure all topic handlers are stopped
+
+    try:
+        rclpy.shutdown()  # Shut down ROS2
+    except Exception as e:
+        print(f"Error during ROS2 shutdown: {e}")
 
 def load_main_config(path_to_conf):
     global CONFIG
@@ -17,28 +31,31 @@ def load_main_config(path_to_conf):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init()
+    rclpy.init()
     load_main_config(CONFIG_PATH)
+
+    global TOPICS
+    TOPICS = []
 
     for msg in CONFIG["topics"]:
         try:
             th = TopicHandler(msg)
             app.include_router(th.router)
             TOPICS.append(th)
+            print(f"{msg['msg_type']} TopicHandler initialized successfully!")
         except Exception as e:
             print(f"Couldn't create/start TopicHandler for {msg['msg_type']}:", e)
+        sleep(0.1)
     yield
     shutdown()
-    for topic in TOPICS:
-        topic.thread.join()
- 
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -46,6 +63,16 @@ app.add_middleware(
 async def get_config():
     return JSONResponse(content=CONFIG)
 
+def signal_handler(sig, frame):
+    print('SIGINT received, shutting down...')
+    shutdown()
+    sys.exit(0)
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    try:
+        uvicorn.run(app, host="localhost", port=8000)
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt received, shutting down...')
+        shutdown()

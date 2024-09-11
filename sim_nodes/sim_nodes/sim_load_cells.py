@@ -22,12 +22,10 @@ class SimLoadCellsNode(Node):
 
 
     def servo_callback(self,servo_msg): # called when data received from subscribed topic
-        if not self.is_full_1:
-            self.load_cell_1 += servo_msg.servo1_position
-            self.is_full_1 = self.load_cell_1 > 400 # arbitrary value
-        if not self.is_full_2:
-            self.load_cell_2 += servo_msg.servo2_position
-            self.is_full_2 = self.load_cell_2  > 400 # arbitrary value
+        if servo_msg.servo1_position > 50:
+            self.load_cell_1 += int(servo_msg.servo1_position / 10)
+        if servo_msg.servo2_position > 50:
+            self.load_cell_2 += int(servo_msg.servo2_position / 10)
             
 
     def publish_load_cells(self):
@@ -35,6 +33,7 @@ class SimLoadCellsNode(Node):
         load_cells_msg.load_cell_1 = self.load_cell_1
         load_cells_msg.load_cell_2 = self.load_cell_2
         load_cells_msg.header.stamp = self.get_clock().now().to_msg()
+        load_cells_msg.header.frame_id = 'LoadCells'
 
         # Populate your message
         self.publisher_.publish(load_cells_msg)

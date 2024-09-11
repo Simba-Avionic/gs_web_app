@@ -51,7 +51,7 @@ class InfluxClient:
             if e.status and e.status == 404:
                 raise BucketNotFoundException()
             raise InfluxNotAvailableException()
-        logger.debug(f"{p}")
+        # logger.debug(f"{p}")
         return res
     
     """
