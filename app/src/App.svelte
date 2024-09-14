@@ -1,6 +1,6 @@
 <script>
   import Dashboard from './Dashboard.svelte';
-  import Gradients from './Gradients.svelte';
+  import Gradients from './lib/Gradients.svelte';
   import NavBar from './NavBar.svelte';
   import InFlight from './InFlight.svelte';
 

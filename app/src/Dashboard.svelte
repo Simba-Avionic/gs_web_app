@@ -1,9 +1,9 @@
 <script>
   // @ts-nocheck
   import { onMount } from "svelte";
-  import SVG from "./assets/gs3.svg";
+  import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
-  import { animatePath } from "./Utils.svelte";
+  import { animatePath } from "./lib/Utils.svelte";
 
   let topics = [];
   let gs_topics = [];

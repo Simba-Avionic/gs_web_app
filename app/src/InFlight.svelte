@@ -1,7 +1,7 @@
 <script>
     // @ts-nocheck
     import { onMount } from "svelte";
-    import SVG from "./assets/rocket.svg";
+    import SVG from "../public/images/rocket.svg";
     import Field from "./Field.svelte";
 </script>
 

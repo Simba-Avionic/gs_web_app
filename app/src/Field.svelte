@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from "svelte";
-  import { rosTimeToFormattedTime } from "./Utils.svelte";
+  import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();

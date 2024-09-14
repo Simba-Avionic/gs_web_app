@@ -182,7 +182,7 @@
                 {
                     "type": "bool",
                     "val_name": "is_alive",
-                    "unit": ""
+                    "unit": "bool"
                 }
             ]
         },

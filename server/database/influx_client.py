@@ -6,19 +6,17 @@ from loguru import logger
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
 from datetime import datetime
-from dotenv import dotenv_values
+from dotenv import dotenv_values, find_dotenv
 import json
-
-ENV_PATH = "database/.env"
 
 class InfluxClient:
 
     def __init__(self, msg_type: str, topic_name: str, msg_fields: dict) -> None:
-        env_values = dotenv_values(ENV_PATH)
+        env_values = dotenv_values(find_dotenv())
         self.bucket = env_values.get('BUCKET_NAME')
         self.org = env_values.get('ORGANISATION')
         self.token = env_values.get('INFLUXDB_TOKEN')
-        self.url = f"http://localhost:{env_values.get('INFLUXDB_PORT')}"
+        self.url = f"{env_values.get('INFLUXDB_URL')}:{env_values.get('INFLUXDB_PORT')}"
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
 
         self.msg_type = msg_type

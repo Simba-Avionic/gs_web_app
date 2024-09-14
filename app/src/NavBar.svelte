@@ -43,7 +43,7 @@
 <nav class="navbar">
   <div class="navbar-options">
     <!-- Logo placeholder -->
-    <img src="src/assets/simba_logo.png" alt="Logo" class="logo" />
+    <img src="icons/simba_logo.png" alt="Logo" class="logo" />
     <a href="#" class="{currentView === 'inflight' ? 'active' : ''}" on:click|preventDefault={() => navigate("dashboard")}
       >Pre-Flight</a
     >
@@ -54,7 +54,7 @@
   <div class="navbar-time">
     {currentTime}
     <button class="reload-button" on:click={reloadPage}>
-      <img src="src/assets/refresh-icon.svg" alt="Reload" class="reload-icon" />
+      <img src="icons/refresh-icon.svg" alt="Reload" class="reload-icon" />
     </button>
   </div>
 </nav>

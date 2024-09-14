@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from classes.topic_handler import TopicHandler
+from src.topic_handler import TopicHandler
 
 CONFIG = None
 CONFIG_PATH = "../config.json"

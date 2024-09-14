@@ -4,6 +4,8 @@ services:
   influxdb:
     image: influxdb:2.6.1
     container_name: influxdb2
+    env_file:
+      - ../../.env
     volumes:
       - myInfluxVolume:/var/lib/influxdb2
     ports:
