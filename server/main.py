@@ -8,11 +8,11 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from src.topic_handler import TopicHandler
+from src.node_handler import NodeHandler
 
 CONFIG = None
 CONFIG_PATH = "../config.json"
-TOPICS = []  # Global variable to keep track of TopicHandler instances
+TOPICS = []  # Global variable to keep track of NodeHandler instances
 
 def shutdown():
     global TOPICS
@@ -39,12 +39,12 @@ async def lifespan(app: FastAPI):
 
     for msg in CONFIG["topics"]:
         try:
-            th = TopicHandler(msg)
+            th = NodeHandler(msg)
             app.include_router(th.router)
             TOPICS.append(th)
-            print(f"{msg['msg_type']} TopicHandler initialized successfully!")
+            print(f"{msg['msg_type']} NodeHandler initialized successfully!")
         except Exception as e:
-            print(f"Couldn't create/start TopicHandler for {msg['msg_type']}:", e)
+            print(f"Couldn't create/start NodeHandler for {msg['msg_type']}:", e)
         sleep(0.1)
     yield
     shutdown()

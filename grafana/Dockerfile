@@ -10,7 +10,7 @@ ENV GF_AUTH_ANONYMOUS_ENABLED "true"
 ENV GF_AUTH_ANONYMOUS_ORG_ROLE "Admin"
 
 # Install plugins here our in your own config file
-ENV GF_INSTALL_PLUGINS=satellogic-3d-globe-panel,vonage-status-panel,pr0ps-trackmap-panel,speakyourcode-button-panel,corpglory-progresslist-panel,yesoreyeram-boomtheme-panel
+# ENV GF_INSTALL_PLUGINS=satellogic-3d-globe-panel,vonage-status-panel,pr0ps-trackmap-panel,speakyourcode-button-panel,corpglory-progresslist-panel,yesoreyeram-boomtheme-panel
 # ENV GF_INSTALL_PLUGINS="https://github.com/cloudspout/cloudspout-button-panel/releases/download/7.0.23/cloudspout-button-panel.zip;cloudspout-button-panel"
 
 # Add provisioning

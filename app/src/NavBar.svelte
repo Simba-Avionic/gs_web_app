@@ -44,11 +44,14 @@
   <div class="navbar-options">
     <!-- Logo placeholder -->
     <img src="icons/simba_logo.png" alt="Logo" class="logo" />
-    <a href="#" class="{currentView === 'inflight' ? 'active' : ''}" on:click|preventDefault={() => navigate("dashboard")}
+    <a href="#" class="{currentView === 'dashboard' ? 'active' : ''}" on:click|preventDefault={() => navigate("dashboard")}
       >Pre-Flight</a
     >
     <a href="#" class="{currentView === 'inflight' ? 'active' : ''}" on:click|preventDefault={() => navigate("inflight")}
       >In-Flight</a
+    >
+    <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
+      >Cameras</a
     >
   </div>
   <div class="navbar-time">
@@ -80,7 +83,7 @@
   .navbar-options {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 40px;
   }
 
   .navbar-options a {

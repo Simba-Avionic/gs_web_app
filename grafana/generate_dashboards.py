@@ -1,6 +1,7 @@
 import json
 import shutil
 import copy
+import random
 
 def process_unit(unit : str):
     if unit == "°C":
@@ -103,7 +104,7 @@ TEMPLATE = {
 
 config_file_path = '../config.json'
 target_file_path = 'dashboards/dashboard.json'
-backup_file_path = 'dashboards/dashboard_template.json'
+backup_file_path = 'dashboard_template.json'
 shutil.copy(backup_file_path, target_file_path)
 print(f"Backup created: {backup_file_path}")
 
@@ -113,6 +114,9 @@ with open(target_file_path, 'r') as file:
 
 with open(config_file_path, 'r') as file:
     CONFIG = json.load(file)
+
+target_data["id"] = random.randint(0, 1000)
+target_data["uid"] = str(random.randint(0, 1000))
 
 idx = 0
 for msg in CONFIG["topics"]:

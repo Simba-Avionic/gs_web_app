@@ -112,7 +112,8 @@ onDestroy(() => {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    margin-right: 16px;
+    margin-right: 8px;
+    margin-top: 2px;
   }
 
   .gs-field-value {

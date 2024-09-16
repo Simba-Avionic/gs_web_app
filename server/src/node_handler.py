@@ -15,7 +15,7 @@ from database.influx_client import (
     BadQueryException,
 )
 
-class TopicHandler:
+class NodeHandler:
 
     def __init__(self, msg_config):
         
@@ -91,4 +91,4 @@ class TopicHandler:
         self.receiver.destroy_node()
         self.executor.shutdown()
         self.executor_thread.join(timeout=5)
-        logger.info(f"TopicHandler stopped for {self.receiver}")
+        logger.info(f"NodeHandler stopped for {self.receiver}")

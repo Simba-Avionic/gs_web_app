@@ -16,7 +16,7 @@
 
 #svg-container {
     position: relative;
-    width: 50vw;
+    width: 60vw;
 }
 
 </style>

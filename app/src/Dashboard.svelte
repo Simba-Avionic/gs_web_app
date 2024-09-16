@@ -97,43 +97,45 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div id="svg-container">
   <SVG width="60vw" />
+</div>
 
-  <div id="rocket-info">
-    <h3>ROCKET</h3>
-    {#each rocket_topics as topic}
-      <Field
-        class_name="rocket"
-        on:telemetryChange={handleTelemetryChange}
-        {topic}
-      />
-    {/each}
-  </div>
+<div id="rocket-info">
+  <h3>ROCKET</h3>
+  {#each rocket_topics as topic}
+    <Field
+      class_name="rocket"
+      on:telemetryChange={handleTelemetryChange}
+      {topic}
+    />
+  {/each}
+</div>
 
-  <div id="gs-info">
-    <h3>GROUND SEGMENT</h3>
-    {#each gs_topics as topic}
-      <Field
-        class_name="gs"
-        on:telemetryChange={handleTelemetryChange}
-        {topic}
-      />
-    {/each}
-  </div>
+<div id="gs-info">
+  <h3>GROUND SEGMENT</h3>
+  {#each gs_topics as topic}
+    <Field
+      class_name="gs"
+      on:telemetryChange={handleTelemetryChange}
+      {topic}
+    />
+  {/each}
 </div>
 
 <style>
   #svg-container {
-    position: relative;
-    width: 70vw;
-    margin-top: 5%;
+    position: absolute;
+    top: 15vh;
+    left: 27vw;
+    width: 60vw;
+    /* margin-top: 5%; */
   }
 
   #rocket-info {
     position: absolute;
-    top: 5%;
-    left: -18%;
-    width: 24%;
-    height: 80%;
+    top: 15vh;
+    left: 2vw;
+    width: 24vw;
+    height: 70vh;
     border-radius: 1vw;
     border: 1px solid #eee;
     background-color: #242424;
@@ -145,10 +147,10 @@
 
   #gs-info {
     position: absolute;
-    top: 5%;
-    left: 70%;
-    width: 40%;
-    height: 95%;
+    top: 15vh;
+    left: 68vw;
+    height: 80vh;
+    width: 30vw;
     border-radius: 1vw;
     border: 1px solid #eee;
     background-color: #242424;
