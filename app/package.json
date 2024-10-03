@@ -17,6 +17,7 @@
     "vite": "^5.1.0"
   },
   "dependencies": {
-    "date-fns": "^3.6.0"
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5"
   }
 }

@@ -41,16 +41,18 @@ Single entry looks like this:
 - Docker (https://docs.docker.com/engine/install/)
 
 ## Setup
-0. Create python virtual environment `python3 -m venv venv`
-1. Install required packages `pip install -r requirements.txt`
-2. Build ROS messages package `colcon build --packages-select gs_interfaces`
-3. Go to **app** directory and run `npm install`<br>
+0. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
+1. Create python virtual environment `python3 -m venv venv`
+2. Activate the Python environment `source venv/bin/activate`
+3. Install required packages `pip install -r requirements.txt`
+4. Build ROS messages package `colcon build --packages-select gs_interfaces`
+5. Go to **app** directory and run `npm install`<br>
 
 ## Launching the app (step by step)
 0. Activate the Python environment `source venv/bin/activate`
 1. Make sure to source ROS environment `source install/setup.bash`
-2. Run the database `cd server/database && docker compose up -d`
-3. Run the server `python3 server/server.py` or `cd server && uvicorn main:app`
+2. Run the database `cd server/database && docker compose up --env-file <path_to_env_file> -d`
+3. Run the server `python3 server/main.py` or `cd server && uvicorn main:app`
 4. Inside the **app** directory run the frontend `npm run dev`
 5. (Optional) Run the Grafana visualisation `cd grafana && python generate_dashboards.py && docker compose up -d`
 6. (Optional) Run example topics `./sim_nodes/run_all_sim_nodes.sh`
@@ -59,13 +61,20 @@ Single entry looks like this:
 
 ## Common errors
 
-### ModuleNotFoundError: No module named 'gs_interfaces'
-You need to source the environment from the main directory: `source install/setup.bash`.
+- #### ModuleNotFoundError: No module named 'gs_interfaces'
+    You need to source the environment from the main directory: `source install/setup.bash`.
 If you don't see the folder **install** refer to *gs_interfaces* README.
 
-### (Grafana & InfluxDB) <>:8086: connect: connection refused
-Make sure to set correct IP of your device (IP_ADDRESS) inside **.env** file.
+- #### (Grafana & InfluxDB) <>:8086: connect: connection refused
+    Make sure to set correct IP of your device (IP_ADDRESS) inside **.env** file.
 
+- #### await import('source-map-support').then((r) => r.default.install()) <br> SyntaxError: Unexpected reserved word
+    Fix:
+    ```shell
+    sudo npm cache clean -f
+    sudo npm install -g n
+    sudo n stable
+    ```
 ### Technologies used:
 
 - [x] Svelte

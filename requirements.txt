@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 influxdb_client
 loguru
 python-dotenv

@@ -14,7 +14,9 @@
 
   onMount(() => {
 
-    const socket = new WebSocket(`ws://localhost:8000/${String(topic.topic_name)}`);
+    // @ts-ignore
+    const host = process.env.IP_ADDRESS;
+    const socket = new WebSocket(`ws://${host}:8000/${String(topic.topic_name)}`);
 
     socket.onmessage = (event) => {
         temp = JSON.parse(event.data);

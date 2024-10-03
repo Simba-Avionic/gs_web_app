@@ -5,6 +5,9 @@
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
 
+  const host = process.env.IP_ADDRESS;
+  console.log(host);
+
   let topics = [];
   let gs_topics = [];
   let rocket_topics = [];
@@ -75,7 +78,7 @@
   }
 
   async function fetchConfig() {
-    const response = await fetch("http://localhost:8000/config");
+    const response = await fetch(`http://${host}:8000/config`);
     const data = await response.json();
     topics = data.topics;
 
