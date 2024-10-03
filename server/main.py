@@ -4,11 +4,13 @@ import signal
 import sys
 
 from time import sleep
+from loguru import logger
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.node_handler import NodeHandler
+from src.server_telemetry import ServerTelemetry
 
 CONFIG = None
 CONFIG_PATH = "../config.json"
@@ -22,7 +24,7 @@ def shutdown():
     try:
         rclpy.shutdown()  # Shut down ROS2
     except Exception as e:
-        print(f"Error during ROS2 shutdown: {e}")
+        logger.error(f"Error during ROS2 shutdown: {e}")
 
 def load_main_config(path_to_conf):
     global CONFIG
@@ -37,14 +39,22 @@ async def lifespan(app: FastAPI):
     global TOPICS
     TOPICS = []
 
+    try:
+        st = ServerTelemetry()
+        app.include_router(st.router)
+        TOPICS.append(st)
+        logger.info("ServerTelemetry initialized successfully!")
+    except Exception as e:
+        logger.error(f"Error when initializing server telemetry endpoint! {e}")
+
     for msg in CONFIG["topics"]:
         try:
             th = NodeHandler(msg)
             app.include_router(th.router)
             TOPICS.append(th)
-            print(f"{msg['msg_type']} NodeHandler initialized successfully!")
+            logger.info(f"{msg['msg_type']} NodeHandler initialized successfully!")
         except Exception as e:
-            print(f"Couldn't create/start NodeHandler for {msg['msg_type']}:", e)
+            logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}:", e)
         sleep(0.1)
     yield
     shutdown()
@@ -64,7 +74,7 @@ async def get_config():
     return JSONResponse(content=CONFIG)
 
 def signal_handler(sig, frame):
-    print('SIGINT received, shutting down...')
+    logger.info('SIGINT received, shutting down...')
     shutdown()
     sys.exit(0)
 
@@ -80,5 +90,5 @@ if __name__ == "__main__":
     try:
         uvicorn.run(app, host=args.host, port=args.port)
     except KeyboardInterrupt:
-        print('KeyboardInterrupt received, shutting down...')
+        logger.info('KeyboardInterrupt received, shutting down...')
         shutdown()

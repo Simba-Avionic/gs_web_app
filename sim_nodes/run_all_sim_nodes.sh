@@ -17,7 +17,7 @@ source install/setup.bash
 
 for NODE in "${NODES[@]}"; do
     ros2 run $PACKAGE_NAME $NODE &
-    sleep 5
+    sleep 2
 done
 
 wait

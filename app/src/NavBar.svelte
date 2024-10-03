@@ -1,8 +1,13 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
 
+  const dispatch = createEventDispatcher();
+
   export let currentView;
+  let temp;
+  let telem_data;
+  let socket;
 
   let currentTime = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
@@ -12,8 +17,10 @@
     second: "2-digit",
   }).format(new Date());
 
-  // Function to update the current time every second in UTC
   onMount(() => {
+
+    handleWebSocket();
+
     const interval = setInterval(() => {
       currentTime = new Intl.DateTimeFormat("en-GB", {
         hour12: false,
@@ -24,20 +31,60 @@
       }).format(new Date());
     }, 1000);
 
-    // Clear interval when the component is destroyed
     return () => clearInterval(interval);
   });
 
-  // Function to reload the page
+  function handleWebSocket() {
+
+    // @ts-ignore
+    const host = process.env.IP_ADDRESS;
+    const socket = new WebSocket(`ws://${host}:8000/server/telemetry`);
+
+    socket.onmessage = (event) => {
+        temp = JSON.parse(event.data);
+        if (temp !== 'None' && 
+        temp !== null && 
+        temp !==  undefined) {
+          telem_data = temp;
+        }
+        // dispatch('telemetryChange', telem_data);
+    };
+
+    socket.onopen = () => {
+        console.log(`WebSocket connection for server/telemetry established`);
+    };
+
+    socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+
+    socket.onclose = () => {
+        console.log('WebSocket connection closed');
+    };
+
+    return () => {
+        socket.close();
+    };
+  };
+
+  onDestroy(() => {
+    if (socket) {
+      socket.close();
+  }});
+
   function reloadPage() {
     window.location.reload();
   }
 
-  const dispatch = createEventDispatcher();
-
   function navigate(view) {
     dispatch("navigate", view);
   }
+
+  // window.addEventListener("beforeunload", function () {
+  //   if (socket) {
+  //       socket.close();
+  //   }
+  // });
 </script>
 
 <nav class="navbar">
@@ -53,6 +100,14 @@
     <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
       >Cameras</a
     >
+  </div>
+  <div class="navbar-telemetry">
+    <span>CPU: {telem_data?.cpu_usage ? `${telem_data?.cpu_usage}%` : 'N/A'}</span>
+    <span>Memory: {telem_data?.memory_usage ? `${telem_data?.memory_usage}%` : 'N/A'}</span>
+    <span>Disk: {telem_data?.disk_usage ? `${telem_data?.disk_usage}%` : 'N/A'}</span>
+    <span>Temp: {telem_data?.cpu_temperature ? `${telem_data?.cpu_temperature}°C` : 'N/A'}</span>
+    <span>Load (1m): {telem_data?.load_1_min.toFixed(2) ?? 'N/A'}</span>
+    <span>Load (5m): {telem_data?.load_5_min.toFixed(2) ?? 'N/A'}</span>
   </div>
   <div class="navbar-time">
     {currentTime}
@@ -70,14 +125,14 @@
     padding: 10px 20px;
     background-color: #333;
     color: #fff;
-    position: fixed; /* Make the navbar fixed to the top */
-    top: 0; /* Position at the top of the screen */
-    left: 0; /* Align the navbar to the left of the screen */
-    right: 0; /* Align the navbar to the right of the screen */
-    width: 100%; /* Ensure it takes the full width of the screen */
-    z-index: 1000; /* Ensure it stays on top of other content */
-    box-sizing: border-box; /* Include padding and border in the element's total width */
-    overflow: hidden; /* Prevent content from overflowing */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .navbar-options {
@@ -92,30 +147,44 @@
     font-weight: bold;
     cursor: pointer;
     padding: 5px 10px;
-    transition:
-      background-color 0.3s,
-      color 0.3s; /* Smooth transition for hover effect */
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 5px;
   }
 
   .navbar-options a:hover {
-    background-color: #555; /* Change background on hover */
-    color: #fff; /* Keep the text color white */
+    background-color: #555;
+    color: #fff;
   }
 
   .navbar-options a:active {
-    background-color: #777; /* Change background on click */
-    color: #fff; /* Keep the text color white */
+    background-color: #777;
+    color: #fff;
   }
 
   .navbar-time {
     font-size: 16px;
     display: flex;
     align-items: center;
-    gap: 20px; /* Space between time and reload button */
+    gap: 20px;
+  }
+
+  .navbar-telemetry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    border: 1px solid #aaa;
+    border-radius: 1vw;
+    color: whitesmoke;
+  }
+
+  .navbar-telemetry span {
+    display: inline-block;
+    padding: 10px 8px;
   }
 
   .logo {
-    width: 40px; /* Adjust the size of the logo */
+    width: 40px;
     height: auto;
   }
 
@@ -126,28 +195,28 @@
     padding: 5px 10px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s; /* Smooth transition for hover effect */
+    transition: background-color 0.3s;
   }
 
   .reload-button:hover {
-    background-color: #777; /* Change background on hover */
+    background-color: #777;
   }
 
   .reload-icon {
-    width: 20px; /* Adjust size of icon */
-    height: 20px; /* Adjust size of icon */
+    width: 20px;
+    height: 20px;
     padding-top: 3px;
     color: #fff;
   }
 
   .active {
-    background-color: #555; /* Highlight color for active view */
+    background-color: #555;
     color: #fff;
   }
 
   body {
-    margin: 0; /* Remove default margin */
-    padding-top: 50px; /* Add padding equal to navbar height to prevent content from hiding under the navbar */
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    margin: 0;
+    padding-top: 50px;
+    overflow-x: hidden;
   }
 </style>

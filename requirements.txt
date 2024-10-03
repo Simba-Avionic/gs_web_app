@@ -10,3 +10,4 @@ lark
 catkin-pkg
 numpy
 pyyaml
+psutil

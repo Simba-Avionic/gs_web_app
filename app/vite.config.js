@@ -4,6 +4,8 @@ import { svelteSVG } from 'rollup-plugin-svelte-svg'
 import * as dotenv from 'dotenv'
 import { resolve } from 'path'
 
+dotenv.config({ path: resolve(__dirname, '../.env') });
+
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {

@@ -1,10 +1,9 @@
+import psutil
 import time
 import asyncio
 import threading
 from loguru import logger
-from rclpy import executors
 from fastapi import WebSocket, APIRouter, Request, HTTPException
-from src.topic_receiver import TopicReceiver
 from database.influx_client import (
     InfluxClient,
     InfluxNotAvailableException,
@@ -12,35 +11,87 @@ from database.influx_client import (
     BadQueryException,
 )
 
+class ServerTelemetry:
 
-class NodeHandler:
+    def __init__(self) -> None:
+        
+        self.topic_name = "/server/telemetry"
+        self.msg_name = "ServerTelemetry" 
+        self.interval = 1000
+        self.msg_fields = """
+        [
+            {
+                "val_name": "cpu_usage",
+                "type": "float32",
+                "unit": "%"
+            },
+            {
+                "val_name": "memory_usage",
+                "type": "float32",
+                "unit": "%"
+            },
+            {
+                "val_name": "cpu_temperature",
+                "type": "float32",
+                "unit": "°C"
+            },
+            {
+                "val_name": "load_1_min",
+                "type": "float32",
+            },
+            {
+                "val_name": "load_5_min",
+                "type": "float32",
+            },
+            {
+                "val_name": "load_15_min",
+                "type": "float32",
+            }
+        ]
+        """
 
-    def __init__(self, msg_config):
-        # Load configuration and initialize ROS receiver
-        self.load_config(msg_config)
-        self.receiver = TopicReceiver(
-            self.msg_type, self.topic_name, self.interval, self.msg_fields)
-
-        # Router setup for WebSocket and HTTP endpoints
         self.router = APIRouter()
-        self.router.add_api_websocket_route(f"/{self.topic_name}", self.return_msg)
-        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
-
-        # Executor setup for ROS2 communication
-        self.executor = executors.MultiThreadedExecutor()
-        self.executor.add_node(self.receiver)
-        self.executor_thread = threading.Thread(target=self.executor.spin, daemon=True)
-        self.executor_thread.start()
-
-        # InfluxDB client setup and background data insertion thread
-        self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
+        self.router.add_api_websocket_route(self.topic_name, self.return_msg)
+        self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
+        
+        self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
         if self.ic:
             self.db_insert = threading.Thread(target=self.db_thread)
             self.db_insert.start()
 
         self.connected_clients = set()
 
+    def get_system_data(self):
+        cpu_usage = psutil.cpu_percent()
+
+        memory_info = psutil.virtual_memory()
+        memory_usage = memory_info.percent
+
+        disk_info = psutil.disk_usage('/')
+        disk_usage = disk_info.percent
+
+        try:
+            temp = psutil.sensors_temperatures()
+            cpu_temp = temp['cpu-thermal'][0].current if 'cpu-thermal' in temp else None
+        except Exception:
+            cpu_temp = None
+
+        load_1, load_5, load_15 = psutil.getloadavg()
+
+        return {
+            "cpu_usage": cpu_usage,
+            "memory_usage": memory_usage,
+            "disk_usage": disk_usage,
+            "cpu_temperature": cpu_temp,
+            "load_1_min": load_1,
+            "load_5_min": load_5,
+            "load_15_min": load_15
+        }
+
     async def return_msg(self, ws: WebSocket):
+        """
+        WebSocket endpoint to handle messages for each client and broadcast messages.
+        """
         await ws.accept()
         self.connected_clients.add(ws)
         logger.info(f"New WebSocket client connected: {len(self.connected_clients)} clients connected.")
@@ -49,7 +100,7 @@ class NodeHandler:
             last_msg = None
             while True:
                 await asyncio.sleep(self.interval / 1000)
-                data = self.receiver.get_msg()
+                data = self.get_system_data()
                 if data:
                     last_msg = data
                     await self.broadcast_message(data)
@@ -63,6 +114,9 @@ class NodeHandler:
             await ws.close()
 
     async def broadcast_message(self, message):
+        """
+        Broadcasts a message to all currently connected WebSocket clients.
+        """
         for client in list(self.connected_clients):  # Convert set to list to avoid runtime modification issues
             try:
                 await client.send_json(message)
@@ -71,11 +125,17 @@ class NodeHandler:
                 await self.handle_client_disconnection(client)
 
     async def handle_client_disconnection(self, client: WebSocket):
+        """
+        Handles client disconnection scenarios to safely remove from the connected clients set.
+        """
         if client in self.connected_clients:
             self.connected_clients.remove(client)
             logger.info(f"Removed disconnected client. {len(self.connected_clients)} clients remaining.")
 
     async def query(self, r: Request, time_range: int = 5):
+        """
+        HTTP endpoint to query historical data from the InfluxDB.
+        """
         try:
             records = []
             # records = await self.ic.query_(self.msg_type, some_value_name, time_range=time_range)
@@ -95,22 +155,12 @@ class NodeHandler:
         Background thread to handle database operations.
         """
         while True:
-            data = self.receiver.get_msg_db()
+            data = self.get_system_data()
             if data:
                 self.ic.insert_data(data)
-            time.sleep(self.interval / 100)
-
-    def load_config(self, msg_config):
-        self.msg_fields = msg_config["msg_fields"]
-        self.msg_type = msg_config["msg_type"]
-        self.topic_name = msg_config["topic_name"]
-        self.interval = msg_config["interval"]
+            time.sleep(self.interval / 1000)
 
     def stop(self):
-        self.executor.remove_node(self.receiver)
-        self.receiver.destroy_node()
-        self.executor.shutdown()
-        self.executor_thread.join(timeout=5)
         # self.connected_clients.clear()
         # self.db_insert.join(timeout=3)
-        logger.info(f"NodeHandler stopped for {self.receiver}")
+        logger.info(f"ServerTelemetry stopped.")

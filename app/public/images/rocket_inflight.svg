@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 584.82 758.81">
+    <defs>
+        <style>
+            .cls-1,.cls-7{fill:none;}.cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#fff;}.cls-2{fill:blue;}.cls-3{fill:#f15a24;}.cls-4{fill:aqua;}.cls-5{fill:#f0f;}.cls-6{fill:lime;}.cls-7{stroke-linecap:round;stroke-linejoin:round;}</style>
+    </defs>
+    <g id="Layer_2" data-name="Layer 2">
+        <g id="Layer_7" data-name="Layer 7">
+            <g id="rocket_group">
+                <polygon id="outline" class="cls-1"
+                    points="262.46 0.63 263.99 2.39 265.34 7.3 268.8 22.68 273.61 49.51 277.2 78.74 279.71 100.3 280.79 118.82 281.09 721.04 302.36 735 302.36 750.03 281.15 752.95 281.03 758.31 243.42 758.31 243.42 752.95 222.21 749.78 222.21 735.13 243.96 720.55 243.69 117.91 244.5 103.35 246.29 84.83 248.45 66.56 251.14 46.95 253.3 33.3 256.18 17.65 258.51 7.6 260.67 1.57 262.46 0.63" />
+                <rect id="oxidizer" class="cls-2" x="190.97" y="448.19" width="142.89"
+                    height="37.09" transform="matrix(0, 1, -1, 0, 729.16, 204.32)" />
+                <rect id="fuel" class="cls-3" x="169.27" y="641.2" width="185.9" height="37.6"
+                    transform="matrix(0, 1, -1, 0, 922.22, 397.79)" />
+                <rect id="computer" class="cls-4" x="232.17" y="314.3" width="60.42" height="37.01"
+                    transform="matrix(0, 1, -1, 0, 595.18, 70.42)" />
+                <rect id="payload" class="cls-5" x="237.31" y="259.05" width="50.11" height="36.98"
+                    transform="matrix(0, 1, -1, 0, 539.9, 15.17)" />
+                <rect id="parachute" class="cls-6" x="208.79" y="156.77" width="106.95"
+                    height="37.06" transform="matrix(0, 1, -1, 0, 437.56, -86.97)" />
+            </g>
+            <g id="lines">
+                <line class="cls-7" x1="46.44" y1="277.54" x2="202.65" y2="277.54" />
+                <line class="cls-7" x1="46.44" y1="277.54" x2="0.5" y2="231.6" />
+                <line class="cls-7" x1="46.44" y1="466.74" x2="202.65" y2="466.74" />
+                <line class="cls-7" x1="46.44" y1="466.74" x2="0.5" y2="512.68" />
+                <line class="cls-7" x1="521.69" y1="181.14" x2="302.35" y2="181.14" />
+                <line class="cls-7" x1="521.71" y1="181.14" x2="567.65" y2="135.2" />
+                <line class="cls-7" x1="538.36" y1="660" x2="302.35" y2="660" />
+                <line class="cls-7" x1="538.38" y1="660" x2="584.32" y2="614.07" />
+                <line class="cls-7" x1="528.36" y1="332.8" x2="302.35" y2="332.8" />
+                <line class="cls-7" x1="528.36" y1="332.8" x2="574.29" y2="378.74" />
+            </g>
+        </g>
+    </g>
+</svg>
