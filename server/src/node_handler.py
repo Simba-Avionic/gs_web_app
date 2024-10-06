@@ -52,9 +52,9 @@ class NodeHandler:
                 data = self.receiver.get_msg()
                 if data:
                     last_msg = data
-                    await self.broadcast_message(data)
+                    await ws.send_json(data)
                 elif last_msg and (time.time() - int(last_msg['header']['stamp']['sec'])) > (self.interval / 100):
-                    await self.broadcast_message(None)
+                    await ws.send_json(None)
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:

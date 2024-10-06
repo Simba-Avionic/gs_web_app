@@ -9,7 +9,11 @@
   let telem_data;
   let socket;
 
-  let currentTime = new Intl.DateTimeFormat("en-GB", {
+  let currentTime;
+  let interval;
+  let connectionCount = 0; // Track the number of WebSocket connections
+
+  currentTime = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
     timeZone: "UTC",
     hour: "2-digit",
@@ -19,9 +23,9 @@
 
   onMount(() => {
 
-    handleWebSocket();
+    initializeWebSocket();
 
-    const interval = setInterval(() => {
+    interval = setInterval(() => {
       currentTime = new Intl.DateTimeFormat("en-GB", {
         hour12: false,
         timeZone: "UTC",
@@ -31,46 +35,61 @@
       }).format(new Date());
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      closeSocket();
+    }
   });
 
-  function handleWebSocket() {
+  function closeSocket() {
+    if (socket) {
+      socket.close();
+      socket = null;
+      console.log(`WebSocket for server/telemetry closed on component destroy.`);
+    }
+  }
 
+  function initializeWebSocket() {
     // @ts-ignore
     const host = process.env.IP_ADDRESS;
-    const socket = new WebSocket(`ws://${host}:8000/server/telemetry`);
+    socket = new WebSocket(`ws://${host}:8000/server/telemetry`);
 
+    connectionCount++;
+    console.log(`Initializing WebSocket connection #${connectionCount}`);
+
+    // Define WebSocket event handlers
     socket.onmessage = (event) => {
-        temp = JSON.parse(event.data);
-        if (temp !== 'None' && 
-        temp !== null && 
-        temp !==  undefined) {
-          telem_data = temp;
-        }
-        // dispatch('telemetryChange', telem_data);
+      temp = JSON.parse(event.data);
+      if (temp !== "None" && temp !== null && temp !== undefined) {
+        telem_data = temp;
+      }
+      dispatch("telemetryChange", telem_data);
     };
 
     socket.onopen = () => {
-        console.log(`WebSocket connection for server/telemetry established`);
+      console.log(`WebSocket connection for server/telemetry established`);
     };
 
     socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
 
-    socket.onclose = () => {
-        console.log('WebSocket connection closed');
-    };
+    socket.onclose = (event) => {
+      console.log(`WebSocket connection closed: ${event.reason}`);
 
-    return () => {
-        socket.close();
+      // Optional: Attempt to reconnect after a delay if the component is still mounted
+      if (!event.wasClean) {
+        setTimeout(() => {
+          console.log(`Reconnecting to WebSocket for server/telemetry...`);
+          initializeWebSocket();
+        }, 3000); // Retry after 3 seconds
+      }
     };
-  };
+  }
 
-  onDestroy(() => {
-    if (socket) {
-      socket.close();
-  }});
+  window.addEventListener('beforeunload', () => {
+      closeSocket();
+    });
 
   function reloadPage() {
     window.location.reload();
@@ -80,11 +99,10 @@
     dispatch("navigate", view);
   }
 
-  // window.addEventListener("beforeunload", function () {
-  //   if (socket) {
-  //       socket.close();
-  //   }
-  // });
+  onDestroy(() => {
+    clearInterval(interval);
+    closeSocket();
+  });
 </script>
 
 <nav class="navbar">
@@ -105,7 +123,7 @@
     <span>CPU: {telem_data?.cpu_usage ? `${telem_data?.cpu_usage}%` : 'N/A'}</span>
     <span>Memory: {telem_data?.memory_usage ? `${telem_data?.memory_usage}%` : 'N/A'}</span>
     <span>Disk: {telem_data?.disk_usage ? `${telem_data?.disk_usage}%` : 'N/A'}</span>
-    <span>Temp: {telem_data?.cpu_temperature ? `${telem_data?.cpu_temperature}°C` : 'N/A'}</span>
+    <span>Temp: {telem_data?.temperature ? `${telem_data?.temperature.toFixed(2)}°C` : 'N/A'}</span>
     <span>Load (1m): {telem_data?.load_1_min.toFixed(2) ?? 'N/A'}</span>
     <span>Load (5m): {telem_data?.load_5_min.toFixed(2) ?? 'N/A'}</span>
   </div>
