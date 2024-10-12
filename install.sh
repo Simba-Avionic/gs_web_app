@@ -100,7 +100,12 @@ install_npm() {
     echo "npm is not installed. Installing npm..."
     sudo apt update
     sudo apt install -y npm
-    echo "npm installed successfully!"
+    echo "npm installed, installing node..."
+
+    sudo npm cache clean -f
+    sudo npm install -g n
+    sudo n stable
+    echo "node installed successfully!"
 }
 
 if command -v npm &> /dev/null; then

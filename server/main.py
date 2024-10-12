@@ -2,12 +2,14 @@ import rclpy
 import json
 import signal
 import sys
+import os
 
 from time import sleep
 from loguru import logger
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from fastapi.responses import JSONResponse
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
@@ -68,6 +70,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+TILES_DIRECTORY = "../app/public/tiles"
+
+@app.get("/tiles/{layer}/{z}/{x}/{y}.png")
+def get_tile(layer: str, z: int, x: int, y: int):
+    tile_path = os.path.join(TILES_DIRECTORY, layer, str(z), str(x), f"{y}.png")
+    # logger.debug(tile_path)
+    
+    if not os.path.isfile(tile_path):
+        raise HTTPException(status_code=404, detail="Tile not found")
+
+    return FileResponse(tile_path, media_type="image/png")
 
 @app.get("/config")
 async def get_config():

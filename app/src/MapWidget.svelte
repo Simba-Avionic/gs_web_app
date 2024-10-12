@@ -6,11 +6,13 @@
     let map;
  
     onMount(() => {
+        const host = process.env.IP_ADDRESS;
         // 54.351887748, 18.646338873.
         map = L.map('map').setView([54.351887748, 18.646338873], 8);
-        L.tileLayer('tiles/tiles_tricity/{z}/{x}/{y}.png', {
+        L.tileLayer(`http://${host}:8000/tiles/tiles_tricity/{z}/{x}/{y}.png`, {
             maxZoom: 13,
-            minZoom: 6,
+            minZoom: 10,
+            tileSize: 256
         }).addTo(map);
     });
  
