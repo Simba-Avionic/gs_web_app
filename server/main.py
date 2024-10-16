@@ -3,6 +3,7 @@ import json
 import signal
 import sys
 import os
+import threading
 
 from time import sleep
 from loguru import logger
@@ -13,9 +14,11 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
+from rclpy.executors import MultiThreadedExecutor
 
+MAIN_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG = None
-CONFIG_PATH = "../config.json"
+CONFIG_PATH = os.path.join(MAIN_FILE_DIR, "../config.json")
 TOPICS = []  # Global variable to keep track of NodeHandler instances
 
 def shutdown():
@@ -37,6 +40,7 @@ def load_main_config(path_to_conf):
 async def lifespan(app: FastAPI):
     rclpy.init()
     load_main_config(CONFIG_PATH)
+    executor = MultiThreadedExecutor()
 
     global TOPICS
     TOPICS = []
@@ -51,14 +55,21 @@ async def lifespan(app: FastAPI):
 
     for msg in CONFIG["topics"]:
         try:
-            th = NodeHandler(msg)
-            app.include_router(th.router)
-            TOPICS.append(th)
+            nh = NodeHandler(msg)
+            executor.add_node(nh)
+            app.include_router(nh.router)
+            TOPICS.append(nh)
             logger.info(f"{msg['msg_type']} NodeHandler initialized successfully!")
         except Exception as e:
-            logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}:", e)
+            logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}: {e}")
         sleep(0.1)
+    executor_thread = threading.Thread(target=executor.spin, daemon=True)
+    executor_thread.start()
+
     yield
+    executor.shutdown()
+    for nh in TOPICS:
+        nh.destroy_node()
     shutdown()
 
 app = FastAPI(lifespan=lifespan)

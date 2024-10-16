@@ -13,8 +13,6 @@
         <SVG height="40vw" />
     </div>
     
-    <MapWidget />
-    
     <div class="rocket-field" id="recovery">
         <p>Recovery</p>
     </div>

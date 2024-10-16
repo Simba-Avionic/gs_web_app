@@ -11,7 +11,6 @@ class TopicReceiver(Node):
         self.curr_msg = None
         self.curr_msg_db = None
 
-        # TODO: wait for node if not available do not throw exception???
         self.subscription = self.create_subscription(
             getattr(gs_interfaces.msg, msg_type), topic_name, self.msg_callback, 10)
 

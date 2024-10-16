@@ -53,7 +53,6 @@ class ServerTelemetry:
         self.router = APIRouter()
         self.router.add_api_websocket_route(self.topic_name, self.return_msg)
         self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
-        
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
         if self.ic:
             self.db_insert = threading.Thread(target=self.db_thread)
@@ -72,7 +71,7 @@ class ServerTelemetry:
 
         try:
             temp = psutil.sensors_temperatures()
-            cpu_temp = temp['cpu-thermal'][0].current if 'cpu-thermal' in temp else None
+            cpu_temp = temp['cpu_thermal'][0].current if 'cpu_thermal' in temp else None
         except Exception:
             cpu_temp = None
 
@@ -94,7 +93,8 @@ class ServerTelemetry:
         """
         await ws.accept()
         self.connected_clients.add(ws)
-        logger.info(f"New WebSocket client connected: {len(self.connected_clients)} clients connected.")
+        # logger.info(f"New WebSocket client {ws} connected: {len(self.connected_clients)} clients connected.")
+        last_time = 0
 
         try:
             last_msg = None
@@ -106,12 +106,15 @@ class ServerTelemetry:
                     await self.broadcast_message(data)
                 elif last_msg and (time.time() - int(last_msg['header']['stamp']['sec'])) > (self.interval / 100):
                     await self.broadcast_message(None)
+                # logger.info(self.connected_clients) 
+                
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:
-            self.connected_clients.remove(ws)
-            logger.info(f"WebSocket client disconnected: {len(self.connected_clients)} clients connected.")
-            await ws.close()
+            if ws in self.connected_clients:
+                self.connected_clients.remove(ws)
+                # logger.info(f"WebSocket client disconnected: {len(self.connected_clients)} clients connected.")
+                await ws.close()
 
     async def broadcast_message(self, message):
         """
