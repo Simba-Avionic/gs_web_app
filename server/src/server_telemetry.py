@@ -56,6 +56,8 @@ class ServerTelemetry:
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
 
         self.connected_clients = set()
+        self.stop_event = asyncio.Event()
+        asyncio.create_task(self.start_sending_data())
 
     def get_system_data(self):
         cpu_usage = psutil.cpu_percent()
@@ -84,6 +86,16 @@ class ServerTelemetry:
             "load_15_min": load_15
         }
 
+    async def start_sending_data(self):
+        """
+        A background task that continuously gathers and sends telemetry data to connected clients.
+        """
+        while not self.stop_event.is_set():
+            await asyncio.sleep(self.interval / 1000)
+            data = self.get_system_data()
+            if data:
+                await self.broadcast_message(data)
+
     async def return_msg(self, ws: WebSocket):
         """
         WebSocket endpoint to handle messages for each client and broadcast messages.
@@ -91,27 +103,13 @@ class ServerTelemetry:
         await ws.accept()
         self.connected_clients.add(ws)
         # logger.info(f"New WebSocket client {ws} connected: {len(self.connected_clients)} clients connected.")
-        last_time = 0
-
         try:
-            last_msg = None
             while True:
-                await asyncio.sleep(self.interval / 1000)
-                data = self.get_system_data()
-                if data:
-                    last_msg = data
-                    await self.broadcast_message(data)
-                elif last_msg and (time.time() - int(last_msg['header']['stamp']['sec'])) > (self.interval / 100):
-                    await self.broadcast_message(None)
-                # logger.info(self.connected_clients) 
-                
+                await asyncio.sleep(self.interval / 1000)                
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:
-            if ws in self.connected_clients:
-                self.connected_clients.remove(ws)
-                # logger.info(f"WebSocket client disconnected: {len(self.connected_clients)} clients connected.")
-                await ws.close()
+            await self.handle_client_disconnection()
 
     async def broadcast_message(self, message):
         """

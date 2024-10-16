@@ -8,6 +8,8 @@
   const host = process.env.IP_ADDRESS;
   console.log(host);
 
+  let svgContent = "";
+
   let topics = [];
   let gs_topics = [];
   let rocket_topics = [];
@@ -22,10 +24,23 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
+    // x="-23.32" y="448.19" width="142.89" height="37.09"
+    // x="29.58" y="395.22" width="37.07" height="142.89" />
+    const maxHeight = 142.89;
+    const maxY = 395.22; // The initial Y position when full
+
     const svg = document.querySelector("svg");
 
     switch (frame_id) {
       case "LoadCells":
+        const { load_cell_1, load_cell_2 } = telemetryData;
+        console.log(load_cell_1, load_cell_2);
+        let newHeight = ((load_cell_1 + load_cell_2) / 200) * maxHeight;
+        let newY = maxY - (maxHeight + newHeight);
+
+        let rect = svg.getElementById("oxidizer_liquid");
+        rect.setAttribute("height", Math.min(newHeight, 142.89));
+        rect.style.fill = "url(#gradient_blue)";
         break;
 
       case "ValveServos":
@@ -77,6 +92,11 @@
     }
   }
 
+  async function fetchSVG() {
+    const response = await fetch("../public/images/gs3.svg");
+    svgContent = await response.text();
+  }
+
   async function fetchConfig() {
     const response = await fetch(`http://${host}:8000/config`);
     const data = await response.json();
@@ -89,6 +109,7 @@
   }
 
   onMount(() => {
+    fetchSVG();
     fetchConfig();
     let index = 0;
     animatePath(document.querySelectorAll("#_433_signal path"), index);
@@ -99,7 +120,8 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div id="svg-container">
-  <SVG width="60vw" />
+  {@html svgContent}
+  <!-- <SVG width="60vw" /> -->
 </div>
 
 <div id="rocket-info">

@@ -1,7 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1134.44 823.22">
     <defs>
         <style>
-            .cls-1,.cls-7{fill:none;}.cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#fff;}.cls-2{fill:blue;}.cls-3{fill:#f15a24;}.cls-4{fill:aqua;}.cls-5{fill:#f0f;}.cls-6{fill:lime;}.cls-7{stroke-width:2px;}.cls-8{fill:#fff;}</style>
+            .cls-1,.cls-7{fill:none;}
+            .cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#fff;}
+            .cls-2{fill:none;}
+            .cls-3{fill:#f15a24;}
+            .cls-4{fill:aqua;}
+            .cls-5{fill:#f0f;}
+            .cls-6{fill:lime;}
+            .cls-7{stroke-width:2px;}
+            .cls-8{fill:#fff;}
+            .cls-9{fill:blue;}
+
+            #oxidizer_liquid {
+                transition: height 1s ease, y 1s ease;
+            }
+        </style>
     </defs>
     <g id="Layer_2" data-name="Layer 2">
         <g id="gs">
@@ -9,8 +23,10 @@
                 <g id="rocket_group">
                     <polygon id="outline" class="cls-1"
                         points="48.17 0.63 49.7 2.39 51.05 7.3 54.5 22.68 59.31 49.51 62.91 78.74 65.42 100.3 66.5 118.82 66.8 721.04 88.06 735 88.06 750.03 66.86 752.95 66.74 758.31 29.12 758.31 29.12 752.95 7.92 749.78 7.92 735.13 29.66 720.55 29.39 117.91 30.2 103.35 32 84.83 34.15 66.56 36.85 46.95 39.01 33.3 41.88 17.65 44.22 7.6 46.37 1.57 48.17 0.63" />
-                    <rect id="oxidizer" class="cls-2" x="-23.32" y="448.19" width="142.89"
-                        height="37.09" transform="matrix(0, 1, -1, 0, 514.86, 418.61)" />
+                    
+                    <rect id="oxidizer_outline" class="cls-2" x="-23.32" y="448.19" width="142.89" height="37.09" transform="matrix(0, 1, -1, 0, 514.86, 418.61)" />
+                    <rect id="oxidizer_liquid" class="cls-9" x="29.58" y="395.22" width="37.07" height="142.89" transform="rotate(180, 48.12, 466.67)"/>
+
                     <rect id="fuel" class="cls-3" x="-45.03" y="641.2" width="185.9" height="37.6"
                         transform="matrix(0, 1, -1, 0, 707.93, 612.08)" />
                     <rect id="computer" class="cls-4" x="17.87" y="314.3" width="60.42"
