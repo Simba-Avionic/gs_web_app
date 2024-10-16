@@ -141,7 +141,7 @@
     height: 70vh;
     border-radius: 1vw;
     border: 1px solid #eee;
-    background-color: #242424;
+    background-color: #161616;
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -156,7 +156,7 @@
     width: 30vw;
     border-radius: 1vw;
     border: 1px solid #eee;
-    background-color: #242424;
+    background-color: #161616;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;

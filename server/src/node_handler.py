@@ -19,7 +19,6 @@ from database.influx_client import (
 class NodeHandler(Node):
 
     def __init__(self, msg_config):
-        # Load configuration and initialize ROS subscription
         self.load_config(msg_config)
         super().__init__(self.msg_type)
 
@@ -27,43 +26,34 @@ class NodeHandler(Node):
         threading.Thread(target=self.run_event_loop, daemon=True).start()
 
         self.start_subscription_thread()
-        # self.subscription = self.create_subscription(
-        #     getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, 10)
 
         # Router setup for WebSocket and HTTP endpoints
         self.router = APIRouter()
         self.router.add_api_websocket_route(f"/{self.topic_name}", self.websocket_endpoint)
-        # self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
-
-        # Executor setup for ROS2 communication
-        # self.executor = executors.MultiThreadedExecutor()
-        # self.executor.add_node(self.subscription)
-        # self.executor_thread = threading.Thread(target=self.executor.spin, daemon=True)
-        # self.executor_thread.start()
+        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
 
         # InfluxDB client setup and background data insertion thread
-        # self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
-        # if self.ic:
-        #     self.db_insert = threading.Thread(target=self.db_thread)
-        #     self.db_insert.start()
+        self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
 
         self.connected_clients = set()
         self.curr_msg = None
 
 
     def start_subscription_thread(self):
-        subscription_thread = threading.Thread(target=self.create_subscription_and_spin)
-        subscription_thread.daemon = True  # Ensure thread exits when the main program does
-        subscription_thread.start()
+        self.subscription_thread = threading.Thread(target=self.create_subscription_and_spin)
+        self.subscription_thread.daemon = True  # Ensure thread exits when the main program does
+        self.subscription_thread.start()
 
     def create_subscription_and_spin(self):
         self.subscription = self.create_subscription(
             getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, 10)
 
-    def msg_callback(self, msg):
+    async def msg_callback(self, msg):
         self.curr_msg = message_to_ordereddict(msg)
+        await self.broadcast_message(self.curr_msg)
         # asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.loop)
-        asyncio.create_task(self.broadcast_message(self.curr_msg))
+        self.ic.insert_data(self.curr_msg)
+        # asyncio.create_task(self.broadcast_message(self.curr_msg))
 
     def run_event_loop(self):
         # Run the event loop
@@ -76,7 +66,9 @@ class NodeHandler(Node):
         # logger.info(f"New WebSocket client connected: {len(self.connected_clients)} clients connected.")
         try:
             while True:
-                await ws.receive_text() 
+                await asyncio.sleep(self.interval / 1000)
+                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > (self.interval / 100):
+                    await self.broadcast_message("None")
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:
@@ -104,10 +96,25 @@ class NodeHandler(Node):
         self.interval = msg_config["interval"]
 
     def stop(self):
-        self.executor.remove_node(self.receiver)
-        self.receiver.destroy_node()
-        self.executor.shutdown()
-        self.executor_thread.join(timeout=5)
-        # self.connected_clients.clear()
-        # self.db_insert.join(timeout=3)
-        logger.info(f"NodeHandler stopped for {self.receiver}")
+        if self.loop.is_running():
+            self.loop.call_soon_threadsafe(self.loop.stop)
+
+        if self.subscription_thread is not None:
+            self.subscription_thread.join(timeout=3)
+
+        self.connected_clients.clear()
+
+    async def query(self, r: Request, time_range: int = 5):
+        try:
+            records = []
+            # records = await self.ic.query_(self.msg_type, some_value_name, time_range=time_range)
+            return records  # Return the records, adjust as necessary for your use case
+        except (
+            InfluxNotAvailableException,
+            BucketNotFoundException,
+            BadQueryException,
+        ) as e:
+            raise HTTPException(
+                status_code=e.STATUS_CODE,
+                detail=e.DESCRIPTION,
+            )

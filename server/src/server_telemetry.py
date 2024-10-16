@@ -54,9 +54,6 @@ class ServerTelemetry:
         self.router.add_api_websocket_route(self.topic_name, self.return_msg)
         self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
-        if self.ic:
-            self.db_insert = threading.Thread(target=self.db_thread)
-            self.db_insert.start()
 
         self.connected_clients = set()
 
@@ -152,16 +149,6 @@ class ServerTelemetry:
                 status_code=e.STATUS_CODE,
                 detail=e.DESCRIPTION,
             )
-
-    def db_thread(self):
-        """
-        Background thread to handle database operations.
-        """
-        while True:
-            data = self.get_system_data()
-            if data:
-                self.ic.insert_data(data)
-            time.sleep(self.interval / 1000)
 
     def stop(self):
         # self.connected_clients.clear()
