@@ -2,81 +2,106 @@
   import { onMount, onDestroy } from "svelte";
   import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
 
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
   export let class_name;
   export let topic;
+  export let host;
 
   let temp;
   let telem_data;
   let socket;
 
   onMount(() => {
-
     // @ts-ignore
-    const host = process.env.IP_ADDRESS;
-    const socket = new WebSocket(`ws://${host}:8000/${String(topic.topic_name)}`);
+    // const host = process.env.IP_ADDRESS;
+    const socket = new WebSocket(
+      `ws://${host}:8000/${String(topic.topic_name)}`,
+    );
 
     socket.onmessage = (event) => {
-        temp = JSON.parse(event.data);
-        if (temp !== 'None' && 
-        temp !== null && 
-        temp !==  undefined) {
-          telem_data = temp;
-        }
-        dispatch('telemetryChange', telem_data);
+      temp = JSON.parse(event.data);
+      if (temp !== "None" && temp !== null && temp !== undefined) {
+        telem_data = temp;
+      }
+      dispatch("telemetryChange", telem_data);
     };
 
     socket.onopen = () => {
-        console.log(`WebSocket connection for ${topic.topic_name} established`);
+      console.log(`WebSocket connection for ${topic.topic_name} established`);
     };
 
     socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
 
     socket.onclose = () => {
-        console.log('WebSocket connection closed');
+      console.log(`WebSocket connection for ${topic.topic_name} is closed`);
     };
 
     return () => {
-        socket.close();
+      socket.close();
     };
   });
 
-onDestroy(() => {
+  onDestroy(() => {
     if (socket) {
       socket.close();
-}});
+    }
+  });
 
+  function renderField(telemData, field) {
+    const value = telemData[field.val_name];
+    
+    // Check if the field is an object (like LoadCell)
+    if (typeof value === 'object' && value !== null) {
+      return Object.keys(value).map(key => {
+        return `
+          <div class="${class_name}-nested-field">
+            <span>${key}:</span>
+            <span>${parseFloat(value[key]).toFixed(2)}</span>
+          </div>
+        `;
+      }).join('');
+    } else {
+      if (field.type.includes("float")) {
+        return `<span>${parseFloat(value).toFixed(2)}</span>`;
+      }
+      else {
+        return `<span>${value}</span>`;
+      }
+    }
+  }
 </script>
 
 <div class="{class_name}-field">
   <div
-    class="status-indicator {
-      temp !== 'None' && 
-      temp !== null && 
-      temp !==  undefined
+    class="status-indicator {temp !== 'None' &&
+    temp !== null &&
+    temp !== undefined
       ? 'green-status'
       : 'red-status'}"
   ></div>
   <div class="{class_name}-field-content">
     <span class="{class_name}-field-text">{String(topic.topic_name)}</span>
-    {#if telem_data != undefined && telem_data !== 'None' && telem_data !== null}
-      <span class="timestamp">{rosTimeToFormattedTime(
+    {#if telem_data != undefined && telem_data !== "None" && telem_data !== null}
+      <span class="timestamp"
+        >{rosTimeToFormattedTime(
           telem_data.header.stamp.sec,
-          telem_data.header.stamp.nanosec
-        )}</span>
+          telem_data.header.stamp.nanosec,
+        )}</span
+      >
       {#each topic.msg_fields as field}
         {#if field.val_name !== "header"}
           <div class="{class_name}-field-value">
             <span>{field.val_name}:</span>
-            {#if field.type.includes("float")}
-              <span>{parseFloat(telem_data[field.val_name].toFixed(2)) + " " + field.unit}</span>
-            {:else}
-              <span>{telem_data[field.val_name] + " " + field.unit}</span>
-            {/if}
+            <span>
+              {@html renderField(telem_data, field)}
+              {#if field.unit}
+                {" " + field.unit}
+              {/if}
+            </span>
           </div>
         {/if}
       {/each}
@@ -126,6 +151,11 @@ onDestroy(() => {
   .gs-field-value span:first-child {
     font-weight: bold;
     margin-right: 4px;
+  }
+
+  .gs-nested-field {
+    font-weight: bold;
+    padding-left: 50px;
   }
 
   .timestamp {
@@ -207,5 +237,4 @@ onDestroy(() => {
       background-position: 0% 50%;
     }
   }
-  
-  </style>
+</style>

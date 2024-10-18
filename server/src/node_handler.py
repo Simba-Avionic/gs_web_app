@@ -1,11 +1,9 @@
 import time
-import rclpy
 import asyncio
 import threading
 import gs_interfaces.msg
 from rclpy.node import Node
 from loguru import logger
-from rclpy import executors
 from rosidl_runtime_py import message_to_ordereddict
 from fastapi import WebSocket, APIRouter, Request, HTTPException
 from database.influx_client import (
@@ -22,19 +20,16 @@ class NodeHandler(Node):
         self.load_config(msg_config)
         super().__init__(self.msg_type)
 
+        self.router = APIRouter()
+        self.router.add_api_websocket_route(f"/{self.topic_name}", self.websocket_endpoint)
+        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
+
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.run_event_loop, daemon=True).start()
 
         self.start_subscription_thread()
 
-        # Router setup for WebSocket and HTTP endpoints
-        self.router = APIRouter()
-        self.router.add_api_websocket_route(f"/{self.topic_name}", self.websocket_endpoint)
-        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
-
-        # InfluxDB client setup and background data insertion thread
         self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
-
         self.connected_clients = set()
         self.curr_msg = None
 
@@ -52,7 +47,7 @@ class NodeHandler(Node):
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
         # asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.loop)
-        self.ic.insert_data(self.curr_msg)
+        # self.ic.insert_data(self.curr_msg)
         # asyncio.create_task(self.broadcast_message(self.curr_msg))
 
     def run_event_loop(self):

@@ -4,9 +4,10 @@
   import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
-   
-  const host = process.env.IP_ADDRESS;
-  console.log(host);
+  
+  export let host;
+  // const host = process.env.IP_ADDRESS;
+  // console.log(host);
 
   let svgContent = "";
 
@@ -24,8 +25,11 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
+    
     // x="-23.32" y="448.19" width="142.89" height="37.09"
     // x="29.58" y="395.22" width="37.07" height="142.89" />
+    
+    // TODO: get those values directly from SVG 
     const maxHeight = 142.89;
     const maxY = 395.22; // The initial Y position when full
 
@@ -33,24 +37,24 @@
 
     switch (frame_id) {
       case "LoadCells":
-        const { load_cell_1, load_cell_2 } = telemetryData;
-        let newHeight = ((load_cell_1 + load_cell_2) / 200) * maxHeight;
+        const { combined_fuel_kg } = telemetryData;
+        let newHeight = ((combined_fuel_kg) / 100) * maxHeight;
         let newY = maxY - (maxHeight + newHeight);
 
         let rect = svg.getElementById("oxidizer_liquid");
-        rect.setAttribute("height", Math.min(newHeight, 142.89));
+        rect.setAttribute("height", Math.min(Math.max(newHeight, 0), 142.89));
         rect.style.fill = "url(#gradient_blue)";
         break;
 
       case "ValveServos":
-        const { servo1_position, servo2_position } = telemetryData;
+        const { valve_feed_position, valve_vent_position } = telemetryData;
         const valve1 = svg.getElementById("valve1");
         const valve2 = svg.getElementById("valve2");
 
-        if (servo1_position > 50) valve1.style.stroke = "url(#gradient_green)";
+        if (valve_feed_position > 50) valve1.style.stroke = "url(#gradient_green)";
         else valve1.style.stroke = "url(#gradient_red)";
 
-        if (servo2_position > 50) valve2.style.stroke = "url(#gradient_green)";
+        if (valve_vent_position > 50) valve2.style.stroke = "url(#gradient_green)";
         else valve2.style.stroke = "url(#gradient_red)";
 
         break;
@@ -140,7 +144,7 @@
     <Field
       class_name="rocket"
       on:telemetryChange={handleTelemetryChange}
-      {topic}
+      {topic} {host}
     />
   {/each}
 </div>
@@ -151,12 +155,13 @@
     <Field
       class_name="gs"
       on:telemetryChange={handleTelemetryChange}
-      {topic}
+      {topic} {host}
     />
   {/each}
 </div>
 
 <style>
+
   #svg-container {
     position: absolute;
     top: 15vh;

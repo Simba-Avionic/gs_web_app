@@ -12,16 +12,6 @@
 
 
 <style>
-    .map-container {
-        position: absolute;
-        top: calc(50% + 20px);
-        left: 50%;
-        transform: translate(-50%, -50%); /* Center it */
-        width: 70vw;
-        height: 70vh;
-        border-radius: 2vw; /* Adjust the border-radius for a rounded rectangle */
-        overflow: hidden;
-        border: 1px solid #eee; /* Optional: Add a border */
-    }
+
 
 </style>

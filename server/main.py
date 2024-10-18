@@ -71,7 +71,10 @@ async def lifespan(app: FastAPI):
     yield
     executor.shutdown()
     for nh in TOPICS:
-        nh.destroy_node()
+        try:
+            nh.destroy_node()
+        except Exception as e:
+            logger.warning(e)
     shutdown()
 
 app = FastAPI(lifespan=lifespan)

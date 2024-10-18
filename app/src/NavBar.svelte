@@ -4,6 +4,7 @@
 
   const dispatch = createEventDispatcher();
 
+  export let host;
   export let currentView;
   let temp;
   let telem_data;
@@ -11,7 +12,6 @@
 
   let currentTime;
   let interval;
-  let connectionCount = 0; // Track the number of WebSocket connections
 
   currentTime = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
@@ -50,14 +50,9 @@
   }
 
   function initializeWebSocket() {
-    // @ts-ignore
-    const host = process.env.IP_ADDRESS;
     socket = new WebSocket(`ws://${host}:8000/server/telemetry`);
+    
 
-    connectionCount++;
-    console.log(`Initializing WebSocket connection #${connectionCount}`);
-
-    // Define WebSocket event handlers
     socket.onmessage = (event) => {
       temp = JSON.parse(event.data);
       if (temp !== "None" && temp !== null && temp !== undefined) {
@@ -66,9 +61,9 @@
       dispatch("telemetryChange", telem_data);
     };
 
-    // socket.onopen = () => {
-    //   console.log(`WebSocket connection for server/telemetry established`);
-    // };
+    socket.onopen = () => {
+      console.log('WebSocket connection for server/telemetry established');
+    };
 
     // socket.onerror = (error) => {
     //   console.error("WebSocket error:", error);
@@ -86,10 +81,6 @@
       }
     };
   }
-
-  // window.addEventListener('beforeunload', () => {
-  //     closeSocket();
-  //   });
 
   function reloadPage() {
     window.location.reload();

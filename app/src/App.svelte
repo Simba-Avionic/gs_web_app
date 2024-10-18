@@ -7,6 +7,8 @@
   import Map from './Map.svelte'
 
   let currentView = 'dashboard';
+  // @ts-ignore
+  const host = process.env.IP_ADDRESS;
 
   function handleNavigation(event) {
     currentView = event.detail;
@@ -15,9 +17,9 @@
 </script>
 
 <main>
-  <NavBar on:navigate={handleNavigation} {currentView} />
+  <NavBar on:navigate={handleNavigation} {currentView} {host} />
   {#if currentView === 'dashboard'}
-    <Dashboard />
+    <Dashboard {host}/>
   {:else if currentView === 'inflight'}
     <InFlight />
   {:else if currentView === 'cameras'}

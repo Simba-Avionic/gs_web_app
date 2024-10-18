@@ -10,12 +10,24 @@
         // @ts-ignore
         const host = process.env.IP_ADDRESS;
         // 54.351887748, 18.646338873.
-        map = L.map('map').setView([54.351887748, 18.646338873], 8);
-        L.tileLayer(`http://${host}:8000/tiles/tiles_tricity/{z}/{x}/{y}.png`, {
-            maxZoom: 13,
-            minZoom: 10,
-            tileSize: 256
-        }).addTo(map);
+        // map = L.map('map').setView([54.351887748, 18.646338873], 10);
+
+        // L.tileLayer(`http://${host}:8000/tiles/tiles_tricity/{z}/{x}/{y}.png`, {
+        //     maxZoom: 15,
+        //     minZoom: 10,
+        //     tileSize: 256
+        // }).addTo(map);
+
+        var map = L.map('map', {attributionControl: false}).setView([54.4034, 18.5166], 12);
+        const layer = L.tileLayer("tiles/tiles_tricity/{z}/{x}/{y}.png", {
+            minZoom: 10, maxZoom: 15, tms: false})
+
+        map.addLayer(layer);
+        // L.tileLayer("tiles/tiles_tricity/{z}/{x}/{y}.png", {
+        //     maxZoom: 15,
+        //     minZoom: 10,
+        //     tileSize: 256,
+        // }).addTo(map);
     });
  
     onDestroy(() => {

@@ -11,14 +11,67 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "int32",
-                    "val_name": "load_cell_1",
+                    "type": "gs_interfaces/LoadCell",
+                    "val_name": "tenso_l"
+                },
+                {
+                    "type": "gs_interfaces/LoadCell",
+                    "val_name": "tenso_r"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "combined_raw_kg",
                     "unit": "kg"
                 },
                 {
-                    "type": "int32",
-                    "val_name": "load_cell_2",
+                    "type": "float32",
+                    "val_name": "combined_vehicle_kg",
                     "unit": "kg"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "combined_fuel_kg",
+                    "unit": "kg"
+                }
+            ]
+        },
+        {
+            "topic_name": "tanking/load_cells/params",
+            "msg_type": "LoadCellsParams",
+            "interval": 1000,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "tenso_l_rocket_point"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "tenso_l_empty_rocket_point"
+                },
+                {
+                    "type": "float64",
+                    "val_name": "tenso_l_scale"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "tenso_r_rocket_point"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "tenso_r_empty_rocket_point"
+                },
+                {
+                    "type": "float64",
+                    "val_name": "tenso_r_scale"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "lean_angle"
                 }
             ]
         },
@@ -33,13 +86,13 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "uint16",
-                    "val_name": "servo1_position",
+                    "type": "int8",
+                    "val_name": "valve_feed_position",
                     "unit": "%"
                 },
                 {
-                    "type": "uint16",
-                    "val_name": "servo2_position",
+                    "type": "int8",
+                    "val_name": "valve_vent_position",
                     "unit": "%"
                 }
             ]
@@ -195,6 +248,102 @@
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
+                }
+            ]
+        },
+        {
+            "topic_name": "uart/statistics",
+            "msg_type": "UartStatistics",
+            "interval": 1000,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "total_bytes_sent"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "total_bytes_received"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "total_messages_sent"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "total_messages_received"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "good_messages_received"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "good_messages_received_per_second"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "messages_sent_per_second"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "messages_received_per_second"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "bytes_sent_per_second"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "bytes_received_per_second"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "good_messages_ratio_received_per_second"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "messages_overwritten"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "buffor_overflows"
+                }
+            ]
+        },
+        {
+            "topic_name": "power",
+            "msg_type": "Power",
+            "interval": 1000,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "shunt_voltage",
+                    "unit": "mV"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "bus_voltage",
+                    "unit": "V"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "power",
+                    "unit": "W"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "current",
+                    "unit": "A"
                 }
             ]
         }

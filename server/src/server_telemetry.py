@@ -1,7 +1,5 @@
 import psutil
-import time
 import asyncio
-import threading
 from loguru import logger
 from fastapi import WebSocket, APIRouter, Request, HTTPException
 from database.influx_client import (
@@ -51,7 +49,7 @@ class ServerTelemetry:
         """
 
         self.router = APIRouter()
-        self.router.add_api_websocket_route(self.topic_name, self.return_msg)
+        self.router.add_api_websocket_route(self.topic_name, self.websocket_endpoint)
         self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
 
@@ -89,6 +87,7 @@ class ServerTelemetry:
     async def start_sending_data(self):
         """
         A background task that continuously gathers and sends telemetry data to connected clients.
+        TODO: insert data to DB
         """
         while not self.stop_event.is_set():
             await asyncio.sleep(self.interval / 1000)
@@ -96,7 +95,7 @@ class ServerTelemetry:
             if data:
                 await self.broadcast_message(data)
 
-    async def return_msg(self, ws: WebSocket):
+    async def websocket_endpoint(self, ws: WebSocket):
         """
         WebSocket endpoint to handle messages for each client and broadcast messages.
         """
