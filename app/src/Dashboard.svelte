@@ -4,7 +4,7 @@
   import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
-
+   
   const host = process.env.IP_ADDRESS;
   console.log(host);
 
@@ -34,7 +34,6 @@
     switch (frame_id) {
       case "LoadCells":
         const { load_cell_1, load_cell_2 } = telemetryData;
-        console.log(load_cell_1, load_cell_2);
         let newHeight = ((load_cell_1 + load_cell_2) / 200) * maxHeight;
         let newY = maxY - (maxHeight + newHeight);
 
@@ -67,7 +66,7 @@
 
       case "Telemetry433":
         const { noise } = telemetryData;
-        const radio = document.querySelectorAll("#_433_signal path");
+        const radio = svg.querySelectorAll("#_433_signal path");
 
         if (noise < -30) {
           radio.forEach((path) => {
@@ -108,20 +107,31 @@
     console.log(topics);
   }
 
-  onMount(() => {
+  function observeSVGRender() {
+    const svgContainer = document.getElementById("svg-container");
+    const observer = new MutationObserver(() => {
+      let index = 0;
+
+      const signalPath = document.querySelectorAll("#_433_signal path");
+      const txPath = document.querySelectorAll("#radiolinia_signal_tx path");
+
+      if (signalPath) animatePath(signalPath, index);
+      if (txPath) animatePath(txPath, index);
+
+      observer.disconnect();
+    });
+    observer.observe(svgContainer, { childList: true, subtree: true });
+  }
+
+  onMount( async () => {
     fetchSVG();
     fetchConfig();
-    let index = 0;
-    animatePath(document.querySelectorAll("#_433_signal path"), index);
-    animatePath(document.querySelectorAll("#radiolinia_signal_tx path"), index);
+    observeSVGRender();
   });
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div id="svg-container">
   {@html svgContent}
-  <!-- <SVG width="60vw" /> -->
 </div>
 
 <div id="rocket-info">

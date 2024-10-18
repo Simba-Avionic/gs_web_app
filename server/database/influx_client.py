@@ -16,7 +16,7 @@ class InfluxClient:
         self.bucket = env_values.get('BUCKET_NAME')
         self.org = env_values.get('ORGANISATION')
         self.token = env_values.get('INFLUXDB_TOKEN')
-        self.url = f"{env_values.get('INFLUXDB_URL')}:{env_values.get('INFLUXDB_PORT')}"
+        self.url = f"{env_values.get('IP_ADDRESS')}:{env_values.get('INFLUXDB_PORT')}"
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
 
         self.msg_type = msg_type

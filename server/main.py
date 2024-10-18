@@ -15,11 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
 from rclpy.executors import MultiThreadedExecutor
+from dotenv import dotenv_values, find_dotenv
 
 MAIN_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG = None
 CONFIG_PATH = os.path.join(MAIN_FILE_DIR, "../config.json")
 TOPICS = []  # Global variable to keep track of NodeHandler instances
+env_values = dotenv_values(find_dotenv())
 
 def shutdown():
     global TOPICS
@@ -108,7 +110,7 @@ if __name__ == "__main__":
     import uvicorn, argparse
 
     parser = argparse.ArgumentParser(description="Start the Uvicorn server.")
-    parser.add_argument('--host', type=str, default='localhost', help='Host address of the server')
+    parser.add_argument('--host', type=str, default=env_values.get("IP_ADDRESS"), help='Host address of the server')
     parser.add_argument('--port', type=int, default=8000, help='Port number of the server')
     args = parser.parse_args()
 
