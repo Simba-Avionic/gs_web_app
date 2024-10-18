@@ -1,12 +1,16 @@
-import rclpy
-from rclpy.node import Node
-from rclpy.executors import MultiThreadedExecutor
+"""
+Script for simulating ROS2 nodes.
+"""
+
+import os
 import time
 import json
-import os
+import rclpy
+import random
 import threading
 import gs_interfaces.msg
-import random
+from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
 
 def load_main_config(path_to_conf):
     config = None
@@ -23,18 +27,9 @@ def spin_node(node):
     executor.spin()
     executor.shutdown()
 
-def get_slots_and_types_cleaned(ros_msg):
-    if hasattr(ros_msg, '__slots__') and hasattr(ros_msg, '__slot_types__'):
-        # Remove the underscore prefix from each slot
-        cleaned_slots = [slot.lstrip('_') for slot in ros_msg.__slots__]
-        slot_types = ros_msg.__slot_types__
-        return list(zip(cleaned_slots, slot_types))  # Pair cleaned slots with their types
-    else:
-        return None
-
 def populate_message_fields(msg, field_config, stamp, msg_type_name):
     """
-    Populate the fields of the given message based on the field configuration.
+    Populate the fields of the given message based on the field configuration in config.json.
     """
     for field in field_config:
         field_type = field['type']
