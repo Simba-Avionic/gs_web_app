@@ -42,20 +42,56 @@ Single entry looks like this:
 
 ## Setup
 0. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
-1. Create python virtual environment `python3 -m venv venv`
-2. Activate the Python environment `source venv/bin/activate`
-3. Install required packages `pip install -r requirements.txt`
-4. Build ROS messages package `colcon build --packages-select gs_interfaces`
-5. Go to **app** directory and run `npm install`<br>
+1. Run the `install.sh` script.
+App was tested with Python3.10 so make sure you have it installed.
 
 ## Launching the app (step by step)
-0. Activate the Python environment `source venv/bin/activate`
-1. Make sure to source ROS environment `source install/setup.bash`
-2. Run the database `cd server/database && docker compose up --env-file <path_to_env_file> -d`
-3. Run the server `python3 server/main.py` or `cd server && uvicorn main:app`
-4. Inside the **app** directory run the frontend `npm run dev`
-5. (Optional) Run the Grafana visualisation `cd grafana && python generate_dashboards.py && docker compose up -d`
-6. (Optional) Run example topics `./sim_nodes/run_all_sim_nodes.sh`
+0. Activate the Python environment
+
+    ```bash
+    source venv/bin/activate
+    ```
+    
+2. Make sure to source ROS environment
+   
+    ```bash
+    source install/setup.bash
+    ```
+    
+4. Run the database
+   
+   ```bash
+   cd server/database
+   docker compose up --env-file <path_to_env_file> -d
+   ```
+   
+7. Run the server
+   
+   ```bash
+   cd server
+   python3 main.py
+   ```
+   
+9. Run the frontend
+   
+    ```bash
+    cd app
+    npm run dev
+    ```
+    
+12. (Optional) Run the Grafana visualisation
+   
+    ```bash
+    cd grafana
+    python generate_dashboards.py
+    docker compose up -d
+    ```
+    
+15. (Optional) Run example topics
+    ```bash
+    ./sim_nodes/run_all_sim_nodes.sh
+    ```
+
 
 ~~Hope it works! - but I guess it doesn't.~~
 

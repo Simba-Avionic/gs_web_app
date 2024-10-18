@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-influxdb_client
+influxdb_client[async]
 loguru
 python-dotenv
 asyncio

@@ -4,6 +4,7 @@
   import NavBar from './NavBar.svelte';
   import InFlight from './InFlight.svelte';
   import Cameras from './Cameras.svelte';
+  import Map from './Map.svelte'
 
   let currentView = 'dashboard';
 
@@ -21,6 +22,8 @@
     <InFlight />
   {:else if currentView === 'cameras'}
     <Cameras />
+  {:else if currentView === 'map'}
+    <Map />
   {/if}
   <Gradients />
 </main>
@@ -30,3 +33,4 @@
     width: 90vw;
   }
 </style>
+

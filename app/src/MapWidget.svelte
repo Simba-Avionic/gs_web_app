@@ -1,11 +1,13 @@
 <!-- MapWidget.svelte -->
 <script>
     import { onMount, onDestroy } from 'svelte';
+    // @ts-ignore
     import L from 'leaflet';
  
     let map;
  
     onMount(() => {
+        // @ts-ignore
         const host = process.env.IP_ADDRESS;
         // 54.351887748, 18.646338873.
         map = L.map('map').setView([54.351887748, 18.646338873], 8);
@@ -41,7 +43,7 @@
 
  </style>
  
- <div class="map-container">
-    <div id="map"></div>
- </div>
+ <!-- <div class="map-container"> -->
+<div id="map"></div>
+ <!-- </div> -->
  

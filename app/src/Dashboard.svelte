@@ -4,9 +4,11 @@
   import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
-
+   
   const host = process.env.IP_ADDRESS;
   console.log(host);
+
+  let svgContent = "";
 
   let topics = [];
   let gs_topics = [];
@@ -22,10 +24,22 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
+    // x="-23.32" y="448.19" width="142.89" height="37.09"
+    // x="29.58" y="395.22" width="37.07" height="142.89" />
+    const maxHeight = 142.89;
+    const maxY = 395.22; // The initial Y position when full
+
     const svg = document.querySelector("svg");
 
     switch (frame_id) {
       case "LoadCells":
+        const { load_cell_1, load_cell_2 } = telemetryData;
+        let newHeight = ((load_cell_1 + load_cell_2) / 200) * maxHeight;
+        let newY = maxY - (maxHeight + newHeight);
+
+        let rect = svg.getElementById("oxidizer_liquid");
+        rect.setAttribute("height", Math.min(newHeight, 142.89));
+        rect.style.fill = "url(#gradient_blue)";
         break;
 
       case "ValveServos":
@@ -52,7 +66,7 @@
 
       case "Telemetry433":
         const { noise } = telemetryData;
-        const radio = document.querySelectorAll("#_433_signal path");
+        const radio = svg.querySelectorAll("#_433_signal path");
 
         if (noise < -30) {
           radio.forEach((path) => {
@@ -77,6 +91,11 @@
     }
   }
 
+  async function fetchSVG() {
+    const response = await fetch("../public/images/gs3.svg");
+    svgContent = await response.text();
+  }
+
   async function fetchConfig() {
     const response = await fetch(`http://${host}:8000/config`);
     const data = await response.json();
@@ -88,18 +107,31 @@
     console.log(topics);
   }
 
-  onMount(() => {
+  function observeSVGRender() {
+    const svgContainer = document.getElementById("svg-container");
+    const observer = new MutationObserver(() => {
+      let index = 0;
+
+      const signalPath = document.querySelectorAll("#_433_signal path");
+      const txPath = document.querySelectorAll("#radiolinia_signal_tx path");
+
+      if (signalPath) animatePath(signalPath, index);
+      if (txPath) animatePath(txPath, index);
+
+      observer.disconnect();
+    });
+    observer.observe(svgContainer, { childList: true, subtree: true });
+  }
+
+  onMount( async () => {
+    fetchSVG();
     fetchConfig();
-    let index = 0;
-    animatePath(document.querySelectorAll("#_433_signal path"), index);
-    animatePath(document.querySelectorAll("#radiolinia_signal_tx path"), index);
+    observeSVGRender();
   });
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div id="svg-container">
-  <SVG width="60vw" />
+  {@html svgContent}
 </div>
 
 <div id="rocket-info">
@@ -141,7 +173,7 @@
     height: 70vh;
     border-radius: 1vw;
     border: 1px solid #eee;
-    background-color: #242424;
+    background-color: #161616;
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -156,7 +188,7 @@
     width: 30vw;
     border-radius: 1vw;
     border: 1px solid #eee;
-    background-color: #242424;
+    background-color: #161616;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;

@@ -66,30 +66,30 @@
       dispatch("telemetryChange", telem_data);
     };
 
-    socket.onopen = () => {
-      console.log(`WebSocket connection for server/telemetry established`);
-    };
+    // socket.onopen = () => {
+    //   console.log(`WebSocket connection for server/telemetry established`);
+    // };
 
-    socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+    // socket.onerror = (error) => {
+    //   console.error("WebSocket error:", error);
+    // };
 
     socket.onclose = (event) => {
-      console.log(`WebSocket connection closed: ${event.reason}`);
+      // console.log(`WebSocket connection closed: ${event.reason}`);
 
       // Optional: Attempt to reconnect after a delay if the component is still mounted
       if (!event.wasClean) {
         setTimeout(() => {
           console.log(`Reconnecting to WebSocket for server/telemetry...`);
           initializeWebSocket();
-        }, 3000); // Retry after 3 seconds
+        }, 5000); // Retry after 3 seconds
       }
     };
   }
 
-  window.addEventListener('beforeunload', () => {
-      closeSocket();
-    });
+  // window.addEventListener('beforeunload', () => {
+  //     closeSocket();
+  //   });
 
   function reloadPage() {
     window.location.reload();
@@ -110,10 +110,13 @@
     <!-- Logo placeholder -->
     <img src="icons/simba_logo.png" alt="Logo" class="logo" />
     <a href="#" class="{currentView === 'dashboard' ? 'active' : ''}" on:click|preventDefault={() => navigate("dashboard")}
-      >Pre-Flight</a
+      >GS</a
     >
     <a href="#" class="{currentView === 'inflight' ? 'active' : ''}" on:click|preventDefault={() => navigate("inflight")}
-      >In-Flight</a
+      >Rocket</a
+    >
+    <a href="#" class="{currentView === 'map' ? 'active' : ''}" on:click|preventDefault={() => navigate("map")}
+      >Map</a
     >
     <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
       >Cameras</a
@@ -141,7 +144,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #333;
+    background-color: #222;
     color: #fff;
     position: fixed;
     top: 0;
@@ -156,7 +159,7 @@
   .navbar-options {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 25px;
   }
 
   .navbar-options a {

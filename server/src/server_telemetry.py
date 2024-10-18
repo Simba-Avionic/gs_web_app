@@ -53,13 +53,11 @@ class ServerTelemetry:
         self.router = APIRouter()
         self.router.add_api_websocket_route(self.topic_name, self.return_msg)
         self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
-        
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
-        if self.ic:
-            self.db_insert = threading.Thread(target=self.db_thread)
-            self.db_insert.start()
 
         self.connected_clients = set()
+        self.stop_event = asyncio.Event()
+        asyncio.create_task(self.start_sending_data())
 
     def get_system_data(self):
         cpu_usage = psutil.cpu_percent()
@@ -72,7 +70,7 @@ class ServerTelemetry:
 
         try:
             temp = psutil.sensors_temperatures()
-            cpu_temp = temp['cpu-thermal'][0].current if 'cpu-thermal' in temp else None
+            cpu_temp = temp['cpu_thermal'][0].current if 'cpu_thermal' in temp else None
         except Exception:
             cpu_temp = None
 
@@ -88,30 +86,30 @@ class ServerTelemetry:
             "load_15_min": load_15
         }
 
+    async def start_sending_data(self):
+        """
+        A background task that continuously gathers and sends telemetry data to connected clients.
+        """
+        while not self.stop_event.is_set():
+            await asyncio.sleep(self.interval / 1000)
+            data = self.get_system_data()
+            if data:
+                await self.broadcast_message(data)
+
     async def return_msg(self, ws: WebSocket):
         """
         WebSocket endpoint to handle messages for each client and broadcast messages.
         """
         await ws.accept()
         self.connected_clients.add(ws)
-        logger.info(f"New WebSocket client connected: {len(self.connected_clients)} clients connected.")
-
+        # logger.info(f"New WebSocket client {ws} connected: {len(self.connected_clients)} clients connected.")
         try:
-            last_msg = None
             while True:
-                await asyncio.sleep(self.interval / 1000)
-                data = self.get_system_data()
-                if data:
-                    last_msg = data
-                    await self.broadcast_message(data)
-                elif last_msg and (time.time() - int(last_msg['header']['stamp']['sec'])) > (self.interval / 100):
-                    await self.broadcast_message(None)
+                await asyncio.sleep(self.interval / 1000)                
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:
-            self.connected_clients.remove(ws)
-            logger.info(f"WebSocket client disconnected: {len(self.connected_clients)} clients connected.")
-            await ws.close()
+            await self.handle_client_disconnection()
 
     async def broadcast_message(self, message):
         """
@@ -149,16 +147,6 @@ class ServerTelemetry:
                 status_code=e.STATUS_CODE,
                 detail=e.DESCRIPTION,
             )
-
-    def db_thread(self):
-        """
-        Background thread to handle database operations.
-        """
-        while True:
-            data = self.get_system_data()
-            if data:
-                self.ic.insert_data(data)
-            time.sleep(self.interval / 1000)
 
     def stop(self):
         # self.connected_clients.clear()
