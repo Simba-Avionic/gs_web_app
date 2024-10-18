@@ -1,7 +1,6 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rosidl_runtime_py import get_message_slot_types
 import time
 import json
 import os
@@ -32,25 +31,6 @@ def get_slots_and_types_cleaned(ros_msg):
         return list(zip(cleaned_slots, slot_types))  # Pair cleaned slots with their types
     else:
         return None
-
-# "msg_fields": [
-#     {
-#         'val_name': 'raw_val',
-#         'type': 'int32' 
-#     },
-#     {    
-#         'val_name': 'raw_kg', 
-#         'type': 'float' 
-#     },
-#     {    
-#         'val_name': 'vehicle_kg', 
-#         'type': 'float' 
-#     },
-#     {
-#         'val_name': 'fuel_kg', 
-#         'type': 'float'
-#     }
-# ]
 
 def populate_message_fields(msg, field_config, stamp, msg_type_name):
     """
