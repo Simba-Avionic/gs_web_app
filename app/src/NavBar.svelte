@@ -65,19 +65,12 @@
       console.log('WebSocket connection for server/telemetry established');
     };
 
-    // socket.onerror = (error) => {
-    //   console.error("WebSocket error:", error);
-    // };
-
     socket.onclose = (event) => {
-      // console.log(`WebSocket connection closed: ${event.reason}`);
-
-      // Optional: Attempt to reconnect after a delay if the component is still mounted
       if (!event.wasClean) {
         setTimeout(() => {
           console.log(`Reconnecting to WebSocket for server/telemetry...`);
           initializeWebSocket();
-        }, 5000); // Retry after 3 seconds
+        }, 5000);
       }
     };
   }
@@ -96,9 +89,9 @@
   });
 </script>
 
+<!-- svelte-ignore a11y-invalid-attribute -->
 <nav class="navbar">
   <div class="navbar-options">
-    <!-- Logo placeholder -->
     <img src="icons/simba_logo.png" alt="Logo" class="logo" />
     <a href="#" class="{currentView === 'dashboard' ? 'active' : ''}" on:click|preventDefault={() => navigate("dashboard")}
       >GS</a
@@ -112,17 +105,25 @@
     <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
       >Cameras</a
     >
+    <a href="#" class="{currentView === 'grafana' ? 'active' : ''}" on:click|preventDefault={() => navigate("grafana")}
+      >Grafana</a
+    >
+    <a href="#" class="{currentView === 'simulation' ? 'active' : ''}" on:click|preventDefault={() => navigate("simulation")}
+      >Simulation</a
+    >
   </div>
-  <div class="navbar-telemetry">
-    <span>CPU: {telem_data?.cpu_usage ? `${telem_data?.cpu_usage}%` : 'N/A'}</span>
-    <span>Memory: {telem_data?.memory_usage ? `${telem_data?.memory_usage}%` : 'N/A'}</span>
-    <span>Disk: {telem_data?.disk_usage ? `${telem_data?.disk_usage}%` : 'N/A'}</span>
-    <span>Temp: {telem_data?.temperature ? `${telem_data?.temperature.toFixed(2)}°C` : 'N/A'}</span>
-    <span>Load (1m): {telem_data?.load_1_min.toFixed(2) ?? 'N/A'}</span>
-    <span>Load (5m): {telem_data?.load_5_min.toFixed(2) ?? 'N/A'}</span>
-  </div>
-  <div class="navbar-time">
-    {currentTime}
+  <div class="navbar-right">
+    <div class="navbar-telemetry">
+      <span>CPU: {telem_data?.cpu_usage ? `${telem_data?.cpu_usage}%` : 'N/A'}</span>
+      <span>Memory: {telem_data?.memory_usage ? `${telem_data?.memory_usage}%` : 'N/A'}</span>
+      <span>Disk: {telem_data?.disk_usage ? `${telem_data?.disk_usage}%` : 'N/A'}</span>
+      <span>Temp: {telem_data?.temperature ? `${telem_data?.temperature.toFixed(2)}°C` : 'N/A'}</span>
+      <span>Load (1m): {telem_data?.load_1_min.toFixed(2) ?? 'N/A'}</span>
+      <span>Load (5m): {telem_data?.load_5_min.toFixed(2) ?? 'N/A'}</span>
+    </div>
+    <div class="navbar-time">
+      {currentTime}
+    </div>
     <button class="reload-button" on:click={reloadPage}>
       <img src="icons/refresh-icon.svg" alt="Reload" class="reload-icon" />
     </button>
@@ -135,8 +136,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #222;
-    color: #fff;
+    background-color: #181b1f;
     position: fixed;
     top: 0;
     left: 0;
@@ -145,18 +145,24 @@
     z-index: 1000;
     box-sizing: border-box;
     overflow: hidden;
+    height: 60px;
+  }
+
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 
   .navbar-options {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: clamp(5px, 1vw, 30px);
   }
 
   .navbar-options a {
     text-decoration: none;
-    color: #fff;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
     padding: 5px 10px;
     transition: background-color 0.3s, color 0.3s;
@@ -164,30 +170,29 @@
   }
 
   .navbar-options a:hover {
-    background-color: #555;
-    color: #fff;
+    background-color: rgba(204, 204, 220, 0.1);
   }
 
   .navbar-options a:active {
-    background-color: #777;
-    color: #fff;
+    background-color: rgba(204, 204, 220, 0.1);
   }
 
   .navbar-time {
-    font-size: 16px;
+    font-size: 1.5rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 20px;
+    margin-left: auto;
+    justify-content: flex-end;
+    min-width: 65px;
   }
 
   .navbar-telemetry {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 9px;
-    border: 1px solid #aaa;
-    border-radius: 1vw;
-    color: whitesmoke;
+    font-size: 0.7rem;
+    border: 1px solid rgba(204, 204, 220, 0.25);
+    border-radius: 1em;
   }
 
   .navbar-telemetry span {
@@ -201,13 +206,13 @@
   }
 
   .reload-button {
-    background-color: #fff;
-    color: #fff;
+    background-color:#ccccdc;;
     border: none;
     padding: 5px 10px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 1em;
     transition: background-color 0.3s;
+    border-radius: 0.8rem;
   }
 
   .reload-button:hover {
@@ -218,17 +223,9 @@
     width: 20px;
     height: 20px;
     padding-top: 3px;
-    color: #fff;
   }
 
   .active {
     background-color: #555;
-    color: #fff;
-  }
-
-  body {
-    margin: 0;
-    padding-top: 50px;
-    overflow-x: hidden;
   }
 </style>

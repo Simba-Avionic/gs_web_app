@@ -4,10 +4,12 @@
   import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
-  
+
   export let host;
-  // const host = process.env.IP_ADDRESS;
-  // console.log(host);
+
+  // TODO: get those values directly from SVG
+  const maxHeight = 142.89;
+  const maxY = 395.22; // The initial Y position when full
 
   let svgContent = "";
 
@@ -25,20 +27,12 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
-    
-    // x="-23.32" y="448.19" width="142.89" height="37.09"
-    // x="29.58" y="395.22" width="37.07" height="142.89" />
-    
-    // TODO: get those values directly from SVG 
-    const maxHeight = 142.89;
-    const maxY = 395.22; // The initial Y position when full
-
     const svg = document.querySelector("svg");
 
     switch (frame_id) {
       case "LoadCells":
         const { combined_fuel_kg } = telemetryData;
-        let newHeight = ((combined_fuel_kg) / 100) * maxHeight;
+        let newHeight = (combined_fuel_kg / 100) * maxHeight;
         let newY = maxY - (maxHeight + newHeight);
 
         let rect = svg.getElementById("oxidizer_liquid");
@@ -51,10 +45,12 @@
         const valve1 = svg.getElementById("valve1");
         const valve2 = svg.getElementById("valve2");
 
-        if (valve_feed_position > 50) valve1.style.stroke = "url(#gradient_green)";
+        if (valve_feed_position > 50)
+          valve1.style.stroke = "url(#gradient_green)";
         else valve1.style.stroke = "url(#gradient_red)";
 
-        if (valve_vent_position > 50) valve2.style.stroke = "url(#gradient_green)";
+        if (valve_vent_position > 50)
+          valve2.style.stroke = "url(#gradient_green)";
         else valve2.style.stroke = "url(#gradient_red)";
 
         break;
@@ -127,83 +123,82 @@
     observer.observe(svgContainer, { childList: true, subtree: true });
   }
 
-  onMount( async () => {
+  onMount(async () => {
     fetchSVG();
     fetchConfig();
     observeSVGRender();
   });
 </script>
 
-<div id="svg-container">
-  {@html svgContent}
-</div>
+<div id="layout-container">
+  <div id="rocket-info">
+    <h3>ROCKET</h3>
+    {#each rocket_topics as topic}
+      <Field
+        class_name="rocket"
+        on:telemetryChange={handleTelemetryChange}
+        {topic}
+        {host}
+      />
+    {/each}
+  </div>
 
-<div id="rocket-info">
-  <h3>ROCKET</h3>
-  {#each rocket_topics as topic}
-    <Field
-      class_name="rocket"
-      on:telemetryChange={handleTelemetryChange}
-      {topic} {host}
-    />
-  {/each}
-</div>
+  <div id="svg-container">
+    {@html svgContent}
+  </div>
 
-<div id="gs-info">
-  <h3>GROUND SEGMENT</h3>
-  {#each gs_topics as topic}
-    <Field
-      class_name="gs"
-      on:telemetryChange={handleTelemetryChange}
-      {topic} {host}
-    />
-  {/each}
+  <div id="gs-info">
+    <h3>GROUND SEGMENT</h3>
+    {#each gs_topics as topic}
+      <Field
+        class_name="gs"
+        on:telemetryChange={handleTelemetryChange}
+        {topic}
+        {host}
+      />
+    {/each}
+  </div>
 </div>
 
 <style>
 
-  #svg-container {
-    position: absolute;
-    top: 15vh;
-    left: 27vw;
-    width: 60vw;
-    /* margin-top: 5%; */
-  }
+#layout-container {
+  display: grid;
+  grid-template-columns: 2fr 6fr 4fr;
+  grid-template-rows: auto;
+  gap: 1rem;
+  padding: 2rem;
+  margin-top: 60px;
+  height: calc(100vh - 60px);
+  box-sizing: border-box;
+  overflow: hidden;
+  text-align: center;
+}
 
-  #rocket-info {
-    position: absolute;
-    top: 15vh;
-    left: 2vw;
-    width: 24vw;
-    height: 70vh;
-    border-radius: 1vw;
-    border: 1px solid #eee;
-    background-color: #161616;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
+#rocket-info, #svg-container, #gs-info {
+  border-radius: 1rem;
+  max-width: 95%;
+  flex: 1;
+}
 
-  #gs-info {
-    position: absolute;
-    top: 15vh;
-    left: 68vw;
-    height: 80vh;
-    width: 30vw;
-    border-radius: 1vw;
-    border: 1px solid #eee;
-    background-color: #161616;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    overflow-y: scroll;
-  }
+#rocket-info, #gs-info {
+  border: 1px solid rgba(204, 204, 220, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
 
-  @keyframes dash {
-    to {
-      stroke-dasharray: 1000;
-      opacity: 1;
-    }
+#svg-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes dash {
+  to {
+    stroke-dasharray: 1000;
+    opacity: 1;
   }
+}
 </style>

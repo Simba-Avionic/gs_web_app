@@ -5,6 +5,7 @@
   import InFlight from './InFlight.svelte';
   import Cameras from './Cameras.svelte';
   import Map from './Map.svelte'
+  import Grafana from './Grafana.svelte';
 
   let currentView = 'dashboard';
   // @ts-ignore
@@ -21,18 +22,17 @@
   {#if currentView === 'dashboard'}
     <Dashboard {host}/>
   {:else if currentView === 'inflight'}
-    <InFlight />
+    <InFlight {host} />
   {:else if currentView === 'cameras'}
-    <Cameras />
+    <Cameras {host} />
   {:else if currentView === 'map'}
-    <Map />
+    <Map {host} />
+  {:else if currentView === 'grafana'}
+    <Grafana {host} />
   {/if}
   <Gradients />
 </main>
 
 <style>
-  main {
-    width: 90vw;
-  }
 </style>
 

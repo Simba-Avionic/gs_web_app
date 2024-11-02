@@ -15,7 +15,6 @@
 
   onMount(() => {
     // @ts-ignore
-    // const host = process.env.IP_ADDRESS;
     const socket = new WebSocket(
       `ws://${host}:8000/${String(topic.topic_name)}`,
     );
@@ -75,7 +74,7 @@
   }
 </script>
 
-<div class="{class_name}-field">
+<div class="field {class_name}-field">
   <div
     class="status-indicator {temp !== 'None' &&
     temp !== null &&
@@ -83,8 +82,8 @@
       ? 'green-status'
       : 'red-status'}"
   ></div>
-  <div class="{class_name}-field-content">
-    <span class="{class_name}-field-text">{String(topic.topic_name)}</span>
+  <div class="field-content {class_name}-field-content">
+    <span class="field-text {class_name}-field-text">{String(topic.topic_name)}</span>
     {#if telem_data != undefined && telem_data !== "None" && telem_data !== null}
       <span class="timestamp"
         >{rosTimeToFormattedTime(
@@ -94,7 +93,7 @@
       >
       {#each topic.msg_fields as field}
         {#if field.val_name !== "header"}
-          <div class="{class_name}-field-value">
+          <div class="field-value {class_name}-field-value">
             <span>{field.val_name}:</span>
             <span>
               {@html renderField(telem_data, field)}
@@ -110,121 +109,98 @@
 </div>
 
 <style>
-  .gs-field {
-    display: flex;
-    align-items: flex-start;
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-  }
+.field {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  border-bottom: 1px solid rgba(204, 204, 220, 0.5);
+  text-align: left;
+}
 
-  .gs-field-content {
-    flex: 1;
-  }
+.field-content {
+  flex: 1;
+}
 
-  .gs-field:last-child {
-    border-bottom: none;
-  }
+.field:last-child {
+  border-bottom: none;
+}
 
-  .gs-field:first-child {
-    border-top: 1px solid #eee;
-  }
+.field:first-child {
+  border-top: 1px solid rgba(204, 204, 220, 0.5);
+}
 
-  .gs-field-text {
-    flex: 0.2;
-    color: #fff;
-  }
+.field-text {
+  color: #ccccdc;
+}
 
-  .status-indicator {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    margin-right: 8px;
-    margin-top: 2px;
-  }
+.field-value span:first-child {
+  font-weight: bold;
+  margin-right: 4px;
+}
 
-  .gs-field-value {
-    color: whitesmoke;
-    margin-top: 8px;
-  }
+.gs-field {
+  padding: 12px;
+}
 
-  .gs-field-value span:first-child {
-    font-weight: bold;
-    margin-right: 4px;
-  }
+.gs-field-text {
+  flex: 0.2;
+}
 
-  .gs-nested-field {
-    font-weight: bold;
-    padding-left: 50px;
-  }
+.gs-field-value {
+  margin-top: 8px;
+}
 
-  .timestamp {
-    margin-left: 8px; /* Add spacing between topic name and timestamp */
-    color: #aaa; /* Adjust timestamp color */
-    font-size: 0.8em;
-  }
+.gs-nested-field {
+  font-weight: bold;
+  padding-left: 50px;
+}
 
-  .green-status {
-    background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
-    background-size: 100% 100%;
-    animation: gradientAnimation 3s ease infinite;
-  }
+.rocket-field {
+  justify-content: space-between;
+  padding: 10px;
+}
 
-  .orange-status {
-    background: linear-gradient(45deg, orange, yellow);
-    background-size: 100% 100%;
-    animation: orangeGradientAnimation 3s ease infinite;
-  }
+.rocket-field-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
-  .red-status {
-    background: linear-gradient(45deg, red, pink);
-    background-size: 100% 100%;
-    animation: redGradientAnimation 3s ease infinite;
-  }
+.rocket-field-value {
+  margin-top: 5px;
+}
 
-  .rocket-field {
-    white-space: nowrap;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    /* align-items: center; */
-    padding: 10px;
-    border-bottom: 1px solid #eee; /* Add border to the bottom of each field */
-    text-align: left;
-  }
+.status-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
 
-  .rocket-field:last-child {
-    border-bottom: none; /* Remove border from the last field */
-  }
+.timestamp {
+  margin-left: 8px;
+  color: rgba(204, 204, 220, 0.65);
+  font-size: 0.8em;
+}
 
-  .rocket-field-text {
-    flex: 1;
-    color: #fff; /* Text color */
-    min-width: 0; /* Allow text to overflow if needed */
-    overflow: hidden; /* Hide overflow text */
-    white-space: nowrap; /* Prevent text wrapping */
-    text-overflow: ellipsis; /* Show ellipsis if text overflows */
-  }
+.green-status {
+  background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
+  background-size: 100% 100%;
+  animation: gradientAnimation 3s ease infinite;
+}
 
-  .rocket-status-indicator {
-    width: 16px; /* Adjust width as needed */
-    height: 16px; /* Adjust height as needed */
-    border-radius: 50%;
-    margin-right: 10px;
-  }
+.orange-status {
+  background: linear-gradient(45deg, orange, yellow);
+  background-size: 100% 100%;
+  animation: orangeGradientAnimation 3s ease infinite;
+}
 
-  .rocket-field-value {
-    color: whitesmoke; /* Text color */
-  }
-
-  .rocket-field-content {
-    flex: 1;
-  }
-
-  .rocket-field-value span:first-child {
-    font-weight: bold;
-    margin-right: 4px;
-  }
+.red-status {
+  background: linear-gradient(45deg, red, pink);
+  background-size: 100% 100%;
+  animation: redGradientAnimation 3s ease infinite;
+}
 
   @keyframes gradientAnimation {
     0% {

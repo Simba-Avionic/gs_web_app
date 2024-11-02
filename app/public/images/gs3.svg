@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1134.44 823.22">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 823.22">
     <defs>
         <style>
             .cls-1,.cls-7{fill:none;}
-            .cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#fff;}
+            .cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#ccccdc;}
             .cls-2{fill:none;}
             .cls-3{fill:#f15a24;}
             .cls-4{fill:aqua;}
             .cls-5{fill:#f0f;}
             .cls-6{fill:lime;}
             .cls-7{stroke-width:2px;}
-            .cls-8{fill:#fff;}
+            .cls-8{fill:#ccccdc;}
             .cls-9{fill:blue;}
 
             #oxidizer_liquid {

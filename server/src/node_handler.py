@@ -47,7 +47,7 @@ class NodeHandler(Node):
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
         # asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.loop)
-        # self.ic.insert_data(self.curr_msg)
+        self.ic.insert_data(self.curr_msg)
         # asyncio.create_task(self.broadcast_message(self.curr_msg))
 
     def run_event_loop(self):

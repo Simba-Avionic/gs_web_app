@@ -2,6 +2,8 @@
     // @ts-nocheck
     import { onMount } from "svelte";
     import SVG from "../public/images/rocket.svg";
+
+    export let host;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -22,7 +24,7 @@
     }
   
     .camera-item {
-      border: 1px solid #eee;
+      border: 1px solid rgba(204, 204, 220, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;

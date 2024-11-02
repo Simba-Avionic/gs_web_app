@@ -3,7 +3,9 @@
     import { onMount } from "svelte";
     import SVG from "../public/images/rocket_inflight.svg";
     import Field from "./Field.svelte";
-    import MapWidget from './MapWidget.svelte';
+
+    export let host;
+
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -38,7 +40,7 @@
 <style>
 
 .rocket-field {
-    border: 1px solid #eee;
+    border: 1px solid rgba(204, 204, 220, 0.5);
     border-radius: 1vw;
     width: 12vw;
     height: 8vh;

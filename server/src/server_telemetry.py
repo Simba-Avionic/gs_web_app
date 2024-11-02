@@ -148,6 +148,4 @@ class ServerTelemetry:
             )
 
     def stop(self):
-        # self.connected_clients.clear()
-        # self.db_insert.join(timeout=3)
         logger.info(f"ServerTelemetry stopped.")

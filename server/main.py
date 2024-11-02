@@ -50,7 +50,6 @@ async def lifespan(app: FastAPI):
     try:
         st = ServerTelemetry()
         app.include_router(st.router)
-        TOPICS.append(st)
         logger.info("ServerTelemetry initialized successfully!")
     except Exception as e:
         logger.error(f"Error when initializing server telemetry endpoint! {e}")

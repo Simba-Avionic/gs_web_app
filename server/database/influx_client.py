@@ -25,17 +25,24 @@ class InfluxClient:
     
     def insert_data(self, msg_data) -> None:
         p = Point(self.msg_type)
-        try:
-            for key, val in msg_data.items():
-                if key == 'header':
-                    # const milliseconds = secs * 1000 + nsecs / 1000000;
-                    stamp = val['stamp']['sec'] * 1000 + val['stamp']['nanosec'] / 1000000
+
+        def add_fields(prefix, value):
+            if isinstance(value, dict):
+                for key, sub_value in value.items():
+                    add_fields(f"{prefix}_{key}" if prefix else key, sub_value)
+            else:
+                if prefix == "header":
+                    stamp = value['stamp']['sec'] * 1000 + value['stamp']['nanosec'] / 1000000
                     p.time(int(stamp), WritePrecision.MS)
+                elif prefix == "header_stamp_sec" or prefix == "header_stamp_nanosec":
+                    return
+                elif prefix == "header_frame_id":
+                    p.tag("frame_id", value)
                 else:
-                    p.field(key, val)
-            self._insert(p)
-        except Exception as e:
-            logger.exception(e)
+                    p.field(prefix, value)
+        
+        add_fields("", msg_data)
+        self._insert(p)
 
     def _insert(self, p: Point) -> Any:
         write_api = self._client.write_api(write_options=SYNCHRONOUS)
