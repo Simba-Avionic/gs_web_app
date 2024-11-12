@@ -8,16 +8,16 @@ get_python_version() {
   python3 --version 2>&1 | awk '{print $2}' | cut -d'.' -f1,2
 }
 
-# Check if Python 3 is installed and if the version is 3.11 or higher
+# Check if Python 3 is installed and if the version is 3.10 or higher
 if command_exists python3; then
   current_version=$(get_python_version)
-  if (( $(echo "$current_version < 3.11" | bc -l) )); then
-    echo "Python version is below 3.11. Current version: $current_version"
+  if (( $(echo "$current_version == 3.10" | bc -l) )); then
+    echo "Python version is 3.10. No further action needed."
   else
-    echo "Python version is 3.11 or higher. Current version: $current_version"
+    echo "Python version is: $current_version. The app was not tested on this distro."
   fi
 else
-  echo "Python 3 is not installed."
+  echo "Python 3.10 is not installed."
 fi
 
 # Docker installation

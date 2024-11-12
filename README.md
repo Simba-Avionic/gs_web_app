@@ -10,7 +10,7 @@ Single entry looks like this:
 {
     "topic_name": "example/topic",
     "msg_type": "ExampleTopic", # Name of .msg file
-    "interval": 1000, # How often will the NodeHandler try to obtain new msg (in ms)
+    "interval": 1000,
     "place": "gs", # from where the topic is coming from (possible values: "gs", "rocket") 
     "msg_fields": [ # std_msgs/Header is required in every msg type!
         {
@@ -37,13 +37,14 @@ Single entry looks like this:
 ```
 
 ## Prerequisites
+- Ubuntu 22.04
 - ROS2 distro e.g. Humble (https://docs.ros.org/en/humble/Installation.html)
 - Docker (https://docs.docker.com/engine/install/)
 
 ## Setup
 0. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
 1. Run the `install.sh` script.
-App was tested with Python3.10 so make sure you have it installed.
+App was only tested with Python3.10 so make sure you have it installed.
 
 ## Launching the app (step by step)
 0. Activate the Python environment
@@ -52,34 +53,34 @@ App was tested with Python3.10 so make sure you have it installed.
     source venv/bin/activate
     ```
     
-2. Make sure to source ROS environment
+1. Make sure to source ROS environment
    
     ```bash
     source install/setup.bash
     ```
     
-4. Run the database
+2. Run the database
    
    ```bash
    cd server/database
    docker compose up --env-file <path_to_env_file> -d
    ```
    
-7. Run the server
+3. Run the server
    
    ```bash
    cd server
    python3 main.py
    ```
    
-9. Run the frontend
+4. Run the frontend
    
     ```bash
     cd app
     npm run dev
     ```
     
-12. (Optional) Run the Grafana visualisation
+5. Run the Grafana visualisation
    
     ```bash
     cd grafana
@@ -87,7 +88,7 @@ App was tested with Python3.10 so make sure you have it installed.
     docker compose up -d
     ```
     
-15. (Optional) Run example topics
+6. (Optional) Run example topics
     ```bash
     ./sim_nodes/run_all_sim_nodes.sh
     ```
