@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
 
-  import { slide } from 'svelte/transition';
+  import { slide } from "svelte/transition";
   let showTelemetry = true;
 
   function toggleTelemetry() {
@@ -59,22 +59,23 @@
 
   function renderField(telemData, field) {
     const value = telemData[field.val_name];
-    
+
     // Check if the field is an object (like LoadCell)
-    if (typeof value === 'object' && value !== null) {
-      return Object.keys(value).map(key => {
-        return `
+    if (typeof value === "object" && value !== null) {
+      return Object.keys(value)
+        .map((key) => {
+          return `
           <div class="${class_name}-nested-field">
             <span>${key}:</span>
             <span>${parseFloat(value[key]).toFixed(2)}</span>
           </div>
         `;
-      }).join('');
+        })
+        .join("");
     } else {
       if (field.type.includes("float")) {
         return `<span>${parseFloat(value).toFixed(2)}</span>`;
-      }
-      else {
+      } else {
         return `<span>${value}</span>`;
       }
     }
@@ -90,7 +91,9 @@
       : 'red-status'}"
   ></div>
   <div class="field-content {class_name}-field-content">
-    <span class="field-text {class_name}-field-text">{String(topic.topic_name)}</span>
+    <span class="field-text {class_name}-field-text"
+      >{String(topic.topic_name)}</span
+    >
     {#if telem_data != undefined && telem_data !== "None" && telem_data !== null}
       <span class="timestamp"
         >{rosTimeToFormattedTime(
@@ -99,130 +102,161 @@
         )}</span
       >
       {#if showTelemetry}
-      <div in:slide={{ duration: 300 }} out:slide={{ duration: 300 }} class="telemetry-data">
-      {#each topic.msg_fields as field}
-        {#if field.val_name !== "header"}
-          <div class="field-value {class_name}-field-value">
-            <span>{field.val_name}:</span>
-            <span>
-              {@html renderField(telem_data, field)}
-              {#if field.unit}
-                {" " + field.unit}
-              {/if}
-            </span>
+        <div
+          in:slide={{ duration: 300 }}
+          out:slide={{ duration: 300 }}
+          class="telemetry-data"
+        >
+        <div class="fields-column">
+          {#each topic.msg_fields as field}
+            {#if field.val_name !== "header"}
+              <div class="field-value {class_name}-field-value">
+                <span>{field.val_name}:</span>
+                <span>
+                  {@html renderField(telem_data, field)}
+                  {#if field.unit}
+                    {" " + field.unit}
+                  {/if}
+                </span>
+              </div>
+            {/if}
+          {/each}
+        </div>
+          <div class="grafana-panel">
+            <!-- <iframe
+              title="Grafana Panel"
+              src="http://{host}:3001/d-solo/jp2137/simba-dashboard?orgId=1&refresh=1s&from=now-5m&to=now&panelId=tanking/load_cells/combined_raw_kg"
+              width="250"
+              height="150"
+              frameborder="0"
+            >
+            </iframe> -->
           </div>
-        {/if}
-      {/each}
-    </div>
+        </div>
       {/if}
     {/if}
   </div>
   <button on:click={toggleTelemetry} class="toggle-button">
-    {showTelemetry ? '⮝' : '⮟'}
+    {showTelemetry ? "⮝" : "⮟"}
   </button>
 </div>
 
 <style>
 
-.toggle-button {
-  cursor: pointer;
-  background: none;
-  border: 1px solid rgba(204, 204, 220, 0.5);
-  border-radius: 0.5rem;
-}
+  .fields-column {
+    flex: 1;
+  }
 
-.field {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px;
-  border-bottom: 1px solid rgba(204, 204, 220, 0.5);
-  text-align: left;
-}
+  .telemetry-data {
+    display: flex;
+    gap: 5px;
+  }
 
-.field-content {
-  flex: 1;
-}
+  .grafana-panel {
+    display: flex;
+    align-items: center;
+  }
 
-.field:last-child {
-  border-bottom: none;
-}
+  .toggle-button {
+    cursor: pointer;
+    background: none;
+    border: 1px solid rgba(204, 204, 220, 0.5);
+    border-radius: 0.5rem;
+  }
 
-.field:first-child {
-  border-top: 1px solid rgba(204, 204, 220, 0.5);
-}
+  .field {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    border-bottom: 1px solid rgba(204, 204, 220, 0.5);
+    text-align: left;
+    /* justify-content: space-between; */
+  }
 
-.field-text {
-  color: #ccccdc;
-}
+  .field-content {
+    flex: 1;
+  }
 
-.field-value span:first-child {
-  font-weight: bold;
-  margin-right: 4px;
-}
+  .field:last-child {
+    border-bottom: none;
+  }
 
-.gs-field {
-  padding: 12px;
-}
+  .field:first-child {
+    border-top: 1px solid rgba(204, 204, 220, 0.5);
+  }
 
-.gs-field-text {
-  flex: 0.2;
-}
+  .field-text {
+    color: #ccccdc;
+  }
 
-.gs-field-value {
-  margin-top: 8px;
-}
+  .field-value span:first-child {
+    font-weight: bold;
+    margin-right: 4px;
+  }
 
-.gs-nested-field {
-  font-weight: bold;
-  padding-left: 50px;
-}
+  .gs-field {
+    padding: 12px;
+  }
 
-.rocket-field {
-  justify-content: space-between;
-  padding: 10px;
-}
+  .gs-field-text {
+    flex: 0.2;
+  }
 
-.rocket-field-text {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
+  .gs-field-value {
+    margin-top: 8px;
+  }
 
-.rocket-field-value {
-  margin-top: 5px;
-}
+  .gs-nested-field {
+    font-weight: bold;
+    padding-left: 50px;
+  }
 
-.status-indicator {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 8px;
-}
+  .rocket-field {
+    justify-content: space-between;
+    padding: 10px;
+  }
 
-.timestamp {
-  margin-left: 8px;
-  color: rgba(204, 204, 220, 0.65);
-  font-size: 0.8em;
-}
+  .rocket-field-text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
-.green-status {
-  background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
-  background-size: 100% 100%;
-  animation: gradientAnimation 3s ease infinite;
-}
+  .rocket-field-value {
+    margin-top: 5px;
+  }
 
-.orange-status {
-  background: linear-gradient(45deg, orange, yellow);
-  background-size: 100% 100%;
-  animation: orangeGradientAnimation 3s ease infinite;
-}
+  .status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
 
-.red-status {
-  background: linear-gradient(45deg, red, pink);
-  background-size: 100% 100%;
-  animation: redGradientAnimation 3s ease infinite;
-}
+  .timestamp {
+    margin-left: 8px;
+    color: rgba(204, 204, 220, 0.65);
+    font-size: 0.8em;
+  }
+
+  .green-status {
+    background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
+    background-size: 100% 100%;
+    animation: gradientAnimation 3s ease infinite;
+  }
+
+  .orange-status {
+    background: linear-gradient(45deg, orange, yellow);
+    background-size: 100% 100%;
+    animation: orangeGradientAnimation 3s ease infinite;
+  }
+
+  .red-status {
+    background: linear-gradient(45deg, red, pink);
+    background-size: 100% 100%;
+    animation: redGradientAnimation 3s ease infinite;
+  }
 
   @keyframes gradientAnimation {
     0% {

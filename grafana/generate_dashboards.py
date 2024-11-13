@@ -119,7 +119,6 @@ with open(config_file_path, 'r') as file:
     CONFIG = json.load(file)
 
 target_data["id"] = random.randint(0, 1000)
-target_data["uid"] = 2137
 idx = 0
 
 def import_message_type(msg_type):
@@ -137,7 +136,6 @@ def populate_field(msg_field):
 			msg_fields = [
 				{'val_name': f"{msg_field['val_name']}_{key}", 'type': value} for key, value in data.items()
 			]
-		# print("msg_fields:", msg_fields)
 		for msg_field in msg_fields:
 			populate_field(msg_field)
 
@@ -148,8 +146,7 @@ def populate_field(msg_field):
 		if 'unit' in msg_field:
 			template_tmp['fieldConfig']['defaults']['unit'] = process_unit(msg_field['unit'])
 		template_tmp['title'] = f"{msg['topic_name']}/{msg_field['val_name']}"
-		template_tmp['id'] = idx
-		# template_tmp['targets'][0]['query'] = f'from(bucket: "simba_bucket")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r["_measurement"] == "{msg["msg_type"]}")\r\n  |> filter(fn: (r) => r["_field"] == "{msg_field["val_name"]}")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\r\n  |> yield(name: "last")'
+		template_tmp['id'] = f"{msg['topic_name']}/{msg_field['val_name']}"
 		
 		query = (
 			f'from(bucket: "simba_bucket")\n'

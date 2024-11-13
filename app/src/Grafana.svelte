@@ -6,7 +6,7 @@
 
     onMount(() => {
         const iframe = document.getElementById("grafana-iframe");
-        iframe.src = `http://${host}:3001/d/2137/simba-dashboard?refresh=1s`;
+        iframe.src = `http://${host}:3001/d/jp2137/simba-dashboard?refresh=1s`;
     })
 
 </script>
