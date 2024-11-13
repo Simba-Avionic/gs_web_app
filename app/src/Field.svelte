@@ -2,6 +2,13 @@
   import { onMount, onDestroy } from "svelte";
   import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
 
+  import { slide } from 'svelte/transition';
+  let showTelemetry = true;
+
+  function toggleTelemetry() {
+    showTelemetry = !showTelemetry;
+  }
+
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
@@ -91,6 +98,8 @@
           telem_data.header.stamp.nanosec,
         )}</span
       >
+      {#if showTelemetry}
+      <div in:slide={{ duration: 300 }} out:slide={{ duration: 300 }} class="telemetry-data">
       {#each topic.msg_fields as field}
         {#if field.val_name !== "header"}
           <div class="field-value {class_name}-field-value">
@@ -104,11 +113,24 @@
           </div>
         {/if}
       {/each}
+    </div>
+      {/if}
     {/if}
   </div>
+  <button on:click={toggleTelemetry} class="toggle-button">
+    {showTelemetry ? '⮝' : '⮟'}
+  </button>
 </div>
 
 <style>
+
+.toggle-button {
+  cursor: pointer;
+  background: none;
+  border: 1px solid rgba(204, 204, 220, 0.5);
+  border-radius: 0.5rem;
+}
+
 .field {
   display: flex;
   align-items: flex-start;

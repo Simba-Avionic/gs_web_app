@@ -108,7 +108,7 @@ class ServerTelemetry:
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:
-            await self.handle_client_disconnection()
+            await self.connected_clients.remove(ws)
 
     async def broadcast_message(self, message):
         """

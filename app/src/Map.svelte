@@ -5,8 +5,13 @@
     // @ts-ignore
     import L from "leaflet";
 
-    let map;
     export let host;
+
+    let map;
+    let marker;
+    let path = [];
+    let pathLine;
+    let showPath = true;
     let socket;
     let data;
 
@@ -16,6 +21,15 @@
         iconAnchor: [19, 38],
         popupAnchor: [0, -38],
     });
+
+    const loadPathFromLocalStorage = () => {
+        const savedPath = localStorage.getItem('markerPath');
+        return savedPath ? JSON.parse(savedPath) : [];
+    }
+
+    const savePathToLocalStorage = () => {
+        localStorage.setItem('markerPath', JSON.stringify(path));
+    };
 
     onMount(() => {
         map = L.map("map", {
@@ -35,15 +49,21 @@
         L.control.zoom({ position: "bottomright" }).addTo(map);
 
         map.addLayer(layer);
-        const marker = L.marker([54.4034, 18.5166], { icon: customIcon }).addTo(
-            map,
-        );
+        marker = L.marker([54.4034, 18.5166], { icon: customIcon }).addTo(map);
+        
+        path = loadPathFromLocalStorage();
+        pathLine = L.polyline(path, { color: "orange" }).addTo(map);
 
         socket = new WebSocket(`ws://${host}:8000/rocket/telemetry`);
         socket.onmessage = (event) => {
             data = JSON.parse(event.data);
             if (data.latitude && data.longitude) {
-                marker.setLatLng([data.latitude, data.longitude]);
+                const newLatLng = [data.latitude, data.longitude];
+                marker.setLatLng(newLatLng);
+
+                path.push(newLatLng);
+                pathLine.setLatLngs(path);
+                savePathToLocalStorage();
             }
         };
         return () => {
@@ -52,11 +72,32 @@
             }
         };
     });
+
+    const togglePath = () => {
+        showPath = !showPath;
+        if (showPath) {
+            pathLine.addTo(map);
+        } else {
+            pathLine.removeFrom(map);
+        }
+    };
+
+    const clearPath = () => {
+        path = [];
+        pathLine.setLatLngs([]);
+        localStorage.removeItem('markerPath');
+    };
 </script>
 
 <div id="map">
     <div class="info-widget">
-        <h1>Info</h1>
+        <div class="buttons">
+            <h1>Info</h1>
+            <button class="button" on:click={togglePath}>
+                {showPath ? "Hide Path" : "Show Path"}
+            </button>
+            <button class="button" on:click={clearPath}>Clear Path</button>
+        </div>
         <div class="field">
             <div
                 class="status-indicator {data !== 'None' &&
@@ -66,7 +107,7 @@
                     : 'red-status'}"
             ></div>
             <div class="field-content">
-                <span class="field-text">Position</span>
+                <span class="field-text">LOCATION</span>
                 {#if data != undefined && data !== "None" && data !== null}
                     <span class="timestamp"
                         >{rosTimeToFormattedTime(
@@ -99,12 +140,36 @@
         position: relative;
     }
 
+    .buttons {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 0.2rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        font-weight: 500;
+        cursor: pointer;
+        background: rgb(61, 113, 217);
+    }
+
+    .button:hover {
+        background-color: rgb(90, 134, 222);
+        transition: background-color 0.3s, color 0.3s;
+    }
+
     .info-widget {
         position: absolute;
         top: 100px;
         left: 80%;
         width: 15%;
-        height: 30%;
+        height: 25%;
         padding: 15px;
         border: 1px solid rgba(204, 204, 220, 0.5);
         border-radius: 1rem;
@@ -117,6 +182,7 @@
         overflow-y: auto;
         line-height: 1.5rem;
         font-size: 0.9rem;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     }
 
     .field {

@@ -40,9 +40,9 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
             msg.header.frame_id = msg_type_name
         elif field_type in ('float32', 'float64', 'float'):
             if field_name == 'latitude':
-                setattr(msg, field_name, random.uniform(54.30, 54.40))
+                setattr(msg, field_name, random.uniform(54.20, 54.45))
             elif field_name == 'longitude':
-                setattr(msg, field_name, random.uniform(18.60, 18.70))
+                setattr(msg, field_name, random.uniform(18.50, 18.75))
             else:
                 setattr(msg, field_name, random.uniform(-100.0, 100.0))
         elif field_type in ('int8', 'int32', 'uint32', 'int'):

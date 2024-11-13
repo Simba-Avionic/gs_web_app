@@ -4,6 +4,7 @@
   import SVG from "../public/images/gs3.svg";
   import Field from "./Field.svelte";
   import { animatePath } from "./lib/Utils.svelte";
+  import { dndzone } from "svelte-dnd-action";
 
   export let host;
 
@@ -16,6 +17,11 @@
   let topics = [];
   let gs_topics = [];
   let rocket_topics = [];
+
+  function handleReorder(event) {
+    gs_topics = event.detail.items;
+    localStorage.setItem('gs_topics', JSON.stringify(gs_topics));
+  }
 
   function handleTelemetryChange(event) {
     const telemetryData = event.detail;
@@ -102,7 +108,13 @@
     topics = data.topics;
 
     rocket_topics = topics.filter((topic) => topic.place === "rocket");
-    gs_topics = topics.filter((topic) => topic.place === "gs");
+
+    const savedTopics = localStorage.getItem('gs_topics');
+    if (savedTopics) {
+        gs_topics = JSON.parse(savedTopics);
+    } else {
+      gs_topics = topics.filter((topic) => topic.place === "gs");
+    }
 
     console.log(topics);
   }
@@ -149,7 +161,8 @@
 
   <div id="gs-info">
     <h3>GROUND SEGMENT</h3>
-    {#each gs_topics as topic}
+    <div class="fields-container" use:dndzone={{ items: gs_topics, flipDurationMs: 50 }} on:consider={handleReorder} on:finalize={handleReorder}>
+      {#each gs_topics as topic (topic.id)}
       <Field
         class_name="gs"
         on:telemetryChange={handleTelemetryChange}
@@ -157,6 +170,7 @@
         {host}
       />
     {/each}
+    </div>
   </div>
 </div>
 
