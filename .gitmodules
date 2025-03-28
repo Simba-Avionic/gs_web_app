@@ -4,3 +4,6 @@
 [submodule "gs_interfaces"]
 	path = gs_interfaces
 	url = https://github.com/Simba-Avionic/gs_interfaces.git
+[submodule "mavlink_defs/pymavlink"]
+	path = mavlink_defs/pymavlink
+	url = https://github.com/ArduPilot/pymavlink.git

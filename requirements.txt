@@ -11,3 +11,4 @@ catkin-pkg
 numpy
 pyyaml
 psutil
+pyserial

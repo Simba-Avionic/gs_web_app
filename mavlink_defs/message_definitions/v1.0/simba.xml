@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<mavlink>
+
+    <include>common.xml</include>
+    <!-- <version>9</version> -->
+    <dialect>3</dialect>
+
+    <enums>
+        <!-- Enums are defined here (optional) -->
+    </enums>
+
+    <messages>
+        <message id="68" name="SIMBA_ACTUATOR">
+            <description>Status update from actuator.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="values">Actuators' values - each bit represents one actuator</field>
+            <field type="uint8_t" name="errors">Actuators' errors - each bit represents one actuator</field>
+        </message>
+        <message id="71" name="SIMBA_TANK_TEMPERATURE_1">
+            <description>Readings from tank temperature sensors.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint16_t" name="temp">Temperature from tank</field>
+            <field type="uint8_t" name="sensor_error">Sensor health</field>
+        </message>
+        <message id="78" name="SIMBA_TANK_TEMPERATURE_2">
+            <description>Readings from tank temperature sensors.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint16_t" name="temp">Temperature from tank</field>
+            <field type="uint8_t" name="sensor_error">Sensor health</field>
+        </message>
+        <message id="79" name="SIMBA_TANK_PRESSURE_1">
+            <description>Readings from tank pressure sensor.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="float" name="pressure">Pressure from tank</field>
+            <field type="uint8_t" name="error">Sensor health</field>
+        </message>
+        <message id="88" name="SIMBA_TANK_PRESSURE_2">
+            <description>Readings from tank pressure sensor.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="float" name="pressure">Pressure from tank</field>
+            <field type="uint8_t" name="error">Sensor health</field>
+        </message>
+        <message id="94" name="SIMBA_GPS">
+            <description></description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="int32_t" name="lat">Latitude</field>
+            <field type="int32_t" name="lon">Longitude</field>
+            <field type="int32_t" name="alt">Altitude</field>
+        </message>
+        <message id="95" name="SIMBA_MAX_ALTITUDE">
+            <description></description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="int32_t" name="alt">Max altitude</field>
+        </message>
+        <message id="96" name="SIMBA_CMD_VALVE_CONTROL">
+            <description></description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="cmd_valve_control">Command used to control valves</field>
+        </message>
+        <message id="97" name="SIMBA_HEARTBEAT_1">
+            <description>Health from first onboard computers.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="computer_status">Status of computer</field>
+        </message>
+        <message id="98" name="SIMBA_HEARTBEAT_2">
+            <description>Health from second onboard computer.</description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="computer_status">Status of computer</field>
+        </message>
+        <message id="99" name="SIMBA_CMD_HOLD">
+            <description></description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="cmd_hold">Command for hold</field>
+        </message>
+        <message id="145" name="SIMBA_CMD_ABORT">
+            <description></description>
+            <field type="uint64_t" name="timestamp">Timestamp (time since system boot)</field>
+            <field type="uint8_t" name="cmd_abort">Command for abort</field>
+        </message>
+    </messages>
+
+</mavlink>

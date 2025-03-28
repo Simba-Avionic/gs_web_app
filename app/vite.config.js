@@ -8,6 +8,9 @@ dotenv.config({ path: resolve(__dirname, '../.env') });
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    force: process.env.VITE_FORCE_REBUILD === "true",
+  },
   server: {
     host: process.env.IP_ADDRESS || 'localhost',
     port: parseInt(process.env.PORT) || 2137
