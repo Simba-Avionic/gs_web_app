@@ -63,7 +63,7 @@ App was only tested with Python3.10 so make sure you have it installed.
    
    ```bash
    cd server/database
-   docker compose up --env-file <path_to_env_file> -d
+   docker compose --env-file <path_to_env_file> up -d
    ```
    
 3. Run the server
