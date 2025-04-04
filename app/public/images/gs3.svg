@@ -4,13 +4,13 @@
             .cls-1,.cls-7{fill:none;}
             .cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7{stroke:#ccccdc;}
             .cls-2{fill:none;}
-            .cls-3{fill:#f15a24;}
-            .cls-4{fill:aqua;}
-            .cls-5{fill:#f0f;}
-            .cls-6{fill:lime;}
+            .cls-3{fill:#fa6400;}
+            .cls-4{fill:#5694f2;}
+            .cls-5{fill:#e0b400;}
+            .cls-6{fill:#77be69;}
             .cls-7{stroke-width:2px;}
             .cls-8{fill:#ccccdc;}
-            .cls-9{fill:blue;}
+            .cls-9{fill:#1857b8;}
 
             #oxidizer_liquid {
                 transition: height 1s ease, y 1s ease;

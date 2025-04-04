@@ -1,10 +1,11 @@
 # Mission Control App
 Responsible for displaying current state of a rocket and the whole ground segment system. <br>
 In a nutshell it dynamically creates instances of NodeHandler which are responsible for subscribing to single ROS topic,
-creating websocket to send data to frontend and finally creating thread to insert received data to InfluxDB.
+through websocket it sends data to frontend and finally creates thread to insert received data to InfluxDB.
 
-This NodeHandlers are populated based on **config.json** file.
-Single entry looks like this:
+Those Node Handlers are populated based on `config.json` file.
+It's worth mentioning that messages related to rocket are send through *MAVLink protocol* and because of that they need to be parsed and copied into the `config.json` using `xml_to_json.py` script inside `mavlink` directory
+Single entry of the `config.json` looks like this:
 
 ```json
 {
@@ -38,6 +39,7 @@ Single entry looks like this:
 
 ## Prerequisites
 - Ubuntu 22.04
+- Python 3.10 (https://www.python.org/downloads/release/python-31012/)
 - ROS2 distro e.g. Humble (https://docs.ros.org/en/humble/Installation.html)
 - Docker (https://docs.docker.com/engine/install/)
 

@@ -45,13 +45,13 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
                 setattr(msg, field_name, random.uniform(18.50, 18.75))
             else:
                 setattr(msg, field_name, random.uniform(-100.0, 100.0))
-        elif field_type in ('int8', 'int32', 'uint32', 'int'):
+        elif field_type in ('int8', 'uint8', 'uint32', 'int32', 'uint32', 'uint64', 'int', 'int16', 'uint16','int64'):
             setattr(msg, field_name, random.randint(0, 100))
         elif field_type == 'bool':
             setattr(msg, field_name, True)
         else:
             # Dynamically import and set nested message types
-            package_name, message_name = field_type.split('/')
+            _, message_name = field_type.split('/')
             nested_msg_type = import_message_type(message_name)
             nested_msg = nested_msg_type()
 

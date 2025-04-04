@@ -17,11 +17,13 @@ from src.server_telemetry import ServerTelemetry
 from rclpy.executors import MultiThreadedExecutor
 from dotenv import dotenv_values, find_dotenv
 
-MAIN_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.paths import CONFIG_JSON_PATH
+
 CONFIG = None
-CONFIG_PATH = os.path.join(MAIN_FILE_DIR, "../config.json")
 TOPICS = []  # Global variable to keep track of NodeHandler instances
 env_values = dotenv_values(find_dotenv())
+TILES_DIRECTORY = "../app/public/tiles"
 
 def shutdown():
     global TOPICS
@@ -38,10 +40,15 @@ def load_main_config(path_to_conf):
     with open(path_to_conf, "r") as f:
         CONFIG = json.load(f)
 
+def signal_handler(sig, frame):
+    logger.info('SIGINT received, shutting down...')
+    shutdown()
+    sys.exit(0)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     rclpy.init()
-    load_main_config(CONFIG_PATH)
+    load_main_config(CONFIG_JSON_PATH)
     executor = MultiThreadedExecutor()
 
     global TOPICS
@@ -86,13 +93,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TILES_DIRECTORY = "../app/public/tiles"
-
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
 def get_tile(layer: str, z: int, x: int, y: int):
     tile_path = os.path.join(TILES_DIRECTORY, layer, str(z), str(x), f"{y}.png")
-    # logger.debug(tile_path)
-    
     if not os.path.isfile(tile_path):
         raise HTTPException(status_code=404, detail="Tile not found")
 
@@ -101,11 +104,6 @@ def get_tile(layer: str, z: int, x: int, y: int):
 @app.get("/config")
 async def get_config():
     return JSONResponse(content=CONFIG)
-
-def signal_handler(sig, frame):
-    logger.info('SIGINT received, shutting down...')
-    shutdown()
-    sys.exit(0)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
