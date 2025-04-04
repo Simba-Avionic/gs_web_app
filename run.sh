@@ -52,6 +52,12 @@ function generate_mavlink_definitions() {
     echo "MAVLink definitions generated successfully."
 }
 
+function build_msgs() {
+    generate_mavlink_definitions
+    build_messages
+    wait
+}
+
 function run_and_build_all() {
     generate_mavlink_definitions
     build_messages
@@ -122,6 +128,9 @@ case $1 in
         ;;
     help)
         show_help
+        ;;
+    build_msgs)
+        build_msgs
         ;;
     *)
         echo "Invalid option: $1"
