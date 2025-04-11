@@ -72,6 +72,7 @@ fi
 # Check if the 'venv' directory exists
 if [ ! -d "venv" ]; then
     echo "Creating virtual environment in 'venv' directory..."
+    sudo apt install python3.10-venv
     python3 -m venv venv
 else
     echo "'venv' directory already exists. No action needed."
@@ -153,16 +154,20 @@ install_colcon() {
 }
 
 if command -v colcon &> /dev/null; then
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
     echo "Running colcon build for the 'gs_interfaces' package..."
     if ! colcon build --packages-select gs_interfaces; then
         echo "colcon build failed. Attempting to install colcon and retry the build."
         install_colcon
         echo "Retrying colcon build..."
+        source /opt/ros/humble/setup.bash
         colcon build --packages-select gs_interfaces
     else
         echo "colcon build completed successfully!"
     fi
 else
+    source /opt/ros/humble/setup.bash
     echo "colcon is not installed. Installing colcon using apt..."
     install_colcon
 

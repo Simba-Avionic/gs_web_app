@@ -14,7 +14,7 @@ OUTPUT_DIR=pymavlink/dialects/v10
 git submodule update --init --recursive
 
 # Run the mavgen command
-python -m pymavlink.tools.mavgen --lang=Python --output=$OUTPUT_FILE_NAME $XML_FILE
+python3 -m pymavlink.tools.mavgen --lang=Python --output=$OUTPUT_FILE_NAME $XML_FILE
 
 # Check if the mavgen command was successful
 if [ $? -ne 0 ]; then
@@ -29,6 +29,6 @@ cp message_definitions/v1.0/$OUTPUT_FILE_NAME.xml $OUTPUT_DIR/$OUTPUT_FILE_NAME.
 cd pymavlink
 
 # Setup pymavlink libraries
-python setup.py install --user
+python3 setup.py install --user
 
 echo "Setup completed successfully"

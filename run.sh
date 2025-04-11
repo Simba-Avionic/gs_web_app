@@ -3,7 +3,7 @@
 function build_ros_messages() {
     echo "Building ROS 2 messages..."
     cd gs_interfaces || exit
-    python generate_ros2_messages.py
+    python3 generate_ros2_messages.py
     if [ $? -ne 0 ]; then
         echo "Failed to generate ROS 2 messages."
         exit 1
@@ -22,6 +22,7 @@ function build_ros_messages() {
 function generate_mavlink_definitions() {
     echo "Generating MAVLink definitions using setup.sh..."
     cd mavlink|| exit
+    chmod +x setup.sh
     ./setup.sh simba message_definitions/v1.0/simba.xml
     if [ $? -ne 0 ]; then
         echo "Failed to generate MAVLink definitions."
@@ -32,13 +33,13 @@ function generate_mavlink_definitions() {
 }
 
 function run_custom_ros_messages() {
-    echo "Running custom messages (python sim_nodes/run.py)..."
-    python sim_nodes/run.py
+    echo "Running custom messages (python3 sim_nodes/run.py)..."
+    python3 sim_nodes/run.py
 }
 
 function run_mavlink_receiver() {
-    echo "Running MAVLink receiver... (python mavlink/receiver.py)"
-    python mavlink/receiver.py
+    echo "Running MAVLink receiver... (python3 mavlink/receiver.py)"
+    python3 mavlink/receiver.py
 
     if [ $? -ne 0 ]; then
         echo "Failed to run MAVLink receiver."
@@ -60,7 +61,7 @@ function run_database() {
 function run_grafana() {
     cd grafana || exit
     echo "Generating Grafana dashboards..."
-    python generate_dashboards.py
+    python3 generate_dashboards.py
     
     echo "Starting Grafana (docker-compose up -d)..."
     sudo docker compose up -d
@@ -76,9 +77,9 @@ function run_app() {
 }
 
 function run_server() {
-    echo "Starting the server (python main.py)..."
+    echo "Starting the server (python3 main.py)..."
     cd server || exit
-    python main.py
+    python3 main.py
     cd ..
 }
 
@@ -118,8 +119,8 @@ function show_help() {
     echo "Options:"
     echo "  build_ros_messages       Build ROS 2 messages and gs_interfaces package"
     echo "  run_app                  Start the app (npm run dev)"
-    echo "  run_server               Start the server (python main.py)"
-    echo "  run_custom_ros_messages  Run custom messages (python sim_nodes/run.py)"
+    echo "  run_server               Start the server (python3 main.py)"
+    echo "  run_custom_ros_messages  Run custom messages (python3 sim_nodes/run.py)"
     echo "  generate_mavlink         Generate MAVLink definitions using setup.sh"
     echo "  build_msgs               Build MAVLink and ROS 2 messages"
     echo "  run                      Start the server and app"
