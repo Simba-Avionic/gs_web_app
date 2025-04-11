@@ -42,12 +42,15 @@ Single entry of the `config.json` looks like this:
 - Python 3.10 (https://www.python.org/downloads/release/python-31012/)
 
 ## Setup
-1. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
+1. Clone this repo and its submodules 
+    ```
+    git clone --recursive https://github.com/Simba-Avionic/gs_web_app
+    ```
 2. Run the `install.sh` script. It wll try to install *Docker, ROS2, npm* and some related packages.
-If script fails, try to install ROS2 and/or Docker manually:
-- ROS2 Humble (https://docs.ros.org/en/humble/Installation.html)
-- Docker (https://docs.docker.com/engine/install/)
-App was only tested with Python3.10 so make sure you have it installed.
+    If script fails, try to install ROS2 and/or Docker manually:
+    - ROS2 Humble (https://docs.ros.org/en/humble/Installation.html)
+    - Docker (https://docs.docker.com/engine/install/)
+    App was only tested with Python3.10 so make sure you have it installed.
 
 ## Launching the app (step by step)
 1. Activate the Python environment
