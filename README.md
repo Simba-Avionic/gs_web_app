@@ -40,61 +40,37 @@ Single entry of the `config.json` looks like this:
 ## Prerequisites
 - Ubuntu 22.04
 - Python 3.10 (https://www.python.org/downloads/release/python-31012/)
-- ROS2 distro e.g. Humble (https://docs.ros.org/en/humble/Installation.html)
-- Docker (https://docs.docker.com/engine/install/)
 
 ## Setup
-0. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
-1. Run the `install.sh` script.
+1. Clone this repo and its submodules `git clone --recursive https://github.com/Simba-Avionic/gs_web_app`
+2. Run the `install.sh` script. It wll try to install *Docker, ROS2, npm* and some related packages.
+If script fails, try to install ROS2 and/or Docker manually:
+- ROS2 Humble (https://docs.ros.org/en/humble/Installation.html)
+- Docker (https://docs.docker.com/engine/install/)
 App was only tested with Python3.10 so make sure you have it installed.
 
 ## Launching the app (step by step)
-0. Activate the Python environment
+1. Activate the Python environment
 
     ```bash
     source venv/bin/activate
     ```
     
-1. Make sure to source ROS environment
+2. Make sure to source ROS environment
    
     ```bash
     source install/setup.bash
     ```
     
-2. Run the database
-   
-   ```bash
-   cd server/database
-   docker compose --env-file <path_to_env_file> up -d
-   ```
-   
-3. Run the server
-   
-   ```bash
-   cd server
-   python3 main.py
-   ```
-   
-4. Run the frontend
-   
+3. Run the app (*Make sure to `chmod` the script!*):
     ```bash
-    cd app
-    npm run dev
-    ```
-    
-5. Run the Grafana visualisation
-   
-    ```bash
-    cd grafana
-    python generate_dashboards.py
-    docker compose up -d
-    ```
-    
-6. (Optional) Run example topics
-    ```bash
-    ./sim_nodes/run_all_sim_nodes.sh
+    ./run.sh run_all
     ```
 
+    You can also check available commands:
+    ```bash
+    ./run.sh help
+    ```
 
 ~~Hope it works! - but I guess it doesn't.~~
 

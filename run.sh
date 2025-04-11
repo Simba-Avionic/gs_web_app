@@ -49,7 +49,7 @@ function run_mavlink_receiver() {
 function run_database() {
     cd server/database || exit
     echo "Starting the database (docker-compose up -d)..."
-    docker compose --env-file ../../.env up -d
+    sudo docker compose --env-file ../../.env up -d
     if [ $? -ne 0 ]; then
         echo "Failed to start the database."
         exit 1
@@ -63,7 +63,7 @@ function run_grafana() {
     python generate_dashboards.py
     
     echo "Starting Grafana (docker-compose up -d)..."
-    docker compose up -d
+    sudo docker compose up -d
     
     cd ..
 }
@@ -89,6 +89,7 @@ function build_msgs() {
 }
 
 function run() {
+    run_mavlink_receiver &
     run_server &
     run_app &
     wait
@@ -105,6 +106,7 @@ function run_all() {
     build_msgs
     run_database
     run_grafana
+    run_mavlink_receiver &
     run_app &
     run_server &
     run_custom_ros_messages &
@@ -117,7 +119,7 @@ function show_help() {
     echo "  build_ros_messages       Build ROS 2 messages and gs_interfaces package"
     echo "  run_app                  Start the app (npm run dev)"
     echo "  run_server               Start the server (python main.py)"
-    echo "  run_custom_messages      Run custom messages (python sim_nodes/run.py)"
+    echo "  run_custom_ros_messages  Run custom messages (python sim_nodes/run.py)"
     echo "  generate_mavlink         Generate MAVLink definitions using setup.sh"
     echo "  build_msgs               Build MAVLink and ROS 2 messages"
     echo "  run                      Start the server and app"

@@ -46,9 +46,8 @@ class NodeHandler(Node):
     async def msg_callback(self, msg):
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
-        # asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.loop)
-        # self.ic.insert_data(self.curr_msg)
-        # asyncio.create_task(self.broadcast_message(self.curr_msg))
+        if self.ic != None:
+            self.ic.insert_data(self.curr_msg)
 
     def run_event_loop(self):
         # Run the event loop
@@ -58,7 +57,6 @@ class NodeHandler(Node):
     async def websocket_endpoint(self, ws: WebSocket):
         await ws.accept()
         self.connected_clients.add(ws)
-        # logger.info(f"New WebSocket client connected: {len(self.connected_clients)} clients connected.")
         try:
             while True:
                 await asyncio.sleep(self.interval / 1000)
@@ -68,8 +66,6 @@ class NodeHandler(Node):
             logger.error(f"WebSocket connection closed: {e}")
         finally:
             self.connected_clients.remove(ws)
-            # logger.info(f"WebSocket client disconnected: {len(self.connected_clients)} clients connected.")
-            # await ws.close()
 
     async def broadcast_message(self, message):
         for client in list(self.connected_clients):  # Convert set to list to avoid runtime modification issues
@@ -82,7 +78,6 @@ class NodeHandler(Node):
     async def handle_client_disconnection(self, client: WebSocket):
         if client in self.connected_clients:
             self.connected_clients.remove(client)
-            # logger.info(f"Removed disconnected client. {len(self.connected_clients)} clients remaining.")
 
     def load_config(self, msg_config):
         self.msg_fields = msg_config["msg_fields"]

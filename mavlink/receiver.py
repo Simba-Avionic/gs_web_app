@@ -20,7 +20,7 @@ class MavlinkReceiver(Node):
         self._publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
 
         # Establish MAVLink connection
-        self.master = mavutil.mavlink_connection('/dev/ttyS0', baud=57600, dialect="simba")
+        self.master = mavutil.mavlink_connection('/dev/ttyUSB1', baud=57600, dialect="simba")
         self.get_logger().info("Mavlink connection established. Waiting for heartbeat...")
         # self.master.wait_heartbeat()
         self.get_logger().info("Heartbeat received. Waiting for custom messages...")
@@ -60,7 +60,8 @@ class MavlinkReceiver(Node):
 
     def publish_ros_msg(self, mavlink_msg):
         """Publish MAVLink message as a ROS2 message."""
-        msg_type = mavlink_msg.get_type()
+        msg_type = utils.convert_message_name(mavlink_msg.get_type())
+
         if msg_type in self._publishers:
             # Dynamically create a ROS2 message instance
             ros_msg_class = self._publishers[msg_type].msg_type
