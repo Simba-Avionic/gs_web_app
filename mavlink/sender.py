@@ -1,99 +1,80 @@
 from pymavlink import mavutil
 import os
 import time
+import random
+import json
+from parser import parse_simba_xml
+
+SIMBA_XML_PATH = "message_definitions/v1.0/simba.xml"
+CONFIG_PATH = "config.json"
 
 os.environ["MAVLINK_DIALECT"] = "simba"
 
-master = mavutil.mavlink_connection('/dev/ttyUSB0', baud=57600, dialect="simba")
+class MavlinkSender:
+    def __init__(self, port):
+        self.master = mavutil.mavlink_connection(port, baud=57600, dialect="simba")
+        self.messages = parse_simba_xml(SIMBA_XML_PATH)
+        self.config = self.load_config(CONFIG_PATH)
 
-print("Mavlink connection established. Waiting for heartbeat...")
+        self.send_messages()
 
-# master.wait_heartbeat()
+    def load_config(self, config_path):
+        """Load the configuration file."""
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        
+        print(f"Loaded configuration: {config}")
+        return config
 
-print("Heartbeat received. Sending custom message...")
+    def encode_message(self, msg):
+        fields = msg["fields"]
+        args = []
 
-def send_all_messages():
-    timestamp = int(time.time() * 1e6)
-    
-    # SIMBA_MAX_ALTITUDE
-    master.mav.simba_max_altitude_send(
-        timestamp,
-        1000  # alt
-    )
-    
-    # SIMBA_CMD_VALVE_CONTROL
-    master.mav.simba_cmd_valve_control_send(
-        timestamp,
-        1  # cmd_valve_control
-    )
-    
-    # SIMBA_HEARTBEAT_1
-    master.mav.simba_heartbeat_1_send(
-        timestamp,
-        1  # computer_status
-    )
-    
-    # SIMBA_HEARTBEAT_2
-    master.mav.simba_heartbeat_2_send(
-        timestamp,
-        1  # computer_status
-    )
-    
-    # SIMBA_CMD_HOLD
-    master.mav.simba_cmd_hold_send(
-        timestamp,
-        1  # cmd_hold
-    )
-    
-    # SIMBA_CMD_ABORT
-    master.mav.simba_cmd_abort_send(
-        timestamp,
-        1  # cmd_abort
-    )
-    
-    # SIMBA_ACTUATOR
-    master.mav.simba_actuator_send(
-        timestamp,
-        1,  # values
-        0   # errors
-    )
-    
-    # SIMBA_TANK_TEMPERATURE_1
-    master.mav.simba_tank_temperature_1_send(
-        timestamp,
-        25,  # temp
-        0    # sensor_error
-    )
-    
-    # SIMBA_TANK_TEMPERATURE_2
-    master.mav.simba_tank_temperature_2_send(
-        timestamp,
-        25,  # temp
-        0    # sensor_error
-    )
-    
-    # SIMBA_TANK_PRESSURE_1
-    master.mav.simba_tank_pressure_1_send(
-        timestamp,
-        1.0,  # pressure
-        0     # error
-    )
-    
-    # SIMBA_TANK_PRESSURE_2
-    master.mav.simba_tank_pressure_2_send(
-        timestamp,
-        1.0,  # pressure
-        0     # error
-    )
-    
-    # SIMBA_GPS
-    master.mav.simba_gps_send(
-        timestamp,
-        123456789,  # lat
-        987654321,  # lon
-        1000        # alt
-    )
+        for field in fields:
+            if field["type"] == "uint64_t":
+                args.append(int(time.time() * 1e6))
+            elif field["type"] in ["uint8_t", "uint16_t", "uint32_t", "int32_t"]:
+                args.append(random.randint(0, 100))
+            elif field["type"] == "float":
+                args.append(random.random())
+            else:
+                args.append(0)
+        return args
 
-while True:
-    send_all_messages()
-    time.sleep(1)
+    def send_message(self, msg_name, args):
+        try:
+            send_func = getattr(self.master.mav, f"{msg_name.lower()}_send")
+            send_func(*args)
+            print(f"Sent message: {msg_name} with args: {args}")
+        except AttributeError:
+            print(f"Message sending function not found for: {msg_name}")
+        except Exception as e:
+            print(f"Error sending message {msg_name}: {e}")
+
+    def send_messages(self):
+        last_sent = {msg["name"]: 0 for msg in self.messages}
+
+        while True:
+            current_time = time.time() * 1e3
+
+            for msg in self.messages:
+                msg_name = msg["name"]
+
+                if msg_name not in self.config:
+                    continue
+
+                interval = self.config[msg_name].get("interval", 1000)  # Default interval is 1000ms
+                if current_time - last_sent[msg_name] < interval:
+                    continue
+                
+                args = self.encode_message(msg)
+                self.send_message(msg_name, args)
+                last_sent[msg_name] = current_time
+
+            time.sleep(0.01)
+
+if __name__ == "__main__":
+    MavlinkSender(port='/dev/ttyUSB1')

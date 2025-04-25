@@ -1,14 +1,6 @@
-fastapi
-uvicorn[standard]
-influxdb_client[async]
 loguru
 python-dotenv
-asyncio
-sse_starlette
 empy==3.3.4
 lark
-catkin-pkg
 numpy
-pyyaml
-psutil
 pyserial

@@ -1,0 +1,14 @@
+{
+    "SIMBA_ACTUATOR": {
+        "interval": 1000
+    },
+    "SIMBA_TANK_TEMPERATURE_1": {
+        "interval": 2000
+    },
+    "SIMBA_GPS": {
+        "interval": 5000
+    },
+    "SIMBA_TANK_PRESSURE_2": {
+        "interval": 3000
+    }
+}
