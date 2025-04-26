@@ -18,11 +18,6 @@
   let gs_topics = [];
   let rocket_topics = [];
 
-  function handleReorder(event) {
-    gs_topics = event.detail.items;
-    localStorage.setItem('gs_topics', JSON.stringify(gs_topics));
-  }
-
   function handleTelemetryChange(event) {
     const telemetryData = event.detail;
 
@@ -161,7 +156,7 @@
 
   <div id="gs-info">
     <h3>GROUND SEGMENT</h3>
-    <div class="fields-container" use:dndzone={{ items: gs_topics, flipDurationMs: 50 }} on:consider={handleReorder} on:finalize={handleReorder}>
+    <div class="fields-container">
       {#each gs_topics as topic (topic.id)}
       <Field
         class_name="gs"

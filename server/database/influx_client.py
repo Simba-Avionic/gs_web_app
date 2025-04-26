@@ -22,7 +22,10 @@ class InfluxClient:
         self.msg_type = msg_type
         self.topic_name = topic_name
         self.msg_fields = msg_fields
-    
+
+    def db_alive(self) -> bool:
+        return self._client.ping()
+
     def insert_data(self, msg_data) -> None:
         p = Point(self.msg_type)
 

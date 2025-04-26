@@ -33,7 +33,6 @@ class NodeHandler(Node):
         self.connected_clients = set()
         self.curr_msg = None
 
-
     def start_subscription_thread(self):
         self.subscription_thread = threading.Thread(target=self.create_subscription_and_spin)
         self.subscription_thread.daemon = True  # Ensure thread exits when the main program does
@@ -46,11 +45,10 @@ class NodeHandler(Node):
     async def msg_callback(self, msg):
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
-        if self.ic != None:
+        if self.ic.db_alive():
             self.ic.insert_data(self.curr_msg)
 
     def run_event_loop(self):
-        # Run the event loop
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
