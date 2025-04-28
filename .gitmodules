@@ -4,3 +4,6 @@
 [submodule "mavlink/pymavlink"]
 	path = mavlink/pymavlink
 	url = https://github.com/ArduPilot/pymavlink.git
+[submodule "mavlink/simba_mavlink"]
+	path = mavlink/simba_mavlink
+	url = https://github.com/Simba-Avionic/simba_mavlink
