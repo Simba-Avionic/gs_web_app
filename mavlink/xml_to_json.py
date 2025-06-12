@@ -4,8 +4,8 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import utils
-from utils.paths import SIMBA_XML_PATH
+import shared.utils as utils
+from shared.paths import SIMBA_XML_PATH
 
 output_json = "temp.json"  # Output JSON file
 
@@ -17,9 +17,20 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
 
     # Iterate through all messages in the XML
     for message in root.findall(".//message"):
+
+        original_name = message.get('name')
+        if original_name.startswith("SIMBA_"):
+            name_without_prefix = original_name[6:]  # Skip the first 6 characters ("SIMBA_")
+        else:
+            name_without_prefix = original_name
+
+        topic_name = f"mavlink/{name_without_prefix.lower()}"
+        if "_cmd" in topic_name:
+            continue  # Skip command messages
+
         topic = {
             "id": int(message.get("id")),
-            "topic_name": f"mavlink/{message.get('name').lower()}",
+            "topic_name": topic_name,
             "msg_type": utils.convert_message_name(message.get("name")),
             "interval": 1000,
             "place": "rocket",

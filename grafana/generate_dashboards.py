@@ -1,8 +1,13 @@
+import os
+import sys
 import json
 import shutil
 import copy
 import random
 import gs_interfaces.msg
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.paths import CONFIG_JSON_PATH
 
 
 def process_unit(unit: str):
@@ -105,9 +110,8 @@ TEMPLATE = {
       "type": "timeseries"
 }
 
-config_file_path = '../config.json'
 target_file_path = 'dashboards/dashboard.json'
-backup_file_path = 'dashboard_template.json'
+backup_file_path = 'templates/dashboard_template.json'
 shutil.copy(backup_file_path, target_file_path)
 print(f"Backup created: {backup_file_path}")
 
@@ -115,7 +119,7 @@ with open(target_file_path, 'r') as file:
     target_data = json.load(file)
 
 
-with open(config_file_path, 'r') as file:
+with open(CONFIG_JSON_PATH, 'r') as file:
     CONFIG = json.load(file)
 
 target_data["id"] = random.randint(0, 1000)

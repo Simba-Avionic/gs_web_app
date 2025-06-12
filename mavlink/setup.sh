@@ -3,9 +3,13 @@
 OUTPUT_FILE_NAME=simba
 XML_FILE=simba_mavlink/simba.xml
 OUTPUT_DIR=pymavlink/dialects/v10
+MSG_DEF_DIR=message_definitions/v1.0
 
 # Initialize and update the submodule
-git submodule update --init --recursive
+# git submodule update --init --recursive
+
+mkdir -p $MSG_DEF_DIR
+cp $XML_FILE $MSG_DEF_DIR/
 
 # Run the mavgen command
 python3 -m pymavlink.tools.mavgen --lang=Python --output=$OUTPUT_FILE_NAME $XML_FILE

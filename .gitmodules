@@ -1,9 +1,11 @@
 [submodule "gs_interfaces"]
 	path = gs_interfaces
 	url = https://github.com/Simba-Avionic/gs_interfaces.git
+	branch = master
 [submodule "mavlink/pymavlink"]
 	path = mavlink/pymavlink
 	url = https://github.com/ArduPilot/pymavlink.git
 [submodule "mavlink/simba_mavlink"]
 	path = mavlink/simba_mavlink
 	url = https://github.com/Simba-Avionic/simba_mavlink
+	branch = master

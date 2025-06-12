@@ -1,0 +1,45 @@
+services:
+  influxdb:
+    image: influxdb:2.6.1
+    container_name: ${INFLUXDB_CONTAINER_NAME}
+    env_file:
+      - .env
+    volumes:
+      - myInfluxVolume:/var/lib/influxdb2
+    ports:
+      - 8086:8086
+    environment:
+      INFLUXDB_DB: influx
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      INFLUXDB_HTTP_AUTH_ENABLED: "true"
+      DOCKER_INFLUXDB_INIT_USERNAME: ${USER_NAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${PASSWORD}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+      DOCKER_INFLUXDB_INIT_ORG: ${ORGANISATION}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${BUCKET_NAME}
+    networks:
+      - net
+
+  grafana:
+    container_name: ${GRAFANA_CONTAINER_NAME}
+    build: grafana
+    ports:
+      - 3001:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    env_file:
+      - .env
+    # depends_on:
+    #   - influxdb
+    networks:
+      - net
+    # volumes:
+    #   - grafanaVolume:/var/lib/grafana
+
+networks:
+  net:
+
+volumes:
+  myInfluxVolume:
+  # grafanaVolume:
