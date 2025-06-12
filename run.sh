@@ -60,7 +60,7 @@ function generate_ros_msgs() {
 }
 
 function run_mavlink_client() {
-
+    echo "Starting the MAVLink client..."
 }
 
 function run_database() {

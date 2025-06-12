@@ -54,6 +54,8 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
         elif field_type in ('int8', 'uint8', 'uint32', 'int32', 'uint32', 'uint64', 'int', 'int16', 'uint16','int64'):
             if 'status' in field_name:
                 setattr(msg, field_name, random.randint(0, 7))
+            elif field_name == 'state':
+                setattr(msg, field_name, random.randint(0, 5))
             else:
                 setattr(msg, field_name, random.randint(0, 100))
         elif field_type == 'bool':
