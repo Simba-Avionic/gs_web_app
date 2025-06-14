@@ -2,7 +2,7 @@
 
 # You can adjust the APP_PATH if app is installed in a different location
 APP_PATH="$HOME"
-echo "$APP_PATH"
+# echo "$APP_PATH"
 BASHRC="$HOME/.bashrc"
 LINE="source $APP_PATH/gs_web_app/build_output/install/setup.bash"
 
@@ -14,7 +14,7 @@ function source_ros() {
     fi
 }
 
-function build_ros_messages() {
+function build_ros_msgs() {
     echo "Building ROS 2 messages..."
     cd gs_interfaces || exit
     python3 generate_ros2_messages.py
@@ -54,7 +54,7 @@ function generate_mavlink_definitions() {
     echo "MAVLink definitions generated successfully."
 }
 
-function generate_ros_msgs() {
+function publish_test_ros_msgs() {
     echo "Running custom test messages (python3 tests/ros/run.py)..."
     python3 tests/ros/run.py
 }
@@ -114,7 +114,7 @@ function run_server() {
 
 function build_msgs() {
     generate_mavlink_definitions
-    build_ros_messages
+    build_ros_msgs
     source_ros
     wait
 }
@@ -131,7 +131,7 @@ function run_with_test_msgs() {
     source_ros
     run_server &
     run_app &
-    generate_ros_msgs &
+    publish_test_ros_msgs &
     wait
 }
 
@@ -141,17 +141,17 @@ function run_all() {
     # run_mavlink_client &
     run_app &
     run_server &
-    generate_ros_msgs &
+    publish_test_ros_msgs &
     wait
 }
 
 function show_help() {
     echo "Usage: $0 [option]"
     echo "Options:"
-    echo "  build_ros_messages       Build ROS 2 messages and gs_interfaces package"
+    echo "  build_ros_msgs       Build ROS 2 messages and gs_interfaces package"
     echo "  run_app                  Start the app (npm run dev)"
     echo "  run_server               Start the server (python3 main.py)"
-    echo "  generate_ros_msgs        Run custom messages (python3 sim_nodes/run.py)"
+    echo "  publish_test_ros_msgs    Run custom messages (python3 tests/ros/run.py)"
     echo "  generate_mavlink         Generate MAVLink definitions using setup.sh"
     echo "  build_msgs               Build MAVLink and ROS 2 messages"
     echo "  run                      Start the server and app"
@@ -166,14 +166,14 @@ if [ "$#" -lt 1 ]; then
 fi
 
 case $1 in
-    build_ros_messages)
-        build_ros_messages
+    build_ros_msgs)
+        build_ros_msgs
         ;;
     generate_mavlink)
         generate_mavlink_definitions
         ;;
-    generate_ros_msgs)
-        generate_ros_msgs
+    publish_test_ros_msgs)
+        publish_test_ros_msgs
         ;;
     run_app)
         run_app

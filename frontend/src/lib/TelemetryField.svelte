@@ -30,7 +30,7 @@
     };
 
     socket.onopen = () => {
-      console.log(`WebSocket connection for ${topic.topic_name} established`);
+      console.log(`Connected to ${topic.topic_name}`);
     };
 
     socket.onerror = (error) => {
@@ -87,7 +87,7 @@
   ></div>
   <div class="field-content">
     <div class="field-header">
-      <span class="field-text field-text">{String(topic.topic_name)}</span>
+      <span class="field-text">{String(topic.topic_name)}</span>
       {#if telem_data != undefined && telem_data !== "None" && telem_data !== null}
         <span class="timestamp"
           >{rosTimeToFormattedTime(

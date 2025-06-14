@@ -130,51 +130,6 @@
             ]
         },
         {
-            "id": 5,
-            "topic_name": "control_panel/switches",
-            "msg_type": "ControlPanelSwitches",
-            "interval": 1000,
-            "place": "gs",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "ignition"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "abort"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "rocket_vent"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "arm"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "main_valve"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "hose_vent"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "decoupler"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "oxidizer_switch"
-                }
-            ]
-        },
-        {
             "id": 7,
             "topic_name": "radio_433/telemetry",
             "msg_type": "Telemetry433",
@@ -314,7 +269,53 @@
                 }
             ]
         },
+        {
+            "id": 13,
+            "topic_name": "tanking/commands",
+            "msg_type": "TankingCommands",
+            "interval": 500,
+            "place": "gs",
+            "msg_fields": [
                 {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "main_valve"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "hose_vent"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "decoupler"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "oxidizer_switch"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "topic_name": "tanking/abort",
+            "msg_type": "TankingAbort",
+            "interval": 500,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "abort"
+                }
+            ]
+        },
+        {
             "id": 68,
             "topic_name": "mavlink/actuator",
             "msg_type": "SimbaActuator",
@@ -499,8 +500,6 @@
                 }
             ]
         }
-
-
     ],
     "msg_defs": [
         {

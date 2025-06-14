@@ -43,9 +43,9 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
             msg.header.stamp = stamp
             msg.header.frame_id = msg_type_name
         elif field_type in ('float32', 'float64', 'float'):
-            if field_name == 'latitude':
+            if field_name == 'lat':
                 setattr(msg, field_name, random.uniform(54.20, 54.45))
-            elif field_name == 'longitude':
+            elif field_name == 'lon':
                 setattr(msg, field_name, random.uniform(18.50, 18.75))
             elif field_name == 'combined_fuel_kg':
                 setattr(msg, field_name, random.uniform(0, 20))

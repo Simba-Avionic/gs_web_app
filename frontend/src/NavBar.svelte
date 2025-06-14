@@ -102,7 +102,7 @@
     };
 
     ackSocket.onopen = () => {
-      console.log("WebSocket connection for mavlink/ack established");
+      console.log("Connected to mavlink/ack");
     };
 
     ackSocket.onclose = (event) => {
@@ -151,7 +151,7 @@
     };
 
     socket.onopen = () => {
-      console.log("WebSocket connection for server/telemetry established");
+      console.log("Connected to server/telemetry");
     };
 
     socket.onclose = (event) => {

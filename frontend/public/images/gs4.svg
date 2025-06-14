@@ -4,11 +4,15 @@
             .cls-1{fill:#ccccdc;}
             .cls-2,.cls-8{fill:none;}
             .cls-2,.cls-4,.cls-5,.cls-6,.cls-7,.cls-8{stroke:#ccccdc;}
-            .cls-3{fill:#1857b8;}
-            .cls-4{fill:#fa6400;}
-            .cls-5{fill:#5694f2;}
-            .cls-6{fill:#e0b400;}
-            .cls-7{fill:#77be69;}
+            <!-- .cls-3{fill:#1857b8;} -->
+            <!-- .cls-3{fill:#181b1f;} -->
+            .cls-3{fill:none;}
+
+            <!-- .cls-4{fill:#fa6400;} -->
+            <!-- .cls-5{fill:#5694f2;} -->
+            <!-- .cls-6{fill:#e0b400;} -->
+            <!-- .cls-7{fill:#77be69;} -->
+            .cls-4,.cls-5,.cls-6,.cls-7{fill:#ccccdc;}
             .cls-8{stroke-width:2px;}
 
             #oxidizer_liquid {

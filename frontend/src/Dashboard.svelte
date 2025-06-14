@@ -97,6 +97,8 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
+    // const {hasNonOkStatus} = telemetryData;
+
     const svg = document.querySelector("svg");
 
     switch (frame_id) {
@@ -156,6 +158,19 @@
         }
         break;
     }
+
+    // if (hasNonOkStatus !== undefined && hasNonOkStatus !== null) {
+    //   const statusElement = svg.querySelector("#status");
+    //   if (statusElement) {
+    //     statusElement.style.fill = "url(#gradient_red)";
+    //   }
+    // } else {
+    //   const statusElement = svg.querySelector("#status");
+    //   if (statusElement) {
+    //     statusElement.style.fill = "url(#gradient_green)";
+    //   }
+    // }
+
   }
 
   onMount(async () => {

@@ -213,10 +213,7 @@
 
                     processTopicData(topicName, data);
 
-                    dispatch("telemetryChange", {
-                        topic: topicName,
-                        data: data,
-                    });
+                    dispatch("telemetryChange", {data, hasNonOkStatus});
                 } catch (e) {
                     console.error(
                         `Error processing data from ${topicName}:`,
