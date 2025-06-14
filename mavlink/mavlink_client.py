@@ -1,5 +1,4 @@
 
-from pymavlink import mavutil
 import os
 import sys
 import time
@@ -13,11 +12,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.paths import SIMBA_XML_PATH
 import shared.utils as utils
 
-import gs_interfaces as gs_msgs     # Import custom ROS2 messages
+import gs_interfaces.msg as gs_msgs     # Import custom ROS2 messages
 from src.control_panel_reader import ControlPanelReader
-import simba
 
 os.environ["MAVLINK_DIALECT"] = "simba"
+from pymavlink import mavutil
+import simba
+
 
 class MavlinkClient(Node):
     def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=9600, num_retries=3):
@@ -64,7 +65,7 @@ class MavlinkClient(Node):
         self._receiver_thread.start()
         self.get_logger().info("Started MAVLink receiver thread")
 
-    def find_mavlink_connection(baudrate=57600, dialect="simba", retry_delay=1):
+    def find_mavlink_connection(self, baudrate=57600, dialect="simba", retry_delay=1):
         while True:
             ports = serial.tools.list_ports.comports()
             for port in ports:
@@ -89,8 +90,9 @@ class MavlinkClient(Node):
 
         for message in root.findall(".//message"):
             msg_name = utils.convert_message_name(message.get("name"))
+            self.get_logger().info(f"Processing message: {msg_name}")
 
-            if "_CMD" in msg_name or "ACK" in msg_name:
+            if "Cmd" in msg_name or "Ack" in msg_name:
                 self.get_logger().info(f"Skipping command message: {msg_name}")
                 continue
 
