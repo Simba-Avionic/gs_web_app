@@ -12,9 +12,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import shared.utils as utils
 
 os.environ["MAVLINK_DIALECT"] = "simba"
-simba = utils.patch_mavlink_dialect()
+# simba = utils.patch_mavlink_dialect()
 from simba import *
-from pymavlink import mavutil
+from src import mavutil
 
 
 class MAVLinkSenderApp:
