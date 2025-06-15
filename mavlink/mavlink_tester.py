@@ -8,14 +8,12 @@ from tkinter import ttk, scrolledtext, messagebox
 import serial
 import serial.tools.list_ports
 
-mavlink_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'mavlink')
-sys.path.append(mavlink_dir)
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import shared.utils as utils
 
 os.environ["MAVLINK_DIALECT"] = "simba"
 simba = utils.patch_mavlink_dialect()
+from simba import *
 from pymavlink import mavutil
 
 
@@ -30,7 +28,7 @@ class MAVLinkSenderApp:
         self.selected_message = tk.StringVar()
         self.bitstring = tk.StringVar(value="00000000")
         self.field_vars = {}
-        
+
         # Create notebook (tabs)
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)

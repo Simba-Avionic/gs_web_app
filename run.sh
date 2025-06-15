@@ -41,7 +41,7 @@ function build_ros_msgs() {
     echo "ROS 2 messages built & sourced successfully."
 }
 
-function generate_mavlink_definitions() {
+function build_mavlink_msgs() {
     echo "Generating MAVLink definitions using setup.sh..."
     cd mavlink|| exit
     chmod +x setup.sh
@@ -113,7 +113,7 @@ function run_server() {
 }
 
 function build_msgs() {
-    generate_mavlink_definitions
+    build_mavlink_msgs
     build_ros_msgs
     source_ros
     wait
@@ -169,8 +169,8 @@ case $1 in
     build_ros_msgs)
         build_ros_msgs
         ;;
-    generate_mavlink)
-        generate_mavlink_definitions
+    build_mavlink_msgs)
+        build_mavlink_msgs
         ;;
     publish_test_ros_msgs)
         publish_test_ros_msgs

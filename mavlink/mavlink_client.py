@@ -16,8 +16,8 @@ import gs_interfaces.msg as gs_msgs     # Import custom ROS2 messages
 from src.control_panel_reader import ControlPanelReader
 
 os.environ["MAVLINK_DIALECT"] = "simba"
+simba = utils.patch_mavlink_dialect()
 from pymavlink import mavutil
-import simba
 
 
 class MavlinkClient(Node):
