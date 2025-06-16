@@ -88,7 +88,8 @@
   }
 
   function handleTelemetryChange(event) {
-    const telemetryData = event.detail;
+    
+    const telemetryData = event.detail.data;
 
     if (telemetryData == null) {
       return;

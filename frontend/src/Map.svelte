@@ -17,6 +17,11 @@
     let socket;
     let data;
 
+    let gpsSocket;
+    let maxAltitudeSocket;
+    let gpsData;
+    let maxAltitudeData;
+
     const customIcon = L.icon({
         iconUrl: "icons/simba_logo.png",
         iconSize: [38, 38],
@@ -34,9 +39,7 @@
     };
 
     onMount(() => {
-
         fetchConfig();
-
         map = L.map("map", {
             zoomControl: false,
             attributionControl: false,
@@ -59,26 +62,48 @@
         path = loadPathFromLocalStorage();
         pathLine = L.polyline(path, { color: "orange" }).addTo(map);
 
-        socket = new WebSocket(`ws://${host}:8000/rocket/telemetry`);
-        socket.onmessage = (event) => {
-            data = JSON.parse(event.data);
-            if (data.latitude && data.longitude) {
-                const newLatLng = [data.latitude, data.longitude];
-                marker.setLatLng(newLatLng);
+        gpsSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_gps`);
+        gpsSocket.onmessage = (event) => {
+            try {
+                gpsData = JSON.parse(event.data);
+                if (
+                    gpsData !== "None" &&
+                    gpsData !== null &&
+                    gpsData.lat &&
+                    gpsData.lon
+                ) {
+                    const newLatLng = [gpsData.lat, gpsData.lon];
+                    marker.setLatLng(newLatLng);
 
-                path.push(newLatLng);
-                pathLine.setLatLngs(path);
-                savePathToLocalStorage();
+                    path.push(newLatLng);
+                    pathLine.setLatLngs(path);
+                    savePathToLocalStorage();
+                }
+            } catch (e) {
+                console.error("Error processing GPS data:", e);
+            }
+        };
+
+        // Connect to Max Altitude topic for additional data
+        maxAltitudeSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_max_altitude`);
+        maxAltitudeSocket.onmessage = (event) => {
+            try {
+                maxAltitudeData = JSON.parse(event.data);
+            } catch (e) {
+                console.error("Error processing max altitude data:", e);
             }
         };
 
         map.invalidateSize();
+    });
 
-        return () => {
-            if (socket) {
-                socket.close();
-            }
-        };
+    onDestroy(() => {
+        if (gpsSocket) {
+            gpsSocket.close();
+        }
+        if (maxAltitudeSocket) {
+            maxAltitudeSocket.close();
+        }
     });
 
     const togglePath = () => {
@@ -97,19 +122,34 @@
     };
 
     async function fetchConfig() {
-        const response = await fetch(`http://${host}:8000/config`);
-        const data = await response.json();
-        topics = data.topics;
-
-        const allowedTopics = [
-            "mavlink/simba_max_altitude",
-            "mavlink/simba_altitude_orientation",
-            "mavlink/simba_gps"
-        ];
-
-        topics = topics.filter(topic => allowedTopics.includes(topic.name));
-
-        console.log(topics);
+        try {
+            const response = await fetch(`http://${host}:8000/config`);
+            const data = await response.json();
+            
+            // Filter topics to only include GPS and max altitude topics
+            const allowedTopics = [
+                "mavlink/simba_max_altitude",
+                "mavlink/simba_altitude_orientation",
+                "mavlink/simba_gps"
+            ];
+            
+            topics = data.topics.filter(topic => 
+                allowedTopics.includes(topic.topic_name || topic.name));
+                
+            // Convert topic data format if needed
+            topics = topics.map(topic => {
+                // Ensure topic has the right structure for TelemetryField
+                return {
+                    id: topic.id || Math.random().toString(),
+                    topic_name: topic.topic_name || topic.name,
+                    msg_fields: topic.msg_fields || []
+                };
+            });
+            
+            console.log("Filtered topics:", topics);
+        } catch (error) {
+            console.error("Error fetching config:", error);
+        }
     }
 </script>
 
@@ -123,68 +163,9 @@
         </div>
         <div class="fields-container">
             {#each topics as topic (topic.id)}
-                <TelemetryField
-                    {topic}
-                    {host}
-                />
+                <TelemetryField {topic} {host} />
             {/each}
         </div>
-        <!-- <div class="field">
-            <div
-                class="status-indicator {data !== 'None' &&
-                data !== null &&
-                data !== undefined
-                    ? 'green-status'
-                    : 'red-status'}"
-            ></div>
-            <div class="field-content">
-                <span class="field-text">LOCATION</span>
-                {#if data != undefined && data !== "None" && data !== null}
-                    <span class="timestamp"
-                        >{rosTimeToFormattedTime(
-                            data.header.stamp.sec,
-                            data.header.stamp.nanosec,
-                        )}</span
-                    >
-                    <div class="field-value">
-                        <span>Altitude:</span>
-                        <span>{data.altitude}</span>
-                    </div>
-                    <div class="field-value">
-                        <span>Longitude:</span>
-                        <span>{data.longitude}</span>
-                    </div>
-                    <div class="field-value">
-                        <span>Latitude:</span>
-                        <span>{data.latitude}</span>
-                    </div>
-                {/if}
-            </div>
-        </div>
-        <div class="field">
-            <div
-                class="status-indicator {data !== 'None' &&
-                data !== null &&
-                data !== undefined
-                    ? 'green-status'
-                    : 'red-status'}"
-            ></div>
-            <div class="field-content">
-                <span class="field-text">MAX ALTITUDE</span>
-                {#if data != undefined && data !== "None" && data !== null}
-                    <span class="timestamp"
-                        >{rosTimeToFormattedTime(
-                            data.header.stamp.sec,
-                            data.header.stamp.nanosec,
-                        )}</span
-                    >
-                    <div class="field-value">
-                        <span>Max altitude:</span>
-                        <span>{data.altitude}</span>
-                    </div>
-                {/if}
-            </div>
-        </div> -->
     </div>
 </div>
 
@@ -198,9 +179,8 @@
     .buttons {
         display: flex;
         align-items: center;
-        gap: 10px;
-        /* margin-bottom: 16px; */
-        justify-content: space-between;
+        gap: 25px;
+        justify-content: center;
     }
 
     .button {
@@ -211,11 +191,11 @@
         display: inline-flex;
         align-items: center;
         font-weight: 500;
-        cursor: pointer;
         background: rgb(61, 113, 217);
-        width: 110px;
+        width: 160px;
         justify-content: center;
         text-align: center;
+        font-size: 1rem;
     }
 
     .button:hover {
@@ -225,12 +205,21 @@
             color 0.3s;
     }
 
+    .fields-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+        max-height: calc(100% - 60px);
+        overflow-y: auto;
+    }
+
     .info-widget {
         position: absolute;
         top: calc(var(--navbar-height) + 20px);
         left: 75%;
         width: 20%;
-        height: 30%;
+        height: 40%;
         padding: 16px;
         border: 1px solid rgba(204, 204, 220, 0.5);
         border-radius: 0.75rem;
@@ -244,64 +233,10 @@
         line-height: 1.5rem;
         font-size: 0.9rem;
         box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+        width: 350px;
+        left: auto;
+        right: 20px;
     }
 
-    .field {
-        display: flex;
-        align-items: flex-start;
-        border-bottom: 1px solid rgba(204, 204, 220, 0.5);
-        text-align: left;
-    }
-
-    .field-content {
-        flex: 1;
-    }
-
-    .field:last-child {
-        border-bottom: none;
-    }
-
-    .field:first-child {
-        border-top: 1px solid rgba(204, 204, 220, 0.5);
-    }
-
-    .field-text {
-        color: #ccccdc;
-    }
-
-    .field-value span:first-child {
-        font-weight: bold;
-        margin-right: 4px;
-    }
-
-    .status-indicator {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        margin-right: 8px;
-    }
-
-    .timestamp {
-        margin-left: 8px;
-        color: rgba(204, 204, 220, 0.65);
-        font-size: 0.8em;
-    }
-
-    .green-status {
-        background: linear-gradient(90deg, #7fff7f, #5eff5e, #3dff3d, #1aff1a);
-        background-size: 100% 100%;
-        animation: gradientAnimation 3s ease infinite;
-    }
-
-    .orange-status {
-        background: linear-gradient(45deg, orange, yellow);
-        background-size: 100% 100%;
-        animation: orangeGradientAnimation 3s ease infinite;
-    }
-
-    .red-status {
-        background: linear-gradient(45deg, red, pink);
-        background-size: 100% 100%;
-        animation: redGradientAnimation 3s ease infinite;
-    }
 </style>
