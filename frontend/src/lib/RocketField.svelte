@@ -6,6 +6,9 @@
   let showTelemetry = false;
   let temp;
   let telem_data;
+  let topicStatusMap = {};
+  let allTopicsOffline = true;
+  let someTopicsOffline = false;
 
   function toggleTelemetry() {
     showTelemetry = !showTelemetry;
@@ -148,6 +151,9 @@
   function processTopicData(topicName, telem_data) {
     if (!topicDataMap[title]) return;
 
+    topicStatusMap[topicName] = true;
+    updateTopicStatusFlags();
+
     let foundNonOkStatus = false;
 
     const topicConfigs = topicDataMap[title].filter(
@@ -191,8 +197,20 @@
     }
   }
 
+  function updateTopicStatusFlags() {
+    // Check if all topics are offline
+    allTopicsOffline = relevantTopicNames.length > 0 && 
+      relevantTopicNames.every(topic => !topicStatusMap[topic]);
+    
+    // Check if some (but not all) topics are offline
+    someTopicsOffline = relevantTopicNames.some(topic => !topicStatusMap[topic]) && 
+      !allTopicsOffline;
+  }
+
   function setupWebSockets() {
     relevantTopicNames.forEach((topicName) => {
+      topicStatusMap[topicName] = false;
+      
       const socket = new WebSocket(`ws://${host}:8000/${topicName}`);
 
       socket.onopen = () => {
@@ -206,6 +224,9 @@
           if (temp !== "None" && temp !== null && temp !== undefined) {
             telem_data = temp;
             processTopicData(topicName, telem_data);
+          } else{
+            topicStatusMap[topicName] = false;
+            updateTopicStatusFlags();
           }
 
           dispatch("telemetryChange", { telem_data, hasNonOkStatus });
@@ -216,6 +237,10 @@
 
       socket.onclose = () => {
         console.log(`Disconnected from ${topicName}`);
+        topicStatusMap[topicName] = false;
+        
+        // Update status flags
+        updateTopicStatusFlags();
         if (Object.values(sockets).every((s) => s.readyState > 1)) {
           isConnected = false;
         }
@@ -223,6 +248,8 @@
 
       sockets[topicName] = socket;
     });
+
+    updateTopicStatusFlags();
   }
 
   onMount(() => {
@@ -242,13 +269,11 @@
 <div class="field">
   <div class="field-top-row">
     <div
-      class="status-indicator {temp === 'None' ||
-      temp === null ||
-      temp === undefined
-        ? 'red-status'
-        : hasNonOkStatus
-          ? 'orange-status'
-          : 'green-status'}"
+      class="status-indicator {allTopicsOffline
+      ? 'red-status'
+      : someTopicsOffline || hasNonOkStatus
+        ? 'orange-status'
+        : 'green-status'}"
     ></div>
 
     <div class="field-header">
@@ -269,13 +294,13 @@
     <div
       in:slide={{ duration: 333 }}
       out:slide={{ duration: 333 }}
-      class="telemetry-telem_data"
+      class="telemetry-data"
     >
       <div class="fields-column">
         {#each Object.entries(extractedData) as [fieldName, fieldInfo]}
           <div class="field-value">
             <span class="field-label">{fieldName}:</span>
-            <span class="field-telem_data">
+            <span class="field-data">
               {typeof fieldInfo.value === "number"
                 ? Number.isInteger(fieldInfo.value)
                   ? fieldInfo.value
@@ -332,7 +357,7 @@
     align-self: flex-start;
   }
 
-  .telemetry-telem_data {
+  .telemetry-data {
     font-size: 0.95rem;
     padding-left: 0.5rem;
     width: 100%;
@@ -355,7 +380,7 @@
     margin-right: 4px;
   }
 
-  .field-telem_data {
+  .field-data {
     text-align: right;
   }
 
@@ -364,7 +389,7 @@
       padding: 0.5rem;
       font-size: 1rem;
     }
-    .telemetry-telem_data {
+    .telemetry-data {
       margin-top: 0.5rem;
       font-size: 1rem;
     }

@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.paths import SIMBA_XML_PATH
 import shared.utils as utils
 
-import gs_interfaces.msg as gs_msgs     # Import custom ROS2 messages
+import gs_interfaces.msg as gs_msgs
 from src.control_panel_reader import ControlPanelReader
 
 os.environ["MAVLINK_DIALECT"] = "simba"
@@ -92,7 +92,7 @@ class MavlinkClient(Node):
             msg_name = utils.convert_message_name(message.get("name"))
             self.get_logger().info(f"Processing message: {msg_name}")
 
-            if "Cmd" in msg_name or "Ack" in msg_name:
+            if "Cmd" in msg_name:
                 self.get_logger().info(f"Skipping command message: {msg_name}")
                 continue
 
@@ -137,6 +137,9 @@ class MavlinkClient(Node):
         if msg_type in self._mavlink_publishers:
             ros_msg_class = self._mavlink_publishers[msg_type].msg_type
             ros_msg = ros_msg_class()
+
+            # TODO: If mavlink message has a timestamp, use it
+            ros_msg.header.stamp = self.get_clock().now().to_msg()
 
             for field_name in mavlink_msg.get_fieldnames():
                 if hasattr(ros_msg, field_name):

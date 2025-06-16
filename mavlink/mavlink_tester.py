@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import shared.utils as utils
 
 os.environ["MAVLINK_DIALECT"] = "simba"
-# simba = utils.patch_mavlink_dialect()
 from simba import *
 from src import mavutil
 
@@ -21,7 +20,10 @@ class MAVLinkSenderApp:
     def __init__(self, root):
         self.root = root
         self.root.title("MAVLink & Bit String Sender")
-        self.root.geometry("600x800")       
+        self.root.geometry("600x800")
+
+        style = ttk.Style()
+        style.configure("Timestamp.TEntry", background='#e0e0e0', foreground='#707070')
    
         self.mavlink_port = tk.StringVar()
         self.bitstring_port = tk.StringVar()
@@ -301,7 +303,15 @@ class MAVLinkSenderApp:
             field_type = field['type']
             field_enum = field['enum']
             
-            ttk.Label(fields_input_frame, text=f"{field_name} ({field_type}):").grid(
+            # Check if this is a timestamp field
+            is_timestamp = field_name.lower() in ["timestamp", "time_usec", "time_boot_ms", "time_unix_usec"]
+            
+            # Add a label for this field
+            label_text = f"{field_name} ({field_type})"
+            if is_timestamp:
+                label_text += " [AUTO]"  # Indicate auto-filled
+                
+            ttk.Label(fields_input_frame, text=label_text).grid(
                 row=i, column=0, padx=5, pady=5, sticky="w")
             
             # Create variable and widget based on field type
@@ -309,24 +319,45 @@ class MAVLinkSenderApp:
                 # For enum fields, create a dropdown
                 var = tk.StringVar()
                 values = [entry[0] for entry in self.enums.get(field_enum, [])]
-                combo = ttk.Combobox(fields_input_frame, textvariable=var, values=values, state="readonly")
+                combo = ttk.Combobox(fields_input_frame, textvariable=var, values=values, 
+                                    state="readonly" if not is_timestamp else "disabled")
                 if values:
                     combo.current(0)
                 combo.grid(row=i, column=1, padx=5, pady=5, sticky="w")
                 self.field_vars[field_name] = (var, field_type, field_enum)
+                
+                # Gray out timestamp fields
+                if is_timestamp:
+                    combo.configure(state="disabled")
             else:
                 # For non-enum fields, create a text entry
                 var = tk.StringVar()
+                
                 # Set default values based on type
-                if 'int' in field_type:
+                if is_timestamp:
+                    # For timestamp fields, show placeholder
+                    if 'uint64' in field_type or field_name.lower() == "time_unix_usec":
+                        var.set("[Auto: μs]")
+                    elif field_name.lower() == "time_boot_ms":
+                        var.set("[Auto: ms]")
+                    else:
+                        var.set("[Auto: s]")
+                elif 'int' in field_type:
                     var.set("0")
                 elif 'float' in field_type:
                     var.set("0.0")
                 elif 'char' in field_type:
                     var.set("")
                 
-                entry = ttk.Entry(fields_input_frame, textvariable=var)
+                # Create the entry widget
+                entry = ttk.Entry(fields_input_frame, textvariable=var, 
+                                state="normal" if not is_timestamp else "disabled")
                 entry.grid(row=i, column=1, padx=5, pady=5, sticky="w")
+                
+                # Set a gray background for timestamp fields
+                if is_timestamp:
+                    entry.configure(style="Timestamp.TEntry")
+                
                 self.field_vars[field_name] = (var, field_type, None)
     
     def toggle_bit(self, index):
@@ -367,11 +398,15 @@ class MAVLinkSenderApp:
             self.log("Error: No message selected")
             return
         
-        # Prepare field values
         field_values = {}
         for field_name, (var, field_type, field_enum) in self.field_vars.items():
             value = var.get()
-            
+
+            if field_name.lower() == "timestamp":
+                utc_time = time.time()  # This is already UTC epoch time
+                field_values[field_name] = int(utc_time)
+                continue
+                            
             try:
                 # Convert string to appropriate type
                 if field_enum:
