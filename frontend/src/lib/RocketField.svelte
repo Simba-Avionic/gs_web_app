@@ -202,12 +202,11 @@
 
       socket.onmessage = (event) => {
         try {
-          temp = JSON.parse(event.telem_data);
+          temp = JSON.parse(event.data);
           if (temp !== "None" && temp !== null && temp !== undefined) {
             telem_data = temp;
+            processTopicData(topicName, telem_data);
           }
-
-          processTopicData(topicName, telem_data);
 
           dispatch("telemetryChange", { telem_data, hasNonOkStatus });
         } catch (e) {
@@ -241,11 +240,10 @@
 </script>
 
 <div class="field">
-  <!-- Top row: status, title area, button -->
   <div class="field-top-row">
     <div
-      class="status-indicator {temp === 'None' &&
-      temp === null &&
+      class="status-indicator {temp === 'None' ||
+      temp === null ||
       temp === undefined
         ? 'red-status'
         : hasNonOkStatus
@@ -267,7 +265,6 @@
     </button>
   </div>
 
-  <!-- Bottom row: telemetry telem_data (full width) -->
   {#if telem_data != undefined && telem_data !== "None" && telem_data !== null && showTelemetry}
     <div
       in:slide={{ duration: 333 }}
