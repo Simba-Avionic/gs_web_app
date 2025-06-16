@@ -317,7 +317,7 @@
         },
         {
             "id": 68,
-            "topic_name": "mavlink/actuator",
+            "topic_name": "mavlink/simba_actuator",
             "msg_type": "SimbaActuator",
             "interval": 1000,
             "place": "rocket",
@@ -334,7 +334,7 @@
         },
         {
             "id": 69,
-            "topic_name": "mavlink/tank_temperature",
+            "topic_name": "mavlink/simba_tank_temperature",
             "msg_type": "SimbaTankTemperature",
             "interval": 1000,
             "place": "rocket",
@@ -359,7 +359,7 @@
         },
         {
             "id": 70,
-            "topic_name": "mavlink/tank_pressure",
+            "topic_name": "mavlink/simba_tank_pressure",
             "msg_type": "SimbaTankPressure",
             "interval": 1000,
             "place": "rocket",
@@ -380,7 +380,7 @@
         },
         {
             "id": 71,
-            "topic_name": "mavlink/altitude_orientation",
+            "topic_name": "mavlink/simba_altitude_orientation",
             "msg_type": "SimbaAltitudeOrientation",
             "interval": 1000,
             "place": "rocket",
@@ -397,7 +397,7 @@
         },
         {
             "id": 72,
-            "topic_name": "mavlink/gps",
+            "topic_name": "mavlink/simba_gps",
             "msg_type": "SimbaGps",
             "interval": 1000,
             "place": "rocket",
@@ -422,7 +422,7 @@
         },
         {
             "id": 73,
-            "topic_name": "mavlink/heartbeat",
+            "topic_name": "mavlink/simba_heartbeat",
             "msg_type": "SimbaHeartbeat",
             "interval": 1000,
             "place": "rocket",
@@ -447,7 +447,7 @@
         },
         {
             "id": 74,
-            "topic_name": "mavlink/max_altitude",
+            "topic_name": "mavlink/simba_max_altitude",
             "msg_type": "SimbaMaxAltitude",
             "interval": 1000,
             "place": "rocket",
@@ -464,7 +464,7 @@
         },
         {
             "id": 146,
-            "topic_name": "mavlink/cmd_change_state",
+            "topic_name": "mavlink/simba_cmd_change_state",
             "msg_type": "SimbaCmdChangeState",
             "interval": 1000,
             "place": "rocket",
@@ -481,7 +481,7 @@
         },
         {
             "id": 148,
-            "topic_name": "mavlink/ack",
+            "topic_name": "mavlink/simba_ack",
             "msg_type": "SimbaAck",
             "interval": 1000,
             "place": "rocket",

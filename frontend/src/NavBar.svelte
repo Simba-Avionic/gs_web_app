@@ -72,7 +72,7 @@
   }
 
   function initializeAckWebSocket() {
-    ackSocket = new WebSocket(`ws://${host}:8000/mavlink/ack`);
+    ackSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_ack`);
 
     ackSocket.onmessage = (event) => {
       try {

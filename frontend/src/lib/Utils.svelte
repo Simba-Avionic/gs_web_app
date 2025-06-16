@@ -356,4 +356,12 @@
         return "UNKNOWN STATUS";
     }
   }
+
+  export function stripSimbaPrefix(str) {
+    if (typeof str !== 'string') {
+        return String(str);
+    }
+    
+    return str.replace(/simba_/g, '');
+  }
 </script>

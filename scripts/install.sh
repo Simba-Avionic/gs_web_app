@@ -122,9 +122,9 @@ else
 fi
 
 # Install frontend (node_modules)
-if [ -d "app" ]; then
-    echo "Navigating to 'app' directory..."
-    cd app
+if [ -d "frontend" ]; then
+    echo "Navigating to 'frontend' directory..."
+    cd frontend
 
     # Check if package.json exists before running npm install
     if [ -f "package.json" ]; then
@@ -132,10 +132,10 @@ if [ -d "app" ]; then
         npm install
         echo "npm packages installed successfully!"
     else
-        echo "No package.json found in 'app' directory. Skipping npm installation."
+        echo "No package.json found in 'frontend' directory. Skipping npm installation."
     fi
 else
-    echo "'app' directory does not exist. Skipping npm installation."
+    echo "'frontend' directory does not exist. Skipping npm installation."
 fi
 
 cd ..

@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy, createEventDispatcher } from "svelte";
-  import { rosTimeToFormattedTime } from "./Utils.svelte";
+  import { rosTimeToFormattedTime, stripSimbaPrefix } from "./Utils.svelte";
 
   import { slide } from "svelte/transition";
   let showTelemetry = false;
@@ -87,7 +87,7 @@
   ></div>
   <div class="field-content">
     <div class="field-header">
-      <span class="field-text">{String(topic.topic_name)}</span>
+      <span class="field-text">{String(stripSimbaPrefix(topic.topic_name))}</span>
       {#if telem_data != undefined && telem_data !== "None" && telem_data !== null}
         <span class="timestamp"
           >{rosTimeToFormattedTime(

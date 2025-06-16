@@ -16,15 +16,15 @@ import gs_interfaces.msg as gs_msgs     # Import custom ROS2 messages
 from src.control_panel_reader import ControlPanelReader
 
 os.environ["MAVLINK_DIALECT"] = "simba"
-# simba = utils.patch_mavlink_dialect()
 from src import mavutil
+import simba
 
 
 class MavlinkClient(Node):
-    def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=9600, num_retries=3):
+    def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=57600, num_retries=3):
         super().__init__('mavlink_client')
 
-        self._publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
+        self._mavlink_publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
         self._control_panel_reader = ControlPanelReader(control_panel_port)
 
         if mavlink_port:
@@ -134,8 +134,8 @@ class MavlinkClient(Node):
         """Publish MAVLink message as a ROS2 message."""
         msg_type = utils.convert_message_name(mavlink_msg.get_type())
 
-        if msg_type in self._publishers:
-            ros_msg_class = self._publishers[msg_type].msg_type
+        if msg_type in self._mavlink_publishers:
+            ros_msg_class = self._mavlink_publishers[msg_type].msg_type
             ros_msg = ros_msg_class()
 
             for field_name in mavlink_msg.get_fieldnames():
@@ -146,7 +146,7 @@ class MavlinkClient(Node):
                     self.get_logger().warn(
                         f"Field {field_name} not found in ROS2 message {msg_type}")
 
-            self._publishers[msg_type].publish(ros_msg)
+            self._mavlink_publishers[msg_type].publish(ros_msg)
             self.get_logger().info(
                 f"Published ROS2 message on topic: {msg_type}")
 
@@ -164,6 +164,7 @@ class MavlinkClient(Node):
         while self._running and rclpy.ok():
             try:
                 switch_states = self._control_panel_reader.read_switches()
+                # print(f"Current switch states: {switch_states}")
 
                 if not switch_states:
                     time.sleep(0.1)
@@ -236,12 +237,14 @@ class MavlinkClient(Node):
                 except Exception as e:
                     self.get_logger().error(f"Error sending MAVLink command (attempt {attempt+1}): {e}")
             
-            ack_received = self._wait_for_ack(state_to_send, timeout=5.0)
+            # TODO implement acknowledgment handling
+
+            # ack_received = self._wait_for_ack(state_to_send, timeout=5.0)
             
-            if not ack_received:
-                error_msg = f"No acknowledgment received for {action_name} command"
-                self.get_logger().error(error_msg)
-                raise TimeoutError(error_msg)
+            # if not ack_received:
+            #     error_msg = f"No acknowledgment received for {action_name} command"
+            #     self.get_logger().error(error_msg)
+            #     raise TimeoutError(error_msg)
             
             self.get_logger().info(f"Successfully processed {action_name} command")
 
@@ -252,16 +255,18 @@ class MavlinkClient(Node):
         
         try:
             gs_switches = self._control_panel_reader.get_gs_actions()
+            if gs_switches is None:
+                return
         
             msg = gs_msgs.TankingCommands()
             
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.header.frame_id = "control_panel_gs"
             
-            msg.main_valve = gs_switches.get("main_valve")
-            msg.hose_vent = gs_switches.get("hose_vent")
-            msg.decoupler = gs_switches.get("decoupler")
-            msg.oxidizer_switch = gs_switches.get("N2O_He_switch")
+            msg.main_valve = bool(gs_switches.get(("main_valve", "gs"), 0))
+            msg.hose_vent = bool(gs_switches.get(("hose_vent", "gs"), 0))
+            msg.decoupler = bool(gs_switches.get(("decoupler", "gs"), 0))
+            msg.oxidizer_switch = bool(gs_switches.get(("N2O_He_switch", "gs"), 0))
 
             self.gs_switches_publisher.publish(msg)
             self.get_logger().info(f"Published GS switches: {msg}")
@@ -317,12 +322,12 @@ class MavlinkClient(Node):
                 msg = self.master.mav.simba_cmd_change_state_encode(abort_state)
                 self.master.mav.send(msg)
                 
-                # Wait for acknowledgment
-                ack_received = self._wait_for_ack(abort_state, timeout=2.0)
-                if not ack_received:
-                    self.get_logger().error("No acknowledgment received for final ABORT command")
-                else:
-                    self.get_logger().info("Abort sequence acknowledged by rocket")
+                # TODO: Wait for acknowledgment
+                # ack_received = self._wait_for_ack(abort_state, timeout=2.0)
+                # if not ack_received:
+                #     self.get_logger().error("No acknowledgment received for final ABORT command")
+                # else:
+                #     self.get_logger().info("Abort sequence acknowledged by rocket")
             except Exception as e:
                 self.get_logger().error(f"Error in final ABORT verification: {e}")
             
@@ -367,7 +372,7 @@ class MavlinkClient(Node):
 
 if __name__ == '__main__':
     rclpy.init()
-    mavlink_receiver = MavlinkClient()
+    mavlink_receiver = MavlinkClient(control_panel_port="/dev/ttyUSB0", mavlink_port="/dev/ttyUSB1")
 
     try:
         rclpy.spin(mavlink_receiver)

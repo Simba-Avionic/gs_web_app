@@ -12,4 +12,3 @@ numpy
 pyyaml
 psutil
 pyserial
-pymavlink

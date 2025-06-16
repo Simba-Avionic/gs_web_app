@@ -135,8 +135,10 @@ class MAVLinkSenderApp:
         self.message_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
         
         # Populate message dropdown - filter out command messages
-        message_names = [name for name in sorted(self.messages.keys()) if name in 
-                        ["SIMBA_CMD_CHANGE_STATE", "SIMBA_ACTUATOR_CMD", "SIMBA_ACK"]]
+        # message_names = [name for name in sorted(self.messages.keys()) if name in 
+        #                 ["SIMBA_CMD_CHANGE_STATE", "SIMBA_ACTUATOR_CMD", "SIMBA_ACK"]]
+        
+        message_names = [name for name in sorted(self.messages.keys())]
         self.message_combo['values'] = message_names
         if message_names:
             self.message_combo.current(0)
@@ -257,7 +259,8 @@ class MAVLinkSenderApp:
     
     def refresh_ports(self):
         """Refresh the list of available serial ports"""
-        ports = [port.device for port in serial.tools.list_ports.comports()]
+        ports = [port.device for port in serial.tools.list_ports.comports() 
+                if not port.device.startswith('/dev/ttyS')]
         
         self.mavlink_port_combo['values'] = ports
         self.bitstring_port_combo['values'] = ports
@@ -268,7 +271,7 @@ class MAVLinkSenderApp:
             if not self.bitstring_port.get() or self.bitstring_port.get() not in ports:
                 self.bitstring_port.set(ports[0])
         
-        self.log(f"Found {len(ports)} serial ports")
+        self.log(f"Found {len(ports)} serial ports (excluding ttyS* ports)")
     
     def on_message_selected(self, event=None):
         """Handle message selection event"""
@@ -389,43 +392,42 @@ class MAVLinkSenderApp:
                 return
         
         try:
-            # Create and send MAVLink message
             connection = mavutil.mavlink_connection(port, baud=57600)
             self.log(f"Connected to {port}")
             
-            # Wait for heartbeat
-            self.log("Waiting for heartbeat...")
-            # connection.wait_heartbeat(timeout=5)
-            # self.log("Heartbeat received")
-            
-            # Use the encode function directly from simba.py
-            if message_name == "SIMBA_CMD_CHANGE_STATE":
-                msg = connection.mav.simba_cmd_change_state_encode(
-                    field_values.get("new_state", 0)
-                )
-                self.log(f"Sending SIMBA_CMD_CHANGE_STATE with state={field_values.get('new_state', 0)}")
-                
-            elif message_name == "SIMBA_ACTUATOR_CMD":
-                msg = connection.mav.simba_actuator_cmd_encode(
-                    field_values.get("actuator_id", 0),
-                    field_values.get("value", 0)
-                )
-                self.log(f"Sending SIMBA_ACTUATOR_CMD with id={field_values.get('actuator_id', 0)}, value={field_values.get('value', 0)}")
-                
-            elif message_name == "SIMBA_ACK":
-                msg = connection.mav.simba_ack_encode(
-                    field_values.get("state", 0),
-                    field_values.get("status", 0)
-                )
-                self.log(f"Sending SIMBA_ACK with state={field_values.get('state', 0)}, status={field_values.get('status', 0)}")
-                
-            else:
-                self.log(f"Unsupported message type: {message_name}")
+            # Get message definition to determine field order
+            message_info = self.messages.get(message_name)
+            if not message_info:
+                self.log(f"Error: Message definition not found for {message_name}")
                 return
             
-            # Send the message
-            connection.mav.send(msg)
-            self.log(f"Sent {message_name} message with fields: {field_values}")
+            # Build ordered list of field values based on field definitions
+            ordered_values = []
+            for field in message_info['fields']:
+                field_name = field['name']
+                ordered_values.append(field_values.get(field_name, 0))  # Default to 0 if missing
+            
+            # Log what we're about to send
+            field_summary = ', '.join([f"{field['name']}={field_values.get(field['name'], 0)}" 
+                                    for field in message_info['fields']])
+            self.log(f"Sending {message_name} with: {field_summary}")
+            
+            # Dynamically get the encode method for this message type
+            # Convert message name to lowercase with underscores
+            method_name = message_name.lower() + "_encode"
+            
+            # Check if the method exists
+            if hasattr(connection.mav, method_name):
+                # Get the method and call it with our field values
+                encode_method = getattr(connection.mav, method_name)
+                msg = encode_method(*ordered_values)
+                
+                # Send the message
+                connection.mav.send(msg)
+                self.log(f"Successfully sent {message_name} message")
+            else:
+                self.log(f"Error: Method {method_name} not found in MAVLink dialect")
+                
             connection.close()
             
         except Exception as e:
@@ -445,12 +447,8 @@ class MAVLinkSenderApp:
             return
         
         try:
-            # Convert bit string to byte
-            byte_value = int(bit_string, 2).to_bytes(1, byteorder='big')
-            
-            # Send via serial port
-            with serial.Serial(port, 9600, timeout=1) as ser:
-                ser.write(byte_value)
+            with serial.Serial(port, baudrate=57600, timeout=0) as ser:
+                ser.write(bit_string.encode('utf-8') + b'\n')
                 self.log(f"Sent bit string {bit_string} to {port}")
         
         except Exception as e:

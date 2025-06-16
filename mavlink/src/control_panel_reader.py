@@ -15,15 +15,17 @@ class ControlPanelReader:
         ("abort", "abort"): 0           # bit 7
     }
 
-    def __init__(self, port=None, baudrate=9600, num_retries=3):
+    def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
         self.baudrate = baudrate
         self.num_retries = num_retries
         self.ser = None
+        self.thread = None
 
         self.latest_switches = {}
 
         if port:
-            self.ser = serial.Serial(port, baudrate, timeout=1)
+            self.ser = serial.Serial(port, baudrate)
+            print(f"Using specified Control Panel port: {port} | baud: {baudrate}")
         else:
             self.scan_and_connect()
 
@@ -38,7 +40,7 @@ class ControlPanelReader:
         for port in available_ports:
             try:
                 print(f"Trying port {port}...")
-                test_ser = serial.Serial(port, self.baudrate, timeout=0.5)
+                test_ser = serial.Serial(port, self.baudrate, timeout=0.1)
                 time.sleep(1)  # Allow time for Arduino reset after connection
 
                 for _ in range(self.num_retries):
@@ -78,12 +80,13 @@ class ControlPanelReader:
         actions = self.SWITCH_ACTIONS.copy()
 
         if not self.ser:
-            return actions
+            return None
 
         try:
             raw = self.ser.readline().decode().strip()
+            # print(raw)
             if not raw or not self._is_valid_binary_string(raw):
-                return actions
+                return None
 
             # Update actions based on the binary string
             # Using the order of keys in SWITCH_ACTIONS to map to bit positions
@@ -104,6 +107,8 @@ class ControlPanelReader:
             Dictionary of rocket-related actions
         """
         actions = self.read_switches()
+        if actions is None:
+            return None
         return {key: value for key, value in actions.items()
                 if key[1] == "rocket"}
 
@@ -115,6 +120,8 @@ class ControlPanelReader:
             Dictionary of ground segment-related actions
         """
         actions = self.read_switches()
+        if actions is None:
+            return None
         return {key: value for key, value in actions.items()
                 if key[1] == "gs"}
 
@@ -126,3 +133,16 @@ class ControlPanelReader:
         if self.ser:
             self.ser.close()
             self.ser = None
+
+if __name__ == "__main__":
+    reader = ControlPanelReader("/dev/ttyUSB0", baudrate=57600)
+    try:
+        while True:
+            actions = reader.read_switches()
+
+            time.sleep(0.05)
+    except KeyboardInterrupt:
+        print("Exiting...")
+    finally:
+        reader.close()
+        pass

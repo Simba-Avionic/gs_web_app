@@ -150,16 +150,10 @@ class mavfile_state(object):
         self.messages = { 'MAV' : self }
         self.flightmode = "UNKNOWN"
         self.vehicle_type = "UNKNOWN"
-        self.mav_type = mavlink.MAV_TYPE_FIXED_WING
-        self.mav_autopilot = mavlink.MAV_AUTOPILOT_GENERIC
+        self.mav_type = None
+        self.mav_autopilot = None
         self.base_mode = 0
         self.armed = False # canonical arm state for the vehicle as a whole
-
-        if float(mavlink.WIRE_PROTOCOL_VERSION) >= 1:
-            self.messages['HOME'] = mavlink.MAVLink_gps_raw_int_message(0,0,0,0,0,0,0,0,0,0)
-            mavlink.MAVLink_waypoint_message = mavlink.MAVLink_mission_item_message
-        else:
-            self.messages['HOME'] = mavlink.MAVLink_gps_raw_message(0,0,0,0,0,0,0,0,0)
 
 class param_state(object):
     '''state for a particular system id/component id pair'''
@@ -1060,28 +1054,6 @@ def mavlink_connection(device, baud=115200, source_system=255, source_component=
 
     if dialect is not None:
         set_dialect(dialect)
-    if device.startswith('tcp:'):
-        return mavtcp(device[4:],
-                      autoreconnect=autoreconnect,
-                      source_system=source_system,
-                      source_component=source_component,
-                      retries=retries,
-                      use_native=use_native)
-    if device.startswith('tcpin:'):
-        return mavtcpin(device[6:], source_system=source_system, source_component=source_component, retries=retries, use_native=use_native)
-    if device.startswith('udpin:'):
-        return mavudp(device[6:], input=True, source_system=source_system, source_component=source_component, use_native=use_native, timeout=udp_timeout)
-    if device.startswith('udpout:'):
-        return mavudp(device[7:], input=False, source_system=source_system, source_component=source_component, use_native=use_native)
-    if device.startswith('udpbcast:'):
-        return mavudp(device[9:], input=False, source_system=source_system, source_component=source_component, use_native=use_native, broadcast=True)
-    if device.startswith('wsserver:'):
-        return mavwebsocket(device[9:], source_system=source_system, source_component=source_component, use_native=use_native)
-    # For legacy purposes we accept the following syntax and let the caller to specify direction
-    if device.startswith('udp:'):
-        return mavudp(device[4:], input=input, source_system=source_system, source_component=source_component, use_native=use_native)
-    if device.startswith('mcast:'):
-        return mavmcast(device[6:], source_system=source_system, source_component=source_component, use_native=use_native)
 
     if device.lower().endswith('.bin') or device.lower().endswith('.px4log'):
         # support dataflash logs
@@ -1118,21 +1090,6 @@ def mavlink_connection(device, baud=115200, source_system=255, source_component=
             mavfile_global = m
             return m    
 
-    # list of suffixes to prevent setting DOS paths as UDP sockets
-    logsuffixes = ['mavlink', 'log', 'raw', 'tlog' ]
-    suffix = device.split('.')[-1].lower()
-    if device.find(':') != -1 and not suffix in logsuffixes:
-        return mavudp(device, source_system=source_system, source_component=source_component, input=input, use_native=use_native)
-    if os.path.isfile(device):
-        if device.endswith(".elf") or device.find("/bin/") != -1:
-            print("executing '%s'" % device)
-            return mavchildexec(device, source_system=source_system, source_component=source_component, use_native=use_native)
-        elif not write and not append and not notimestamps:
-            return mavmmaplog(device, progress_callback=progress_callback)
-        else:
-            return mavlogfile(device, planner_format=planner_format, write=write,
-                              append=append, robust_parsing=robust_parsing, notimestamps=notimestamps,
-                              source_system=source_system, source_component=source_component, use_native=use_native)
     return mavserial(device,
                      baud=baud,
                      source_system=source_system,
