@@ -2,6 +2,7 @@ import os
 import time
 import sys
 import inspect
+import threading
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
@@ -31,6 +32,14 @@ class MAVLinkSenderApp:
         self.bitstring = tk.StringVar(value="00000000")
         self.field_vars = {}
 
+        self.command_port = tk.StringVar()
+        self.response_port = tk.StringVar()
+        self.command_state = tk.IntVar(value=0)
+        self.response_state = tk.IntVar(value=0)
+        self.auto_respond = tk.BooleanVar(value=False)
+        self.responder_running = False
+        self.responder_thread = None
+
         # Create notebook (tabs)
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
@@ -38,9 +47,11 @@ class MAVLinkSenderApp:
         # Create tabs
         self.mavlink_tab = ttk.Frame(self.notebook)
         self.bitstring_tab = ttk.Frame(self.notebook)
+        self.ack_tab = ttk.Frame(self.notebook) 
         
         self.notebook.add(self.mavlink_tab, text="MAVLink Messages")
         self.notebook.add(self.bitstring_tab, text="Bit String Sender")
+        self.notebook.add(self.ack_tab, text="Test Ack") 
         
         # Add log area FIRST (before any methods that use logging)
         self.setup_log_area()
@@ -52,6 +63,7 @@ class MAVLinkSenderApp:
         # Setup the tabs
         self.setup_mavlink_tab()
         self.setup_bitstring_tab()
+        self.setup_ack_tab()  # Add setup for new tab
         
         # Refresh ports on startup
         self.refresh_ports()
@@ -115,6 +127,259 @@ class MAVLinkSenderApp:
         self.log(f"Found {len(enums)} MAVLink enums")
         return enums
     
+    def setup_ack_tab(self):
+        """Setup the ACK testing tab"""
+        # Command sender frame
+        command_frame = ttk.LabelFrame(self.ack_tab, text="Command Sender")
+        command_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Port selection for command
+        ttk.Label(command_frame, text="Command Port:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.command_port_combo = ttk.Combobox(command_frame, textvariable=self.command_port)
+        self.command_port_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        
+        # State selection for command
+        ttk.Label(command_frame, text="State Value:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        
+        # Create a dropdown for state selection if SIMBA_ROCKET_STATE enum exists
+        state_enum = self.enums.get('SIMBA_ROCKET_STATE', [])
+        if state_enum:
+            state_values = [(entry[0], entry[1]) for entry in state_enum]
+            state_frame = ttk.Frame(command_frame)
+            state_frame.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+            
+            state_var = tk.StringVar()
+            state_combo = ttk.Combobox(state_frame, textvariable=state_var, 
+                                    values=[s[0] for s in state_values], state="readonly", width=20)
+            if state_values:
+                state_combo.current(0)
+                self.command_state.set(state_values[0][1])
+            state_combo.pack(side=tk.LEFT, padx=5)
+            
+            # Update integer value when dropdown changes
+            def on_state_selected(event):
+                selected = state_var.get()
+                for name, value in state_values:
+                    if name == selected:
+                        self.command_state.set(value)
+                        break
+            state_combo.bind("<<ComboboxSelected>>", on_state_selected)
+            
+            # Also show numeric value
+            ttk.Label(state_frame, textvariable=tk.StringVar(value="Value:")).pack(side=tk.LEFT, padx=5)
+            ttk.Entry(state_frame, textvariable=self.command_state, width=5).pack(side=tk.LEFT)
+        else:
+            # Fallback to simple entry if enum not available
+            ttk.Entry(command_frame, textvariable=self.command_state, width=10).grid(
+                row=1, column=1, padx=5, pady=5, sticky="w")
+        
+        # Send command button
+        ttk.Button(command_frame, text="Send Command", 
+                command=self.send_command).grid(row=2, column=0, columnspan=2, pady=10)
+        
+        # Response frame
+        response_frame = ttk.LabelFrame(self.ack_tab, text="Response Handler")
+        response_frame.pack(fill="x", padx=10, pady=5)
+        
+        # Port selection for response
+        ttk.Label(response_frame, text="Response Port:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.response_port_combo = ttk.Combobox(response_frame, textvariable=self.response_port)
+        self.response_port_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        
+        # Auto-respond checkbox
+        auto_resp_frame = ttk.Frame(response_frame)
+        auto_resp_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        
+        ttk.Checkbutton(auto_resp_frame, text="Auto-respond to commands", 
+                        variable=self.auto_respond).pack(side=tk.LEFT, padx=5)
+        
+        # State for response (same as command by default)
+        # In setup_ack_tab(), modify the response frame:
+
+        # State for response (same as command by default)
+        ttk.Label(response_frame, text="Response State:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        ttk.Entry(response_frame, textvariable=self.response_state, width=10).grid(
+            row=2, column=1, padx=5, pady=5, sticky="w")
+
+        # Add status selection for response
+        ttk.Label(response_frame, text="Response Status:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+
+        # Create status variable and dropdown
+        self.response_status = tk.StringVar(value="SIMBA_OK")
+        status_enum = self.enums.get('SIMBA_STATUS', [])
+        if status_enum:
+            status_combo = ttk.Combobox(response_frame, textvariable=self.response_status, 
+                                values=[s[0] for s in status_enum], state="readonly", width=20)
+            status_combo.current(0)  # Default to SIMBA_OK
+            status_combo.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        else:
+            ttk.Entry(response_frame, textvariable=self.response_status, width=10).grid(
+                row=3, column=1, padx=5, pady=5, sticky="w")
+
+        # Copy button to copy command state to response state
+        ttk.Button(response_frame, text="Use Command State", 
+                command=lambda: self.response_state.set(self.command_state.get())).grid(
+            row=4, column=0, columnspan=2, pady=5)
+
+        # Send response button
+        ttk.Button(response_frame, text="Send Response", 
+                command=self.send_response).grid(row=5, column=0, columnspan=2, pady=10)
+        
+        # Instruction text
+        info_frame = ttk.LabelFrame(self.ack_tab, text="Instructions")
+        info_frame.pack(fill="x", padx=10, pady=5)
+        
+        info_text = """This tab simulates a command-acknowledgment interaction:
+        1. Select different ports for command and response
+        2. Configure the state value for the command
+        3. Send the command using 'Send Command' button
+        4. Either manually send a response, or enable 'Auto-respond'
+        5. The response will use the state value specified in 'Response State'
+
+        With auto-respond enabled, the system will automatically send an acknowledgment
+        whenever a command is received on the response port."""
+        
+        info_label = ttk.Label(info_frame, text=info_text, justify="left", wraplength=580)
+        info_label.pack(padx=10, pady=5, anchor="w")
+        
+        # Refresh button
+        ttk.Button(self.ack_tab, text="Refresh Ports", command=self.refresh_ports).pack(pady=10)
+
+        # After setting up port dropdowns in setup_ack_tab
+        if len(self.command_port_combo['values']) > 1:
+            # Set command port to first value and response port to second value
+            self.command_port.set(self.command_port_combo['values'][0])
+            self.response_port.set(self.command_port_combo['values'][1])
+        
+        def on_auto_respond_changed(*args):
+            if self.auto_respond.get():
+                self.toggle_auto_responder()
+            else:
+                self.responder_running = False
+
+        self.auto_respond.trace_add("write", on_auto_respond_changed)
+    
+
+    def send_command(self):
+        """Send a SIMBA_CMD_CHANGE_STATE message"""
+        port = self.command_port.get()
+        state = self.command_state.get()
+        
+        if not port:
+            self.log("Error: No command port selected")
+            return
+        
+        try:
+            connection = mavutil.mavlink_connection(port, baud=57600)
+            self.log(f"Connected to command port {port}")
+            
+            # Encode and send the message
+            msg = connection.mav.simba_cmd_change_state_encode(state)
+            connection.mav.send(msg)
+            
+            self.log(f"Sent SIMBA_CMD_CHANGE_STATE with state={state}")
+            connection.close()
+            
+        except Exception as e:
+            self.log(f"Error sending command: {e}")
+
+    def send_response(self):
+        """Send a SIMBA_ACK message"""
+        port = self.response_port.get()
+        state = self.response_state.get()
+        status_name = self.response_status.get()
+        
+        if not port:
+            self.log("Error: No response port selected")
+            return
+        
+        # Get numeric status value from enum name
+        status = 0  # Default to SIMBA_OK
+        for name, value in self.enums.get('SIMBA_STATUS', []):
+            if name == status_name:
+                status = value
+                break
+        
+        try:
+            connection = mavutil.mavlink_connection(port, baud=57600)
+            self.log(f"Connected to response port {port}")
+            
+            # Get SIMBA_OK value (default 0)
+            status = 0  # Default to SIMBA_OK
+            for name, value in self.enums.get('SIMBA_STATUS', []):
+                if name == 'SIMBA_OK':
+                    status = value
+                    break
+            
+            # Encode and send the ack message with both state and status parameters
+            msg = connection.mav.simba_ack_encode(state, status)
+            connection.mav.send(msg)
+            
+            self.log(f"Sent SIMBA_ACK with state={state}, status=SIMBA_OK({status})")
+            connection.close()
+            
+        except Exception as e:
+            self.log(f"Error sending response: {e}")
+
+    def toggle_auto_responder(self):
+        """Toggle the automatic responder"""
+        if self.responder_running:
+            self.responder_running = False
+            self.log("Auto-responder stopped")
+            if self.responder_thread:
+                self.responder_thread.join(timeout=1.0)
+                self.responder_thread = None
+        else:
+            if not self.response_port.get():
+                self.log("Error: No response port selected")
+                self.auto_respond.set(False)
+                return
+                
+            self.responder_running = True
+            self.responder_thread = threading.Thread(target=self.run_auto_responder, daemon=True)
+            self.responder_thread.start()
+            self.log("Auto-responder started")
+
+    def run_auto_responder(self):
+        """Thread function to automatically respond to commands"""
+        port = self.response_port.get()
+        
+        try:
+            connection = mavutil.mavlink_connection(port, baud=57600)
+            self.log(f"Auto-responder listening on {port}")
+            
+            # Get SIMBA_OK value (default 0)
+            status = 0  # Default to SIMBA_OK
+            for name, value in self.enums.get('SIMBA_STATUS', []):
+                if name == 'SIMBA_OK':
+                    status = value
+                    break
+            
+            while self.responder_running:
+                # Wait for a command message with a short timeout
+                msg = connection.recv_match(type='simba_cmd_change_state', blocking=True, timeout=0.5)
+                
+                if msg is not None:
+                    self.log(f"Auto-responder received command with state={msg.new_state}")
+                    
+                    # Use the received state for the response
+                    self.response_state.set(msg.new_state)
+                    
+                    # Send the ack with proper status
+                    ack_msg = connection.mav.simba_ack_encode(msg.new_state, status)
+                    connection.mav.send(ack_msg)
+                    self.log(f"Auto-responder sent ACK with state={msg.new_state}, status=SIMBA_OK({status})")
+                
+                # Small sleep to prevent high CPU usage
+                time.sleep(0.01)
+                
+            connection.close()
+            
+        except Exception as e:
+            self.log(f"Error in auto-responder: {e}")
+            self.responder_running = False
+            self.auto_respond.set(False)
+
     def setup_mavlink_tab(self):
         """Setup the MAVLink message sender tab"""
         # Port selection frame
@@ -135,11 +400,7 @@ class MAVLinkSenderApp:
         ttk.Label(message_frame, text="Message:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.message_combo = ttk.Combobox(message_frame, textvariable=self.selected_message, state="readonly")
         self.message_combo.grid(row=0, column=1, padx=5, pady=5, sticky="w")
-        
-        # Populate message dropdown - filter out command messages
-        # message_names = [name for name in sorted(self.messages.keys()) if name in 
-        #                 ["SIMBA_CMD_CHANGE_STATE", "SIMBA_ACTUATOR_CMD", "SIMBA_ACK"]]
-        
+               
         message_names = [name for name in sorted(self.messages.keys())]
         self.message_combo['values'] = message_names
         if message_names:
@@ -264,14 +525,26 @@ class MAVLinkSenderApp:
         ports = [port.device for port in serial.tools.list_ports.comports() 
                 if not port.device.startswith('/dev/ttyS')]
         
+        # Update MAVLink tab port dropdown
         self.mavlink_port_combo['values'] = ports
+        
+        # Update Bitstring tab port dropdown
         self.bitstring_port_combo['values'] = ports
         
+        # Update Test Ack tab port dropdowns
+        self.command_port_combo['values'] = ports
+        self.response_port_combo['values'] = ports
+        
+        # Set default values if none selected
         if ports:
             if not self.mavlink_port.get() or self.mavlink_port.get() not in ports:
                 self.mavlink_port.set(ports[0])
             if not self.bitstring_port.get() or self.bitstring_port.get() not in ports:
                 self.bitstring_port.set(ports[0])
+            if not self.command_port.get() or self.command_port.get() not in ports:
+                self.command_port.set(ports[0])
+            if not self.response_port.get() or self.response_port.get() not in ports:
+                self.response_port.set(ports[0])
         
         self.log(f"Found {len(ports)} serial ports (excluding ttyS* ports)")
     

@@ -231,7 +231,6 @@
       padding: 0.5rem;
     }
     :global(.rocket-telem-class .telemetry-data) {
-      margin-top: 0.5rem;
       font-size: 1rem;
     }
     :global(.rocket-telem-class .field-top-row) {

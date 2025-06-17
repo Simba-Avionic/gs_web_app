@@ -40,7 +40,7 @@
 
                 socket.onopen = () => {
                     console.log(`Connected to ${topicName}`);
-                    topicStatusMap[topicName] = true;
+                    topicStatusMap[topicName] = false;
                     resolve();
                 };
 
