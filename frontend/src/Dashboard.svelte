@@ -287,6 +287,7 @@
     max-height: calc(100vh - var(--navbar-height));
     text-align: center;
     margin-bottom: 1rem;
+    background-color: #181b1f;
   }
 
   #telemetry-info .fields-container {

@@ -345,15 +345,18 @@
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp1"
+                    "val_name": "temp1",
+                    "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp2"
+                    "val_name": "temp2",
+                    "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp3"
+                    "val_name": "temp3",
+                    "unit": "\u00b0C"
                 }
             ]
         },
@@ -370,11 +373,13 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "pressure"
+                    "val_name": "pressure",
+                    "unit": "bar"
                 },
                 {
                     "type": "float32",
-                    "val_name": "d_pressure"
+                    "val_name": "d_pressure",
+                    "unit": "bar"
                 }
             ]
         },
@@ -407,15 +412,15 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "int32",
+                    "type": "float32",
                     "val_name": "lat"
                 },
                 {
-                    "type": "int32",
+                    "type": "float32",
                     "val_name": "lon"
                 },
                 {
-                    "type": "int32",
+                    "type": "float32",
                     "val_name": "alt"
                 }
             ]
@@ -459,23 +464,6 @@
                 {
                     "type": "int32",
                     "val_name": "alt"
-                }
-            ]
-        },
-        {
-            "id": 146,
-            "topic_name": "mavlink/simba_cmd_change_state",
-            "msg_type": "SimbaCmdChangeState",
-            "interval": 1000,
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "new_state"
                 }
             ]
         },

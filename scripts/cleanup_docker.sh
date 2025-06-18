@@ -24,4 +24,9 @@ sudo docker images --filter "reference=$NAME*" --format "{{.ID}}" | while read -
     sudo docker rmi "$image_id"
 done
 
+sudo docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep "$NAME" | awk '{print $2}' | while read -r image_id; do
+    echo "Removing image $image_id..."
+    sudo docker rmi -f "$image_id"
+done
+
 echo "Cleanup completed."

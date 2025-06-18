@@ -4,10 +4,10 @@
 APP_PATH="$HOME"
 # echo "$APP_PATH"
 BASHRC="$HOME/.bashrc"
-LINE="source $APP_PATH/gs_web_app/build_output/install/setup.bash"
+LINE="source $APP_PATH/gs_web_app/build/install/setup.bash"
 
 function source_ros() {
-    source $APP_PATH/gs_web_app/build_output/install/setup.bash
+    source $APP_PATH/gs_web_app/build/install/setup.bash
     if [ $? -ne 0 ]; then
         echo "Failed to source ROS 2 environment."
         exit 1
@@ -25,7 +25,7 @@ function build_ros_msgs() {
 
     cd ..
 
-    colcon --log-base build_output/log build --packages-select gs_interfaces --build-base build_output/build --install-base build_output/install
+    colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
     if [ $? -ne 0 ]; then
         echo "Failed to build gs_interfaces package."
         exit 1
@@ -90,6 +90,18 @@ function run_grafana() {
 }
 
 function run_docker_stack() {
+
+    if [ "$1" = "--clean" ]; then
+        echo "Cleaning up Docker containers first..."
+        chmod +x ./scripts/cleanup_docker.sh
+        ./scripts/cleanup_docker.sh grafana
+        ./scripts/cleanup_docker.sh influxdb
+        if [ $? -ne 0 ]; then
+            echo "Docker cleanup failed."
+            exit 1
+        fi
+    fi
+
     echo "Starting InfluxDB + Grafana stack ..."
     sudo docker compose --env-file .env up -d
     if [ $? -ne 0 ]; then
@@ -148,16 +160,17 @@ function run_all() {
 function show_help() {
     echo "Usage: $0 [option]"
     echo "Options:"
-    echo "  build_ros_msgs       Build ROS 2 messages and gs_interfaces package"
-    echo "  run_app                  Start the app (npm run dev)"
-    echo "  run_server               Start the server (python3 main.py)"
-    echo "  publish_test_ros_msgs    Run custom messages (python3 tests/ros/run.py)"
-    echo "  generate_mavlink         Generate MAVLink definitions using setup.sh"
-    echo "  build_msgs               Build MAVLink and ROS 2 messages"
-    echo "  run                      Start the server and app"
-    echo "  run_with_test_msgs       Start the server, app, and custom messages"
-    echo "  run_all                  Build messages, start the server, app, and custom messages"
-    echo "  help                     Show this help message"
+    echo "  build_ros_msgs                 Build ROS 2 messages and gs_interfaces package"
+    echo "  run_app                        Start the app (npm run dev)"
+    echo "  run_server                     Start the server (python3 main.py)"
+    echo "  publish_test_ros_msgs          Run custom messages (python3 tests/ros/run.py)"
+    echo "  generate_mavlink               Generate MAVLink definitions using setup.sh"
+    echo "  build_msgs                     Build MAVLink and ROS 2 messages"
+    echo "  run_docker_stack [--cleanup]   Start InfluxDB + Grafana stack (with optional cleanup)"
+    echo "  run                            Start the server and app"
+    echo "  run_with_test_msgs             Start the server, app, and custom messages"
+    echo "  run_all                        Build messages, start the server, app, and custom messages"
+    echo "  help                           Show this help message"
 }
 
 if [ "$#" -lt 1 ]; then
@@ -166,6 +179,13 @@ if [ "$#" -lt 1 ]; then
 fi
 
 case $1 in
+    run_docker_stack)
+        if [ "$2" = "--clean" ]; then
+            run_docker_stack --clean
+        else
+            run_docker_stack
+        fi
+        ;;
     build_ros_msgs)
         build_ros_msgs
         ;;

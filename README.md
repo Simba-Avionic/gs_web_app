@@ -62,7 +62,7 @@ Single entry of the `config.json` looks like this:
 2. Make sure to source ROS environment (you can also add to ~/.bashrc)
    
     ```bash
-    source build_output/install/setup.bash
+    source build/install/setup.bash
     ```
     
 3. Run the app (*Make sure to `chmod` the script!*):

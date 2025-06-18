@@ -28,7 +28,34 @@
   "id": 1,
   "links": [],
   "liveNow": false,
-  "panels": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 9999,
+      "panels": [],
+      "title": "Statuses",
+      "type": "row"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 9998,
+      "panels": [],
+      "title": "Graphs",
+      "type": "row"
+    }
+  ],
   "refresh": "1s",
   "schemaVersion": 39,
   "tags": [],
