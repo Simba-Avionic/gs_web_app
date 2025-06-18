@@ -4,8 +4,8 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import utils
-from utils.paths import SIMBA_XML_PATH
+import shared.utils as utils
+from shared.paths import SIMBA_XML_PATH
 
 output_json = "temp.json"  # Output JSON file
 
@@ -15,11 +15,14 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
 
     config = {"topics": []}
 
-    # Iterate through all messages in the XML
     for message in root.findall(".//message"):
+        topic_name = f"mavlink/{message.get('name').lower()}"
+        if "_cmd" in topic_name:
+            continue  # Skip command messages
+
         topic = {
             "id": int(message.get("id")),
-            "topic_name": f"mavlink/{message.get('name').lower()}",
+            "topic_name": topic_name,
             "msg_type": utils.convert_message_name(message.get("name")),
             "interval": 1000,
             "place": "rocket",
@@ -31,15 +34,23 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
             ]
         }
 
-        # Add fields from the XML message
         for field in message.findall("field"):
             field_entry = {
                 "type": utils.get_type_mapping(field.get("type")),
                 "val_name": field.get("name")
             }
+
+            field_name = field.get("name").lower()
+            if 'temp' in field_name:
+                field_entry["unit"] = "°C"
+            elif 'pressure' in field_name:
+                field_entry["unit"] = "bar"
+            elif 'alt' in field_name:
+                field_entry["unit"] = "m"
+            
+            
             topic["msg_fields"].append(field_entry)
 
-        # Add the topic to the config
         config["topics"].append(topic)
 
     with open(output_json, "w") as json_file:

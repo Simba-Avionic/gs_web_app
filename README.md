@@ -46,23 +46,23 @@ Single entry of the `config.json` looks like this:
     ```
     git clone --recursive https://github.com/Simba-Avionic/gs_web_app
     ```
-2. Run the `install.sh` script. It wll try to install *Docker, ROS2, npm* and some related packages.
+2. Run the `./scripts/install.sh`. It will try to install *Docker, ROS2, npm* and some related packages.
     If script fails, try to install ROS2 and/or Docker manually:
     - ROS2 Humble (https://docs.ros.org/en/humble/Installation.html)
     - Docker (https://docs.docker.com/engine/install/)
     App was only tested with Python3.10 so make sure you have it installed.
 
 ## Launching the app (step by step)
-1. Activate the Python environment
+1. Activate the Python environment (you can also add to ~/.bashrc)
 
     ```bash
     source venv/bin/activate
     ```
     
-2. Make sure to source ROS environment
+2. Make sure to source ROS environment (you can also add to ~/.bashrc)
    
     ```bash
-    source install/setup.bash
+    source build/install/setup.bash
     ```
     
 3. Run the app (*Make sure to `chmod` the script!*):
@@ -102,3 +102,4 @@ If you don't see the folder **install** refer to *gs_interfaces* README.
 - [x] Docker
 - [x] Python
 - [x] Grafana
+- [x] MAVLink

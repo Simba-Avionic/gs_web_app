@@ -42,6 +42,7 @@
             "msg_type": "LoadCellsParams",
             "interval": 1000,
             "place": "gs",
+            "grafana": false,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -129,32 +130,6 @@
             ]
         },
         {
-            "id": 5,
-            "topic_name": "control_panel/switches",
-            "msg_type": "ControlPanelSwitches",
-            "interval": 1000,
-            "place": "gs",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                }
-            ]
-        },
-        {
-            "id": 6,
-            "topic_name": "tanking/commands",
-            "msg_type": "TankingCmds",
-            "interval": 1000,
-            "place": "gs",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                }
-            ]
-        },
-        {
             "id": 7,
             "topic_name": "radio_433/telemetry",
             "msg_type": "Telemetry433",
@@ -183,72 +158,6 @@
             ]
         },
         {
-            "id": 8,
-            "topic_name": "rocket/telemetry",
-            "msg_type": "RocketTelemetry",
-            "interval": 1000,
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "altitude",
-                    "unit": "m"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "latitude",
-                    "unit": ""
-                },
-                {
-                    "type": "float32",
-                    "val_name": "longitude",
-                    "unit": ""
-                },
-                {
-                    "type": "float32",
-                    "val_name": "velocity",
-                    "unit": "m/s"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "pressure",
-                    "unit": "bar"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "acceleration",
-                    "unit": "m/s^2"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "temperature",
-                    "unit": "°C"
-                }
-            ]
-        },
-        {
-            "id": 9,
-            "topic_name": "rocket/status",
-            "msg_type": "RocketStatus",
-            "interval": 1000,
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "bool",
-                    "val_name": "is_alive",
-                    "unit": "bool"
-                }
-            ]
-        },
-        {
             "id": 10,
             "topic_name": "radiolink/telemetry",
             "msg_type": "RadiolinkTelemetry",
@@ -267,6 +176,7 @@
             "msg_type": "UartStatistics",
             "interval": 1000,
             "place": "gs",
+            "grafana": false,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -358,9 +268,227 @@
                     "unit": "A"
                 }
             ]
+        },
+        {
+            "id": 13,
+            "topic_name": "tanking/commands",
+            "msg_type": "TankingCommands",
+            "interval": 500,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "main_valve"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "hose_vent"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "decoupler"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "oxidizer_switch"
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "topic_name": "tanking/abort",
+            "msg_type": "TankingAbort",
+            "interval": 500,
+            "place": "gs",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "abort"
+                }
+            ]
+        },
+        {
+            "id": 68,
+            "topic_name": "mavlink/simba_actuator",
+            "msg_type": "SimbaActuator",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "values"
+                }
+            ]
+        },
+        {
+            "id": 69,
+            "topic_name": "mavlink/simba_tank_temperature",
+            "msg_type": "SimbaTankTemperature",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "temp1",
+                    "unit": "\u00b0C"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "temp2",
+                    "unit": "\u00b0C"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "temp3",
+                    "unit": "\u00b0C"
+                }
+            ]
+        },
+        {
+            "id": 70,
+            "topic_name": "mavlink/simba_tank_pressure",
+            "msg_type": "SimbaTankPressure",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "pressure",
+                    "unit": "bar"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "d_pressure",
+                    "unit": "bar"
+                }
+            ]
+        },
+        {
+            "id": 71,
+            "topic_name": "mavlink/simba_altitude_orientation",
+            "msg_type": "SimbaAltitudeOrientation",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "alt_orient"
+                }
+            ]
+        },
+        {
+            "id": 72,
+            "topic_name": "mavlink/simba_gps",
+            "msg_type": "SimbaGps",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "lat"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "lon"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "alt"
+                }
+            ]
+        },
+        {
+            "id": 73,
+            "topic_name": "mavlink/simba_heartbeat",
+            "msg_type": "SimbaHeartbeat",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint64",
+                    "val_name": "timestamp"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "flight_computer_status"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "engine_computer_status"
+                }
+            ]
+        },
+        {
+            "id": 74,
+            "topic_name": "mavlink/simba_max_altitude",
+            "msg_type": "SimbaMaxAltitude",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "alt"
+                }
+            ]
+        },
+        {
+            "id": 148,
+            "topic_name": "mavlink/simba_ack",
+            "msg_type": "SimbaAck",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "state"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "status"
+                }
+            ]
         }
     ],
-
     "msg_defs": [
         {
             "msg_type": "LoadCell",

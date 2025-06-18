@@ -1,0 +1,60 @@
+{
+  "datasource": {
+    "default": true,
+    "type": "influxdb",
+    "uid": "P5697886F9CA74929"
+  },
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "thresholds"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "transparent",
+            "value": null
+          }
+        ]
+      }
+    },
+    "overrides": []
+  },
+  "gridPos": {
+    "h": 6,
+    "w": 3,
+    "x": 0,
+    "y": 0
+  },
+  "id": 3,
+  "options": {
+    "minVizHeight": 75,
+    "minVizWidth": 75,
+    "orientation": "auto",
+    "reduceOptions": {
+      "calcs": [
+        "lastNotNull"
+      ],
+      "fields": "",
+      "values": false
+    },
+    "showThresholdLabels": false,
+    "showThresholdMarkers": false,
+    "sizing": "auto"
+  },
+  "pluginVersion": "11.2.3",
+  "targets": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P5697886F9CA74929"
+      },
+      "query": "",
+      "refId": "A"
+    }
+  ],
+  "title": "",
+  "type": "gauge"
+}
