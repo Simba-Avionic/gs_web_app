@@ -39,7 +39,8 @@ Single entry of the `config.json` looks like this:
 
 ## Prerequisites
 - Ubuntu 22.04
-- Python 3.10 (https://www.python.org/downloads/release/python-31012/)
+- Python 3.10 (Should be already available in Ubuntu 22.04)
+- Git
 
 ## Setup
 1. Clone this repo and its submodules 
