@@ -1,6 +1,14 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
+  import { theme } from './theme.js';
+
+  let currentTheme;
+  theme.subscribe(value => currentTheme = value);
+
+  function toggleTheme() {
+    theme.update(t => t === 'light' ? 'dark' : 'light');
+  }
 
   const dispatch = createEventDispatcher();
 
@@ -18,7 +26,7 @@
   let interval;
 
   let rocketState = 1; // Default to DISARMED (1)
-  let rocketStatus = 0; // Default to OK (0)
+  let rocketStatus = 0; // Default to SIMBA_STATUS_OK (0)
 
   const ROCKET_STATES = {
     1: { text: "DISARMED", class: "state-disarmed" },
@@ -48,11 +56,6 @@
         second: "2-digit",
       }).format(new Date());
     }, 1000);
-
-    // return () => {
-    //   clearInterval(interval);
-    //   closeSockets();
-    // };
   });
 
   function closeSockets() {
@@ -116,17 +119,11 @@
   }
 
   function startCountdown() {
-    // Clear any existing countdown
     stopCountdown();
-
-    // Initialize countdown
     countdownValue = 10;
-
-    // Start interval to decrement countdown
     countdownInterval = setInterval(() => {
       countdownValue -= 1;
 
-      // Stop at zero
       if (countdownValue <= 0) {
         stopCountdown();
         countdownValue = 0; // Ensure we show zero at the end
@@ -233,17 +230,19 @@
           ? `${telem_data?.memory_usage}%`
           : "N/A"}</span
       >
-      <!-- <span>Disk: {telem_data?.disk_usage ? `${telem_data?.disk_usage}%` : 'N/A'}</span> -->
       <span
         >Temp: {telem_data?.temperature
           ? `${telem_data?.temperature.toFixed(2)}°C`
           : "N/A"}</span
       >
-      <!-- <span>Load (1m): {telem_data?.load_1_min.toFixed(2) ?? 'N/A'}</span> -->
-      <!-- <span>Load (5m): {telem_data?.load_5_min.toFixed(2) ?? 'N/A'}</span> -->
     </div>
     <div class="navbar-time">
       {currentTime}
+    </div>
+    <div on:click={toggleTheme} class="toggle-container {currentTheme}">
+      <span class="icon">🌙</span>
+      <span class="icon">☀️</span>
+      <div class="circle"></div>
     </div>
     <button class="reload-button" on:click={reloadPage}>
       <img src="icons/refresh-icon.svg" alt="Reload" class="reload-icon" />
@@ -255,7 +254,7 @@
   .rocket-state {
     display: flex;
     align-items: center;
-    color: #ccccdc;
+    color: var(--text-color);
     gap: 10px;
   }
 
@@ -264,7 +263,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background-color: #181b1f;
+    background-color: var(--snd-bg-color);
     position: fixed;
     top: 0;
     left: 0;
@@ -297,14 +296,15 @@
       background-color 0.3s,
       color 0.3s;
     border-radius: 5px;
+    color: var(--text-color);
   }
 
   .navbar-options a:hover {
-    background-color: rgba(204, 204, 220, 0.1);
+    background-color: var(--nav-hover);
   }
 
-  .navbar-options a:active {
-    background-color: rgba(204, 204, 220, 0.1);
+  .navbar-options .active {
+    background-color: var(--nav-active);
   }
 
   .navbar-time {
@@ -322,7 +322,7 @@
     display: flex;
     align-items: center;
     font-size: 0.7rem;
-    border: 1px solid rgba(204, 204, 220, 0.25);
+    border: 1px solid var(--border-color);
     border-radius: 1em;
     width: 200px;
   }
@@ -348,7 +348,7 @@
   }
 
   .reload-button:hover {
-    background-color: #777;
+    background-color: var(--selection-color);
   }
 
   .reload-icon {
@@ -357,12 +357,50 @@
     padding-top: 3px;
   }
 
+  .toggle-container {
+    width: 50px;
+    height: 30px;
+    background-color: var(--bg-color, #333);
+    border-radius: 9999px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    transition: background-color 0.5s ease;
+  }
+
+  .theme-icon {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+  }
+
+  .circle {
+    position: absolute;
+    top: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+    transition: left 0.3s ease;
+  }
+
+  .light .circle {
+    left: 3px;
+  }
+
+  .dark .circle {
+    left: 33px;
+  }
+
   .active {
-    background-color: #555;
+    background-color: var(--selection-color);
   }
 
   .state-disarmed {
-    color: #ccccdc;
+    color: var(--text-color);
   }
 
   .state-armed {

@@ -3,8 +3,6 @@
   import Dashboard from './Dashboard.svelte';
   import Gradients from './lib/Gradients.svelte';
   import NavBar from './NavBar.svelte';
-  // import InFlight from './InFlight.svelte';
-  // import Cameras from './Cameras.svelte';
   import Map from './Map.svelte'
   import Grafana from './Grafana.svelte';
 
@@ -34,15 +32,13 @@
 </script>
 
 <svelte:head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </svelte:head>
 
 <main>
   <NavBar on:navigate={handleNavigation} {currentView} {host} />
   {#if currentView === 'dashboard'}
     <Dashboard {host}/>
-  <!-- {:else if currentView === 'inflight'}
-    <InFlight {host} /> -->
    <!-- {:else if currentView === 'cameras'} -->
   <!-- //  <Cameras {host} /> -->
   {:else if currentView === 'map'}

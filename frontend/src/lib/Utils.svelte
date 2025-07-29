@@ -40,7 +40,7 @@
     start_name,
     end_name,
     options = {
-      color: "#ccccdc",
+      color: "var(--text-color)",
       size: 1,
       hide: true,
       startPlug: "behind",

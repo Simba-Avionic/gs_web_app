@@ -217,7 +217,7 @@
     }
 
     .timestamp {
-        color: rgba(204, 204, 220, 0.65);
+        color: var(--timestamp-color);
         font-size: 0.8em;
         margin-left: 8px;
     }
@@ -225,7 +225,7 @@
     .toggle-button {
         cursor: pointer;
         background: none;
-        border: 1px solid rgba(204, 204, 220, 0.5);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
         /* margin-right: 1rem; */
     }

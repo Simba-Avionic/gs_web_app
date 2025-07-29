@@ -14,8 +14,6 @@
     let path = [];
     let pathLine;
     let showPath = true;
-    let socket;
-    let data;
 
     let gpsSocket;
     let maxAltitudeSocket;
@@ -84,7 +82,6 @@
             }
         };
 
-        // Connect to Max Altitude topic for additional data
         maxAltitudeSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_max_altitude`);
         maxAltitudeSocket.onmessage = (event) => {
             try {
@@ -136,9 +133,7 @@
             topics = data.topics.filter(topic => 
                 allowedTopics.includes(topic.topic_name || topic.name));
                 
-            // Convert topic data format if needed
             topics = topics.map(topic => {
-                // Ensure topic has the right structure for TelemetryField
                 return {
                     id: topic.id || Math.random().toString(),
                     topic_name: topic.topic_name || topic.name,
@@ -221,9 +216,9 @@
         width: 20%;
         height: 40%;
         padding: 16px;
-        border: 1px solid rgba(204, 204, 220, 0.5);
+        border: 1px solid var(--border-color);
         border-radius: 0.75rem;
-        background-color: #111217;
+        background-color: var(--bg-color);
         color: inherit;
         z-index: 1000;
         display: flex;
@@ -233,7 +228,6 @@
         line-height: 1.5rem;
         font-size: 0.9rem;
         box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-
         width: 350px;
         left: auto;
         right: 20px;

@@ -1,12 +1,14 @@
 <script>
     // @ts-nocheck
     import { onMount } from "svelte";
+    import { theme } from './theme.js';
 
     export let host;
 
     onMount(() => {
+        const stored = localStorage.getItem('theme');
         const iframe = document.getElementById("grafana-iframe");
-        iframe.src = `http://${host}:3001/dashboards`;
+        iframe.src = `http://${host}:3001/dashboards/?theme=${stored}`;
     })
 
 </script>

@@ -6,8 +6,16 @@
   font-size: 0.8em;
 
   color-scheme: light dark;
-  color: #ccccdc;
-  background-color: #111217;
+
+  --bg-color: #111217;
+  --snd-bg-color:#181b1f;
+  --text-color: #ccccdc;
+  --selection-color: #555;
+  --border-color: rgba(204, 204, 220, 0.5);
+  --timestamp-color: rgba(204, 204, 220, 0.65);
+
+  --nav-hover: rgba(204, 204, 220, 0.1);
+  --nav-active: rgba(204, 204, 220, 0.1);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -55,6 +63,18 @@
   }
 }
 
+[data-theme='light'] {
+  --bg-color: #ccccdc;
+  --text-color: #111217;
+  --snd-bg-color:#bbbbcc;
+  --selection-color: #555;
+  --border-color: rgba(138, 138, 148, 0.5);
+  --timestamp-color: #181b1f;
+
+  --nav-hover: rgba(100, 100, 109, 0.1);
+  --nav-active: #ccccdc;
+}
+
 a {
   font-size: 1.2em;
   font-weight: 400;
@@ -64,6 +84,9 @@ a {
 
 html,
 body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
   margin: 0;
   padding: 0;
   height: 100%;
@@ -74,12 +97,14 @@ body {
 button {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
-  color: #ccccdc;
   border: none;
   cursor: pointer;
+  color: var(--text-color)
 }
 
-
+.buttons button {
+  color: #ccccdc;
+}
 
 .status-indicator {
   width: 16px;

@@ -30,7 +30,7 @@
     lines.push(createLine("recovery", "#rocket-info #recovery"));
 
     const defaultOptions = {
-      color: "#ccccdc",
+      color: "var(--text-color)",
       size: 1,
       hide: true,
       startPlug: "behind",
@@ -98,8 +98,6 @@
     const { header } = telemetryData;
     const { frame_id } = header;
 
-    // const {hasNonOkStatus} = telemetryData;
-
     const svg = document.querySelector("svg");
 
     switch (frame_id) {
@@ -159,23 +157,10 @@
         }
         break;
     }
-
-    // if (hasNonOkStatus !== undefined && hasNonOkStatus !== null) {
-    //   const statusElement = svg.querySelector("#status");
-    //   if (statusElement) {
-    //     statusElement.style.fill = "url(#gradient_red)";
-    //   }
-    // } else {
-    //   const statusElement = svg.querySelector("#status");
-    //   if (statusElement) {
-    //     statusElement.style.fill = "url(#gradient_green)";
-    //   }
-    // }
-
   }
 
   onMount(async () => {
-    svgContent = await fetchSVG("/images/gs4.svg");
+    svgContent = await fetchSVG("/images/gs.svg");
     topics = await fetchConfig(host);
     observeSVGRender();
     await tick();
@@ -279,7 +264,7 @@
   #telemetry-info {
     grid-area: gs;
     border-radius: 0.75rem;
-    border: 1px solid rgba(204, 204, 220, 0.5);
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -287,7 +272,7 @@
     max-height: calc(100vh - var(--navbar-height));
     text-align: center;
     margin-bottom: 1rem;
-    background-color: #181b1f;
+    background-color: var(--snd-bg-color);
   }
 
   #telemetry-info .fields-container {
@@ -298,8 +283,8 @@
   }
 
   .rocket-item {
-    border: 1px solid rgba(204, 204, 220, 0.5);
-    background-color: #181b1f;
+    border: 1px solid var(--border-color);
+    background-color: var(--snd-bg-color);
     border-radius: 0.75rem;
     padding: 1rem;
   }
@@ -321,7 +306,7 @@
     }
 
     #layout-container {
-      grid-template-columns: 25% 35% 40%; /* Optional: adjust main layout proportions */
+      grid-template-columns: 25% 35% 40%; /* Adjust main layout proportions */
     }
   }
 

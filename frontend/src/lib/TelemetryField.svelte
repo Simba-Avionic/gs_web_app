@@ -56,8 +56,8 @@
 
   :global(.telemetry-class .field-top-row) {
     padding: 12px;
-    border-bottom: 1px solid rgba(204, 204, 220, 0.5);
-    border-top: 1px solid rgba(204, 204, 220, 0.5);
+    border-bottom: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
     text-align: left;
     min-width: 0;
     width: 100%;
