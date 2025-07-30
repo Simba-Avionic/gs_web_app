@@ -21,4 +21,7 @@ docker save -o "$OUTPUT_DIR/grafana_image.tar" "$GRAFANA_IMAGE"
 echo "Saving InfluxDB image to $OUTPUT_DIR/influxdb_image.tar"
 docker save -o "$OUTPUT_DIR/influxdb_image.tar" "$INFLUXDB_IMAGE"
 
+sudo chmod +r "$OUTPUT_DIR/grafana_image.tar"
+sudo chmod +r "$OUTPUT_DIR/influxdb_image.tar"
+
 echo "✅ Docker images saved to $OUTPUT_DIR."

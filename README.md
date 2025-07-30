@@ -40,14 +40,15 @@ Single entry of the `config.json` looks like this:
 ## Prerequisites
 - Ubuntu 22.04
 - Python 3.10 (Should be already available in Ubuntu 22.04)
-- Git
+- Git ( `sudo apt install git-all` ) 
 
 ## Setup
 1. Clone this repo and its submodules 
+
     ```
     git clone --recursive https://github.com/Simba-Avionic/gs_web_app
     ```
-2. Run the `./scripts/install.sh`. It will try to install *Docker, ROS2, npm* and some related packages.
+2. Run the `./scripts/install.sh`. It will try to install *Docker, ROS2, npm* and some other related packages. After completion restart the system.
     If script fails, try to install ROS2 and/or Docker manually:
     - ROS2 Humble (https://docs.ros.org/en/humble/Installation.html)
     - Docker (https://docs.docker.com/engine/install/)

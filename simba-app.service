@@ -1,0 +1,15 @@
+[Unit]
+Description=Simba App
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+User=simba
+WorkingDirectory=/home/simba/gs_web_app
+ExecStart=/home/simba/gs_web_app/run.sh run
+Restart=no
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

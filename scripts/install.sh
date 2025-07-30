@@ -174,3 +174,17 @@ else
     echo "Retrying colcon build for the 'gs_interfaces' package..."
     colcon build --packages-select gs_interfaces
 fi
+
+# Add permissions for docker and serial ports
+sudo usermod -aG dialout $USER
+sudo usermod -aG docker $USER
+
+sudo apt install chromium-browser
+
+# Enable app to automatically run when system is booting
+sudo cp ../simba-app.service /etc/systemd/system/
+sudo systemctl daemon-reexec
+sudo systemctl enable simba-app.service
+sudo systemctl start simba-app.service
+
+echo "Application installed successfully, please reboot the system."
