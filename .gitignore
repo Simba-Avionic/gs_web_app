@@ -8,3 +8,4 @@ log
 install
 temp
 tiles_tricity
+docker/**

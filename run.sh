@@ -6,6 +6,15 @@ APP_PATH="$HOME"
 BASHRC="$HOME/.bashrc"
 LINE="source $APP_PATH/gs_web_app/build/install/setup.bash"
 
+function source_venv() {
+    source $APP_PATH/gs_web_app/venv/bin/activate
+    if [ $? -ne 0 ]; then
+        echo "Failed to source Python virtual environment."
+        exit 1
+    fi
+}
+
+
 function source_ros() {
     source $APP_PATH/gs_web_app/build/install/setup.bash
     if [ $? -ne 0 ]; then
@@ -65,7 +74,7 @@ function run_mavlink_client() {
 
 function run_database() {
     echo "Starting the database (docker-compose up -d)..."
-    sudo docker compose --env-file .env up -d influxdb
+    docker compose --env-file .env up -d influxdb
     if [ $? -ne 0 ]; then
         echo "Failed to start the database."
         exit 1
@@ -80,7 +89,7 @@ function run_grafana() {
     cd ..
     
     echo "Starting Grafana (docker-compose up -d)..."
-    sudo docker compose --env-file .env up -d grafana
+    docker compose --env-file .env up -d grafana
     if [ $? -ne 0 ]; then
         echo "Failed to start the grafana."
         exit 1
@@ -101,9 +110,33 @@ function run_docker_stack() {
             exit 1
         fi
     fi
+    
+    # Check for offline Docker images in the docker directory
+    if [ -d "./docker" ]; then
+        echo "Checking for offline Docker images in docker directory..."
+        IMAGE_COUNT=0
+        for image_file in ./docker/*.tar ./docker/*.tar.gz ./docker/*.tgz; do
+            if [ -f "$image_file" ]; then
+                echo "Loading Docker image from $image_file..."
+                docker load -i "$image_file"
+                if [ $? -eq 0 ]; then
+                    ((IMAGE_COUNT++))
+                    echo "Successfully loaded image from $image_file"
+                else
+                    echo "Failed to load image from $image_file"
+                fi
+            fi
+        done
+        
+        if [ $IMAGE_COUNT -gt 0 ]; then
+            echo "Loaded $IMAGE_COUNT offline Docker images"
+        else
+            echo "No offline Docker images found in docker directory"
+        fi
+    fi
 
     echo "Starting InfluxDB + Grafana stack ..."
-    sudo docker compose --env-file .env up -d
+    docker compose --env-file .env up -d
     if [ $? -ne 0 ]; then
         echo "Failed to start the Docker stack."
         exit 1
@@ -132,7 +165,9 @@ function build_msgs() {
 }
 
 function run() {
+    source_venv
     source_ros
+    # run_docker_stack &
     # run_mavlink_client &
     run_server &
     run_app &
@@ -140,6 +175,7 @@ function run() {
 }
 
 function run_with_test_msgs() {
+    source_venv
     source_ros
     run_server &
     run_app &
@@ -148,6 +184,7 @@ function run_with_test_msgs() {
 }
 
 function run_all() {
+    source_venv
     build_msgs
     run_docker_stack
     # run_mavlink_client &

@@ -5,14 +5,14 @@ import time
 class ControlPanelReader:
 
     SWITCH_ACTIONS = {
-        ("arm_disarm", "rocket"): 0,    # bit 0
-        ("ignition", "rocket"): 0,      # bit 1
-        ("tank_vent", "rocket"): 0,     # bit 2
-        ("main_valve", "gs"): 0,        # bit 3
-        ("hose_vent", "gs"): 0,         # bit 4
-        ("decoupler", "gs"): 0,         # bit 5
-        ("N2O_He_switch", "gs"): 0,     # bit 6
-        ("abort", "abort"): 0           # bit 7
+        ("decoupler", "gs"): 0,    # bit 0
+        ("main_valve", "gs"): 0,      # bit 1
+        ("hose_vent", "gs"): 0,     # bit 2
+        ("tank_vent", "gs"): 0,        # bit 3
+        ("ignition", "rocket"): 0,         # bit 4
+        ("abort", "abort"): 0,         # bit 5
+        ("arm_disarm", "rocket"): 0,     # bit 6
+        ("N2O_He_switch", "gs"): 0           # bit 7
     }
 
     def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
@@ -76,23 +76,18 @@ class ControlPanelReader:
         Returns:
             Dictionary with (name, category) tuples as keys and states (0 or 1) as values
         """
-        # Create a copy of SWITCH_ACTIONS with default values
         actions = self.SWITCH_ACTIONS.copy()
 
         if not self.ser:
             return None
 
         try:
-            raw = self.ser.readline().decode().strip()
-            # print(raw)
-            if not raw or not self._is_valid_binary_string(raw):
-                return None
-
-            # Update actions based on the binary string
-            # Using the order of keys in SWITCH_ACTIONS to map to bit positions
+            switch_value = int(self.ser.readline().decode().strip())  # Read a line and decode
+            
+            # Map each bit to the corresponding key in SWITCH_ACTIONS
             for i, key in enumerate(actions.keys()):
-                if i < len(raw):
-                    actions[key] = int(raw[i])
+                if i < 8:  # Only 8 bits in uint8_t
+                    actions[key] = (switch_value >> i) & 1
 
             return actions
         except Exception as e:
@@ -135,12 +130,12 @@ class ControlPanelReader:
             self.ser = None
 
 if __name__ == "__main__":
-    reader = ControlPanelReader("/dev/ttyUSB0", baudrate=57600)
+    reader = ControlPanelReader("/dev/ttyACM0", baudrate=57600)
     try:
         while True:
             actions = reader.read_switches()
-
-            time.sleep(0.05)
+            print(actions)
+            time.sleep(0.1)
     except KeyboardInterrupt:
         print("Exiting...")
     finally:
