@@ -83,6 +83,9 @@ class ControlPanelReader:
 
         try:
             switch_value = int(self.ser.readline().decode().strip())  # Read a line and decode
+
+            if switch_value == '':
+                return
             
             # Map each bit to the corresponding key in SWITCH_ACTIONS
             for i, key in enumerate(actions.keys()):

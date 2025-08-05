@@ -275,6 +275,10 @@
     height: var(--navbar-height);
   }
 
+  .navbar a {
+     color: var(--text-color);
+  }
+
   .navbar-right {
     display: flex;
     align-items: center;
@@ -288,6 +292,7 @@
   }
 
   .navbar-options a {
+    font-size: 1.2rem;
     text-decoration: none;
     font-weight: 600;
     cursor: pointer;
@@ -308,7 +313,7 @@
   }
 
   .navbar-time {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 600;
     font-family: monospace;
     display: flex;

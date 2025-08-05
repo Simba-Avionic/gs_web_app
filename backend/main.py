@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
+# from mavlink import MavlinkClient
 from rclpy.executors import MultiThreadedExecutor
 from dotenv import dotenv_values, find_dotenv
 
@@ -27,12 +28,13 @@ env_values = dotenv_values(find_dotenv())
 def shutdown():
     global TOPICS
     for topic in TOPICS:
-        topic.stop()  # Ensure all topic handlers are stopped
+        topic.stop()
 
-    try:
-        rclpy.shutdown()  # Shut down ROS2
-    except Exception as e:
-        logger.error(f"Error during ROS2 shutdown: {e}")
+    if rclpy.ok():
+        try:
+            rclpy.shutdown()
+        except Exception as e:
+            logger.error(f"Error during ROS2 shutdown: {e}")
 
 def load_main_config(path_to_conf):
     global CONFIG
@@ -58,7 +60,12 @@ async def lifespan(app: FastAPI):
         app.include_router(st.router)
         logger.info("ServerTelemetry initialized successfully!")
     except Exception as e:
-        logger.error(f"Error when initializing server telemetry endpoint! {e}")
+        logger.error(f"Error when initializing server telemetry endpoint: {e}")
+
+    # try:
+    #     mavlink_client = MavlinkClient()
+    # except Exception as e:
+    #     logger.error(f"Error when initializing Mavlink client: {e}")
 
     for msg in CONFIG["topics"]:
         try:
@@ -70,17 +77,32 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}: {e}")
         sleep(0.1)
+
+    stop_event = threading.Event()
+    def executor_spin():
+        try:
+            executor.spin()
+        except Exception as e:
+            logger.error(f"Executor stopped unexpectedly: {e}")
+        finally:
+            stop_event.set()
+    
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
     yield
-    executor.shutdown()
+
+    # executor.shutdown()
+    stop_event.wait(timeout=5)
+
     for nh in TOPICS:
         try:
             nh.destroy_node()
         except Exception as e:
             logger.warning(e)
+    
     shutdown()
+    logger.info("Shutdown complete.")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -105,7 +127,7 @@ async def get_config():
     return JSONResponse(content=CONFIG)
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGINT, signal_handler)
     import uvicorn, argparse
 
     parser = argparse.ArgumentParser(description="Start the Uvicorn server.")
@@ -115,6 +137,5 @@ if __name__ == "__main__":
 
     try:
         uvicorn.run(app, host=args.host, port=args.port)
-    except KeyboardInterrupt:
-        logger.info('KeyboardInterrupt received, shutting down...')
-        shutdown()
+    except Exception as e:
+        logger.error(f"Error running Uvicorn: {e}")

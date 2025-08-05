@@ -7,6 +7,7 @@ import threading
 from rclpy.node import Node
 import xml.etree.ElementTree as ET
 import serial.tools.list_ports
+from concurrent.futures import ThreadPoolExecutor
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.paths import SIMBA_XML_PATH
@@ -23,6 +24,8 @@ import simba
 class MavlinkClient(Node):
     def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=57600, num_retries=3):
         super().__init__('mavlink_client')
+
+        self._executor = ThreadPoolExecutor(max_workers=5)
 
         self._mavlink_publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
         self._control_panel_reader = ControlPanelReader(control_panel_port)
@@ -74,10 +77,10 @@ class MavlinkClient(Node):
                     conn = mavutil.mavlink_connection(
                         port.device, baud=baudrate, dialect=dialect)
                     # conn.wait_heartbeat(timeout=timeout)
-                    print(f"✅ MAVLink heartbeat received on {port.device}")
+                    print(f"MAVLink heartbeat received on {port.device}")
                     return conn
                 except Exception as e:
-                    print(f"❌ Failed on {port.device}: {e}")
+                    print(f"Failed on {port.device}: {e}")
             print(
                 f"🔄 No MAVLink device found. Retrying in {retry_delay} seconds...")
             retry_delay *= 2
@@ -181,12 +184,11 @@ class MavlinkClient(Node):
                         if action_key not in previous_rocket_states or previous_rocket_states[action_key] != state:
                             self.get_logger().info(
                                 f"Rocket switch {action_name} changed to {state}")
-                            self._handle_rocket_switch_action(
-                                action_name, state)
+                            self._executor.submit(self._handle_rocket_switch_action, action_name, state)
 
                     elif category == "abort" and state == 1:
                         self.get_logger().debug(f"ABORT!!!")
-                        self._handle_abort()
+                        self._executor.submit(self._handle_abort)
 
                 previous_rocket_states = {
                     key: value for key, value in switch_states.items()
@@ -195,7 +197,7 @@ class MavlinkClient(Node):
 
                 self._handle_gs_switches()
 
-                time.sleep(0.25)
+                time.sleep(0.1)
 
             except Exception as e:
                 self.get_logger().error(f"Error in control panel thread: {e}")
@@ -297,7 +299,7 @@ class MavlinkClient(Node):
                     abort_state = simba.SIMBA_ROCKET_STATE_ABORTED
                     msg = self.master.mav.simba_cmd_change_state_encode(abort_state)
                     self.master.mav.send(msg)
-                    self.get_logger().info("Sent MAVLink ABORT command")
+                    # self.get_logger().info("Sent MAVLink ABORT command")
                 except Exception as e:
                     self.get_logger().error(f"Error sending MAVLink ABORT command: {e}")
                 
@@ -309,7 +311,7 @@ class MavlinkClient(Node):
                     abort_msg.abort = True
                     
                     self.abort_publisher.publish(abort_msg)
-                    self.get_logger().info("Published ROS ABORT message")
+                    # self.get_logger().info("Published ROS ABORT message")
                 except Exception as e:
                     self.get_logger().error(f"Error publishing ROS ABORT message: {e}")
                 
@@ -395,6 +397,7 @@ class MavlinkClient(Node):
         """Clean shutdown of the MAVLink client."""
         self.get_logger().info("Shutting down MAVLink client...")
         self._running = False
+        self._executor.shutdown(wait=True)
 
         if self._receiver_thread and self._receiver_thread.is_alive():
             self._receiver_thread.join(timeout=2.0)
@@ -411,13 +414,17 @@ class MavlinkClient(Node):
 
 if __name__ == '__main__':
     rclpy.init()
-    mavlink_receiver = MavlinkClient(control_panel_port="/dev/ttyUSB0", mavlink_port="/dev/ttyUSB1")
+    # mavlink_receiver = MavlinkClient(control_panel_port="/dev/ttyACM0", mavlink_port="/dev/ttyUSB0")
+    mavlink_receiver = MavlinkClient()
 
     try:
         rclpy.spin(mavlink_receiver)
     except KeyboardInterrupt:
         print("Received keyboard interrupt, shutting down...")
+    except rclpy.executors.ExternalShutdownException:
+        pass  # Expected on shutdown
     finally:
         mavlink_receiver.shutdown()
         mavlink_receiver.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()

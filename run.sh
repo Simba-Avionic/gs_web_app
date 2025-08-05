@@ -14,11 +14,20 @@ function source_venv() {
     fi
 }
 
-
 function source_ros() {
     source $APP_PATH/gs_web_app/build/install/setup.bash
     if [ $? -ne 0 ]; then
         echo "Failed to source ROS 2 environment."
+        exit 1
+    fi
+}
+
+function run_oled_display() {
+    echo "Starting OLED display script (python3 oled_display.py)..."
+    source_venv
+    python3 $APP_PATH/gs_web_app/oled_display.py
+    if [ $? -ne 0 ]; then
+        echo "Failed to start OLED display script."
         exit 1
     fi
 }
@@ -70,6 +79,7 @@ function publish_test_ros_msgs() {
 
 function run_mavlink_client() {
     echo "Starting the MAVLink client..."
+    python3 mavlink/mavlink_client.py
 }
 
 function run_database() {
@@ -167,8 +177,8 @@ function build_msgs() {
 function run() {
     source_venv
     source_ros
-    # run_docker_stack &
-    # run_mavlink_client &
+    run_docker_stack &
+    run_mavlink_client &
     run_server &
     run_app &
     wait
@@ -258,6 +268,9 @@ case $1 in
         ;;
     run_grafana)
         run_grafana
+        ;;
+    run_oled_display)
+        run_oled_display
         ;;
     help)
         show_help

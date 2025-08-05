@@ -10,6 +10,7 @@ ExecStart=/home/simba/gs_web_app/run.sh run
 Restart=no
 StandardOutput=journal
 StandardError=journal
+TimeoutStopSec=30s
 
 [Install]
 WantedBy=multi-user.target

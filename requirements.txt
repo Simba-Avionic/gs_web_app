@@ -12,3 +12,6 @@ numpy
 pyyaml
 psutil
 pyserial
+Pillow
+luma.oled
+luma.core

@@ -67,7 +67,12 @@ Single entry of the `config.json` looks like this:
     source build/install/setup.bash
     ```
     
-3. Run the app (*Make sure to `chmod` the script!*):
+3. Run the app (*Make sure to `chmod +x` the script!*):
+    ```bash
+    sudo chmod +x ./run.sh
+    sudo chmod +x ./scripts/*.sh
+    ```
+
     ```bash
     ./run.sh run_all
     ```
