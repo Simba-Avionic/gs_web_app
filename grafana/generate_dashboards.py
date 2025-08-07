@@ -345,20 +345,35 @@ def populate_field(dashboard_field, msg_type):
         if 'stat' in dashboard_field:
             template_tmp= copy.deepcopy(STAT_TEMPLATE)
             template_tmp['fieldConfig']['defaults']['mappings']= handle_mapping(dashboard_field['stat']['mapping'])
-            template_tmp['options']['reduceOptions']['fields']= f"/^{field_name} {msg_type}$/"
+            template_tmp['options']['reduceOptions']['fields']= f"{field_name} {msg_type}"
             panel_width= 4  # Stats are narrower
             panel_height = 3
+
+            query = (
+                f'from(bucket: "simba_bucket")\n'
+                f'  |> range(start: -30s)\n'
+                f'  |> filter(fn: (r) => r["_measurement"] == "{msg_type}" and r["_field"] == "{field_name}")\n'
+                f'  |> last()'
+            )
         else:
             template_tmp= copy.deepcopy(STAT_TEMPLATE)
             # template_tmp['fieldConfig']['defaults']['custom']['axisLabel']= field_name
             template_tmp['fieldConfig']['defaults']['color']['mode']= "palette-classic-by-name"
-            template_tmp['options']['percentChangeColorMode'] = "same_as_value"
-            template_tmp['options']['showPercentChange'] = True
+            # template_tmp['options']['percentChangeColorMode'] = "same_as_value"
+            template_tmp['options']['showPercentChange'] = False
             template_tmp['options']['colorMode'] = "value"
             template_tmp['options']['graphMode'] = "area"
 
             panel_width= 4
             panel_height = 6
+
+            query = (
+                f'from(bucket: "simba_bucket")\n'
+                f'  |> range(start: -1m)\n'
+                f'  |> filter(fn: (r) => r["_measurement"] == "{msg_type}" and r["_field"] == "{field_name}")\n'
+                f'  |> aggregateWindow(every: 3s, fn: last, createEmpty: false)\n'
+                f'  |> yield(name: "last")'
+            )
 
         if 'unit' in config_field:
             template_tmp['fieldConfig']['defaults']['unit']= process_unit(
@@ -368,14 +383,6 @@ def populate_field(dashboard_field, msg_type):
         template_tmp['title'] = field_name
         template_tmp['id'] = idx
 
-        query = (
-            f'from(bucket: "simba_bucket")\n'
-            f'  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n'
-            f'  |> filter(fn: (r) => r["_measurement"] == "{msg_type}")\n'
-            f'  |> filter(fn: (r) => r["_field"] == "{field_name}")\n'
-            f'  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n'
-            f'  |> yield(name: "last")'
-        )
         template_tmp['targets'][0]['query'] = query
 
         next_pos = get_next_grid_position(target_data["panels"], panel_width, panel_height)
