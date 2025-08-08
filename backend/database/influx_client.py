@@ -1,6 +1,4 @@
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
-from influxdb_client.rest import ApiException
+from influxdb import InfluxDBClient
 from typing import List, Any
 from loguru import logger
 from urllib3.exceptions import NewConnectionError
@@ -13,21 +11,36 @@ class InfluxClient:
 
     def __init__(self, msg_type: str, topic_name: str, msg_fields: dict) -> None:
         env_values = dotenv_values(find_dotenv())
-        self.bucket = env_values.get('BUCKET_NAME')
-        self.org = env_values.get('ORGANISATION')
-        self.token = env_values.get('INFLUXDB_TOKEN')
-        self.url = f"{env_values.get('IP_ADDRESS')}:{env_values.get('INFLUXDB_PORT')}"
-        self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
+        self.db = 'simba'  # InfluxDB 1.x uses "database"
+        self.host = env_values.get('IP_ADDRESS')
+        self.port = int(env_values.get('INFLUXDB_PORT', 8086))
+        self.username = env_values.get('INFLUXDB_USER')
+        self.password = env_values.get('INFLUXDB_PASSWORD')
+        self._client = InfluxDBClient(
+            host=self.host,
+            port=self.port,
+            username=self.username,
+            password=self.password,
+            database=self.db
+        )
 
         self.msg_type = msg_type
         self.topic_name = topic_name
         self.msg_fields = msg_fields
 
     def db_alive(self) -> bool:
-        return self._client.ping()
+        try:
+            return self._client.ping()
+        except Exception:
+            return False
 
     def insert_data(self, msg_data) -> None:
-        p = Point(self.msg_type)
+        point = {
+            "measurement": self.msg_type,
+            "tags": {},
+            "fields": {},
+            "time": None
+        }
 
         def add_fields(prefix, value):
             if isinstance(value, dict):
@@ -35,66 +48,39 @@ class InfluxClient:
                     add_fields(f"{prefix}_{key}" if prefix else key, sub_value)
             else:
                 if prefix == "header":
+                    # Expecting value to be a dict with 'stamp'
                     stamp = value['stamp']['sec'] * 1000 + value['stamp']['nanosec'] / 1000000
-                    p.time(int(stamp), WritePrecision.MS)
+                    # InfluxDB expects RFC3339 or ISO8601, so convert ms to ISO format
+                    dt = datetime.utcfromtimestamp(stamp / 1000.0)
+                    point["time"] = dt.isoformat() + "Z"
                 elif prefix == "header_stamp_sec" or prefix == "header_stamp_nanosec":
                     return
                 elif prefix == "header_frame_id":
-                    p.tag("frame_id", value)
+                    point["tags"]["frame_id"] = value
                 else:
-                    p.field(prefix, value)
-        
-        add_fields("", msg_data)
-        self._insert(p)
+                    # InfluxDB fields must be int, float, bool, or str
+                    point["fields"][prefix] = value
 
-    def _insert(self, p: Point) -> Any:
-        write_api = self._client.write_api(write_options=SYNCHRONOUS)
+        add_fields("", msg_data)
+
+        # Remove None time if not set
+        if point["time"] is None:
+            point.pop("time")
+
+        # TODO: Remove it / Refactor
+        # Only write if there are fields
+        if not point["fields"]:
+            logger.warning(f"Skipping InfluxDB write: no fields for measurement {self.msg_type}")
+            return
+
         try:
-            res = write_api.write(bucket=self.bucket, org=self.org, record=p)
+            res = self._client.write_points([point])
+            if not res:
+                raise InfluxNotAvailableException("Failed to write point to InfluxDB")
         except NewConnectionError:
             raise InfluxNotAvailableException()
-        except ApiException as e:
-            if e.status and e.status == 400:
-                raise BadQueryException()
-            if e.status and e.status == 404:
-                raise BucketNotFoundException()
+        except Exception as e:
+            logger.error(f"InfluxDB write error: {e}")
             raise InfluxNotAvailableException()
-        # logger.debug(f"{p}")
-        return res
-    
-    """
-    async def _query(self, query: str = "") -> List[InfluxWaveRecord]:
-        logger.debug(f"Running {query=}")
-        query_api = self._client.query_api()
-        try:
-            result = query_api.query(query=query)
-        except NewConnectionError:
-            raise InfluxNotAvailableException()
-        except ApiException as e:
-            if e.status and e.status == 400:
-                raise BadQueryException()
-            if e.status and e.status == 404:
-                raise BucketNotFoundException()
-            raise InfluxNotAvailableException()
-        res = []
-        for table in result:
-            for record in table.records:
-                r = InfluxWaveRecord(
-                    location=record.values.get("location"), height=record.get_value()
-                )
-                res.append(r)
-        logger.debug(f"Query returned {len(res)} records")
-        return res
-    async def read_wave_height(
-        self, location: str = "", min_height: float = -1.0, time_range: int = 10
-    ) -> List[InfluxWaveRecord]:
-        query = f'from(bucket:"{self.bucket}")\
-            |> range(start: -{time_range}m) \
-            |> filter(fn:(r) => r._measurement == "{InfluxClient.MEASUREMENT_NAME}")'
-        if location:
-            location = location.lower()
-            query += f'|> filter(fn:(r) => r.location == "{location}")'
-        if min_height > 0:
-            query += f'|> filter(fn:(r) => r._field >= "{min_height}")'
-        return await self._query(query)
-    """
+
+    # You can implement query methods similarly using self._client.query()

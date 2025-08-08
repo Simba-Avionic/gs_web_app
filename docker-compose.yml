@@ -1,6 +1,6 @@
 services:
   influxdb:
-    image: influxdb:2.6.1
+    image: influxdb:1.8
     container_name: ${INFLUXDB_CONTAINER_NAME}
     env_file:
       - .env
@@ -9,14 +9,16 @@ services:
     ports:
       - 8086:8086
     environment:
-      INFLUXDB_DB: influx
+      INFLUXDB_DB: simba
       DOCKER_INFLUXDB_INIT_MODE: setup
-      INFLUXDB_HTTP_AUTH_ENABLED: "true"
-      DOCKER_INFLUXDB_INIT_USERNAME: ${USER_NAME}
-      DOCKER_INFLUXDB_INIT_PASSWORD: ${PASSWORD}
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
-      DOCKER_INFLUXDB_INIT_ORG: ${ORGANISATION}
-      DOCKER_INFLUXDB_INIT_BUCKET: ${BUCKET_NAME}
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      # DOCKER_INFLUXDB_INIT_USERNAME: ${USER_NAME}
+      # DOCKER_INFLUXDB_INIT_PASSWORD: ${PASSWORD}
+      # DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+      # DOCKER_INFLUXDB_INIT_ORG: ${ORGANISATION}
+      # DOCKER_INFLUXDB_INIT_BUCKET: ${BUCKET_NAME}
+      # INFLUXDB_ADMIN_USER: "simba"
+      # INFLUXDB_ADMIN_PASSWORD: "simba123"
     networks:
       - net
 

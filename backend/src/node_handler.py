@@ -22,7 +22,6 @@ class NodeHandler(Node):
 
         self.router = APIRouter()
         self.router.add_api_websocket_route(f"/{self.topic_name}", self.websocket_endpoint)
-        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
 
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.run_event_loop, daemon=True).start()
@@ -92,18 +91,3 @@ class NodeHandler(Node):
             self.subscription_thread.join(timeout=3)
 
         self.connected_clients.clear()
-
-    async def query(self, r: Request, time_range: int = 5):
-        try:
-            records = []
-            # records = await self.ic.query_(self.msg_type, some_value_name, time_range=time_range)
-            return records  # Return the records, adjust as necessary for your use case
-        except (
-            InfluxNotAvailableException,
-            BucketNotFoundException,
-            BadQueryException,
-        ) as e:
-            raise HTTPException(
-                status_code=e.STATUS_CODE,
-                detail=e.DESCRIPTION,
-            )

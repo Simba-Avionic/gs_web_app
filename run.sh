@@ -35,7 +35,7 @@ function run_oled_display() {
 function build_ros_msgs() {
     echo "Building ROS 2 messages..."
     cd gs_interfaces || exit
-    python3 generate_ros2_messages.py
+    # python3 generate_ros2_messages.py
     if [ $? -ne 0 ]; then
         echo "Failed to generate ROS 2 messages."
         exit 1
@@ -178,7 +178,7 @@ function run() {
     source_venv
     source_ros
     run_docker_stack &
-    run_mavlink_client &
+    # run_mavlink_client &
     run_server &
     run_app &
     wait

@@ -25,7 +25,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 17,
+    "id": 313,
     "links": [],
     "liveNow": false,
     "panels": [
@@ -136,7 +136,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ValveServos\" and r[\"_field\"] == \"valve_feed_position\")\n  |> last()",
+                    "query": "SELECT LAST(\"valve_feed_position\") FROM \"ValveServos\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -225,7 +225,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ValveServos\" and r[\"_field\"] == \"valve_vent_position\")\n  |> last()",
+                    "query": "SELECT LAST(\"valve_vent_position\") FROM \"ValveServos\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -311,7 +311,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"TankingCommands\" and r[\"_field\"] == \"main_valve\")\n  |> last()",
+                    "query": "SELECT LAST(\"main_valve\") FROM \"TankingCommands\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -397,7 +397,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"TankingCommands\" and r[\"_field\"] == \"hose_vent\")\n  |> last()",
+                    "query": "SELECT LAST(\"hose_vent\") FROM \"TankingCommands\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -483,7 +483,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"TankingCommands\" and r[\"_field\"] == \"decoupler\")\n  |> last()",
+                    "query": "SELECT LAST(\"decoupler\") FROM \"TankingCommands\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -569,7 +569,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"TankingCommands\" and r[\"_field\"] == \"oxidizer_switch\")\n  |> last()",
+                    "query": "SELECT LAST(\"oxidizer_switch\") FROM \"TankingCommands\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -655,7 +655,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"TankingAbort\" and r[\"_field\"] == \"abort\")\n  |> last()",
+                    "query": "SELECT LAST(\"abort\") FROM \"TankingAbort\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -770,7 +770,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SimbaHeartbeat\" and r[\"_field\"] == \"flight_computer_status\")\n  |> last()",
+                    "query": "SELECT LAST(\"flight_computer_status\") FROM \"SimbaHeartbeat\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -885,7 +885,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SimbaHeartbeat\" and r[\"_field\"] == \"engine_computer_status\")\n  |> last()",
+                    "query": "SELECT LAST(\"engine_computer_status\") FROM \"SimbaHeartbeat\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -985,7 +985,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SimbaAck\" and r[\"_field\"] == \"state\")\n  |> last()",
+                    "query": "SELECT LAST(\"state\") FROM \"SimbaAck\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],
@@ -1100,7 +1100,7 @@
                         "type": "influxdb",
                         "uid": "P5697886F9CA74929"
                     },
-                    "query": "from(bucket: \"simba_bucket\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"SimbaAck\" and r[\"_field\"] == \"status\")\n  |> last()",
+                    "query": "SELECT LAST(\"status\") FROM \"SimbaAck\" WHERE time > now() - 30s",
                     "refId": "A"
                 }
             ],

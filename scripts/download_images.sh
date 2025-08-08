@@ -1,7 +1,8 @@
 #!/bin/bash
 
 GRAFANA_IMAGE="grafana/grafana:11.2.3"
-INFLUXDB_IMAGE="influxdb:2.6.1"
+# INFLUXDB_IMAGE="influxdb:2.6.1"
+INFLUXDB_IMAGE="influxdb:1.8"
 
 OUTPUT_DIR="./docker"
 
@@ -14,7 +15,6 @@ docker pull "$GRAFANA_IMAGE"
 echo "Pulling InfluxDB image: $INFLUXDB_IMAGE"
 docker pull "$INFLUXDB_IMAGE"
 
-# Save Docker images to files in the docker directory
 echo "Saving Grafana image to $OUTPUT_DIR/grafana_image.tar"
 docker save -o "$OUTPUT_DIR/grafana_image.tar" "$GRAFANA_IMAGE"
 

@@ -350,10 +350,8 @@ def populate_field(dashboard_field, msg_type):
             panel_height = 3
 
             query = (
-                f'from(bucket: "simba_bucket")\n'
-                f'  |> range(start: -30s)\n'
-                f'  |> filter(fn: (r) => r["_measurement"] == "{msg_type}" and r["_field"] == "{field_name}")\n'
-                f'  |> last()'
+                f'SELECT LAST("{field_name}") FROM "{msg_type}" '
+                f'WHERE time > now() - 30s'
             )
         else:
             template_tmp= copy.deepcopy(STAT_TEMPLATE)
