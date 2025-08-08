@@ -15,15 +15,29 @@
             ]
         },
         {
-            "msg_type": "ValveServos",
+            "msg_type": "TankingActuators",
             "msg_fields": [
                 {
-                    "val_name": "valve_feed_position",
-                    "stat": {"mapping": "valve_pos"}
+                    "val_name": "valve_feed_oxidizer"
                 },
                 {
-                    "val_name": "valve_vent_position",
-                    "stat": {"mapping": "valve_pos"}
+                    "val_name": "valve_feed_pressurizer"
+                },
+                {
+                    "val_name": "valve_vent_oxidizer",
+                    "stat": {"mapping": "open/closed"}
+                },
+                {
+                    "val_name": "valve_vent_pressurizer",
+                    "stat": {"mapping": "open/closed"}
+                },
+                {
+                    "val_name": "decoupler_oxidizer",
+                    "stat": {"mapping": "on/off"}
+                },
+                {
+                    "val_name": "decoupler_pressurizer",
+                    "stat": {"mapping": "on/off"}
                 }
             ]
         },
@@ -38,27 +52,6 @@
                 },
                 {
                     "val_name": "pressure"
-                }
-            ]
-        },
-        {
-            "msg_type": "TankingCommands",
-            "msg_fields": [
-                {
-                    "val_name": "main_valve",
-                    "stat": {"mapping": "open/closed"}
-                },
-                {
-                    "val_name": "hose_vent",
-                    "stat": {"mapping": "open/closed"}
-                },
-                {
-                    "val_name": "decoupler",
-                    "stat": {"mapping": "on/off"}
-                },
-                {
-                    "val_name": "oxidizer_switch",
-                    "stat": {"mapping": "on/off"}
                 }
             ]
         },
@@ -101,6 +94,14 @@
                 },
                 {
                     "val_name": "d_pressure"
+                }
+            ]
+        },
+        {
+            "msg_type": "SimbaAltitudeOrientation",
+            "msg_fields": [
+                {
+                    "val_name": "alt_orient"
                 }
             ]
         },
