@@ -4,7 +4,9 @@
   import Gradients from './lib/Gradients.svelte';
   import NavBar from './NavBar.svelte';
   import Map from './Map.svelte'
-  import Grafana from './Grafana.svelte';
+  // import Plot from './Plot.svelte';
+  import Plots from './Plots.svelte';
+
 
   let currentView = 'dashboard';
   // @ts-ignore
@@ -43,8 +45,8 @@
   <!-- //  <Cameras {host} /> -->
   {:else if currentView === 'map'}
     <Map {host} />
-  {:else if currentView === 'grafana'}
-    <Grafana {host} />
+  {:else if currentView === 'plots'}
+    <Plots {host}/>
   {/if}
   <Gradients />
 </main>

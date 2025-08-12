@@ -62,11 +62,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Error when initializing server telemetry endpoint: {e}")
 
-    # try:
-    #     mavlink_client = MavlinkClient()
-    # except Exception as e:
-    #     logger.error(f"Error when initializing Mavlink client: {e}")
-
     for msg in CONFIG["topics"]:
         try:
             nh = NodeHandler(msg)
@@ -76,7 +71,7 @@ async def lifespan(app: FastAPI):
             logger.info(f"{msg['msg_type']} NodeHandler initialized successfully!")
         except Exception as e:
             logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}: {e}")
-        sleep(0.1)
+        sleep(0.05)
 
     stop_event = threading.Event()
     def executor_spin():

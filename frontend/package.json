@@ -21,6 +21,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
     "leader-line": "^1.0.8",
+    "plotly.js-dist-min": "^3.1.0",
     "svelte-dnd-action": "^0.9.52"
   }
 }

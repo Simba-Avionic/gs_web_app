@@ -1,7 +1,8 @@
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
-from typing import List, Any
+from typing import List, Any, Dict
+from influxdb_client.client.query_api import QueryApi
 from loguru import logger
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
@@ -62,39 +63,42 @@ class InfluxClient:
         # logger.debug(f"{p}")
         return res
     
-    """
-    async def _query(self, query: str = "") -> List[InfluxWaveRecord]:
-        logger.debug(f"Running {query=}")
-        query_api = self._client.query_api()
+    def query_data(self, flux_query: str) -> List[Dict[str, Any]]:
+        """
+        Query data from InfluxDB using a Flux query string.
+        
+        Args:
+            flux_query (str): Flux query string
+        
+        Returns:
+            List[Dict[str, Any]]: List of query result records as dictionaries
+        
+        Raises:
+            InfluxNotAvailableException, BadQueryException, BucketNotFoundException
+        """
+        query_api: QueryApi = self._client.query_api()
+        
+        # logger.debug(f"Running flux query: {flux_query}")
+        
         try:
-            result = query_api.query(query=query)
+            tables = query_api.query(flux_query, org=self.org)
         except NewConnectionError:
             raise InfluxNotAvailableException()
         except ApiException as e:
-            if e.status and e.status == 400:
+            if e.status == 400:
                 raise BadQueryException()
-            if e.status and e.status == 404:
+            if e.status == 404:
                 raise BucketNotFoundException()
             raise InfluxNotAvailableException()
-        res = []
-        for table in result:
+
+        results = []
+        for table in tables:
             for record in table.records:
-                r = InfluxWaveRecord(
-                    location=record.values.get("location"), height=record.get_value()
-                )
-                res.append(r)
-        logger.debug(f"Query returned {len(res)} records")
-        return res
-    async def read_wave_height(
-        self, location: str = "", min_height: float = -1.0, time_range: int = 10
-    ) -> List[InfluxWaveRecord]:
-        query = f'from(bucket:"{self.bucket}")\
-            |> range(start: -{time_range}m) \
-            |> filter(fn:(r) => r._measurement == "{InfluxClient.MEASUREMENT_NAME}")'
-        if location:
-            location = location.lower()
-            query += f'|> filter(fn:(r) => r.location == "{location}")'
-        if min_height > 0:
-            query += f'|> filter(fn:(r) => r._field >= "{min_height}")'
-        return await self._query(query)
-    """
+                # Convert each record to a dict with all values
+                rec_dict = {
+                    **record.values
+                }
+                results.append(rec_dict)
+
+        # logger.debug(f"Got {len(results)} results")
+        return results

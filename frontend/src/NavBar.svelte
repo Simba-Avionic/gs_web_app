@@ -196,8 +196,8 @@
     >
     <a
       href="#"
-      class={currentView === "grafana" ? "active" : ""}
-      on:click|preventDefault={() => navigate("grafana")}>Grafana</a
+      class={currentView === "Plots" ? "active" : ""}
+      on:click|preventDefault={() => navigate("plots")}>Plots</a
     >
 
     <!-- <a href="#" class="{currentView === 'simulation' ? 'active' : ''}" on:click|preventDefault={() => navigate("simulation")}
