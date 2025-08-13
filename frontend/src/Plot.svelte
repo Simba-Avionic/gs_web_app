@@ -3,7 +3,8 @@
 
     import { onMount, onDestroy } from "svelte";
     import Plotly from "plotly.js-dist-min";
-    import {colors, cssVar} from "./colors.js";
+    import { colors, cssVar } from "./colors.js";
+    import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
 
     export let host;
     export let msg_type;
@@ -13,7 +14,7 @@
 
     let plotDiv;
     let latestValue = "--";
-    let intervalId;
+    let ws;
     let color;
 
     let xData = [];
@@ -23,21 +24,21 @@
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
-
     function setTimeRange(min) {
         time_range = min;
-        restartInterval();
+        closeWebSocket();
+        fetchData(); // restart with new range
     }
 
     async function fetchData() {
         try {
             const res = await fetch(
-                `http://${host}:8000/${topic}/query?field_name=${field}&time_range=${time_range}`,
+                `http://${host}:8000/${topic}/query?field_name=${field}&time_range=${time_range}`
             );
             const data = await res.json();
 
             xData = data.records.map((entry) =>
-                new Date(entry._time).toISOString(),
+                new Date(entry._time).toISOString()
             );
             yData = data.records.map((entry) => entry._value);
 
@@ -49,7 +50,7 @@
                 yData = yData.slice(-maxPoints);
             }
 
-            Plotly.react(
+            Plotly.newPlot(
                 plotDiv,
                 [
                     {
@@ -58,12 +59,13 @@
                         type: "scatter",
                         mode: "lines",
                         line: { color: color, width: 1.5 },
-                        name: "Abort Flag",
+                        name: field,
                         hoverinfo: "x+y",
                     },
                 ],
                 {
-                    margin: { t: 20, b: 30, l: 30, r: 20 },
+                    width: "100%",
+                    margin: { t: 40, b: 40, l: 0, r: 0 },
                     xaxis: {
                         title: "Time",
                         type: "date",
@@ -80,39 +82,77 @@
                         zeroline: false,
                         automargin: true,
                     },
-                    plot_bgcolor: cssVar('--snd-bg-color'),
+                    plot_bgcolor: cssVar("--snd-bg-color"),
                     paper_bgcolor: "rgba(0,0,0,0)",
-                    font: { color: cssVar('--text-color') },
-                    autosize: true
+                    font: { color: cssVar("--text-color") },
+                    autosize: true,
                 },
                 { responsive: true }
             );
+
+            openWebSocket();
         } catch (error) {
             console.error("Error fetching or plotting data:", error);
         }
     }
 
-    function restartInterval() {
-        clearInterval(intervalId);
-        fetchData();
-        intervalId = setInterval(fetchData, 1000);
+    function openWebSocket() {
+        ws = new WebSocket(`ws://${host}:8000/${topic}`);
+        ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+
+                const t = rosTimeToFormattedTime(true, msg.header.stamp.sec, msg.header.stamp.nanosec);
+
+                const v = msg[field];
+
+                xData.push(t);
+                yData.push(v);
+                latestValue = v;
+
+                const maxPoints = time_range * 60;
+                if (xData.length > maxPoints) {
+                    xData.shift();
+                    yData.shift();
+                }
+
+                Plotly.extendTraces(
+                    plotDiv,
+                    { x: [[t]], y: [[v]] },
+                    [0],
+                    maxPoints
+                );
+            } catch (err) {
+                console.error("WS parse error:", err);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket closed");
+        };
+    }
+
+    function closeWebSocket() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
     }
 
     onMount(() => {
-        restartInterval();
-
         color = getRandomColor();
-
+        fetchData();
         window.addEventListener("resize", () => {
             Plotly.Plots.resize(plotDiv);
         });
     });
 
     onDestroy(() => {
-        clearInterval(intervalId);
+        closeWebSocket();
         window.removeEventListener("resize", Plotly.Plots.resize);
     });
 </script>
+
 
 <div class="flex-container">
     <div class="plot-header">

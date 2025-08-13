@@ -1,7 +1,6 @@
 <!-- MapWidget.svelte -->
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { rosTimeToFormattedTime } from "./lib/Utils.svelte";
     import TelemetryField from "./lib/TelemetryField.svelte";
     // @ts-ignore
     import L from "leaflet";

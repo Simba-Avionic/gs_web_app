@@ -222,7 +222,7 @@
 <style>
   #layout-container {
     display: grid;
-    grid-template-columns: 25% 30% 45%;
+    grid-template-columns: 25% 25% 50%;
     grid-template-rows: auto 1fr;
     grid-template-areas:
       "svg rocket gs"

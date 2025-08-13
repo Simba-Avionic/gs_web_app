@@ -165,6 +165,7 @@
             {#if lastUpdated}
                 <span class="timestamp">
                     {rosTimeToFormattedTime(
+                        false,
                         lastUpdated.sec,
                         lastUpdated.nanosec,
                     )}

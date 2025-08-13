@@ -19,13 +19,13 @@
   onMount(() => {
 
     const hash = window.location.hash.slice(1);
-    if (['dashboard', 'inflight', 'map', 'grafana'].includes(hash)) {
+    if (['dashboard', 'inflight', 'map', 'plots'].includes(hash)) {
       currentView = hash;
     }
 
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.slice(1);
-      if (['dashboard', 'inflight', 'map', 'grafana'].includes(hash)) {
+      if (['dashboard', 'inflight', 'map', 'plots'].includes(hash)) {
         currentView = hash;
       }
     });
