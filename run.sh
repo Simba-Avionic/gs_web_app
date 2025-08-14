@@ -34,13 +34,6 @@ function run_oled_display() {
 
 function build_ros_msgs() {
     echo "Building ROS 2 messages..."
-    cd gs_interfaces || exit
-    python3 generate_ros2_messages.py
-    if [ $? -ne 0 ]; then
-        echo "Failed to generate ROS 2 messages."
-        exit 1
-    fi
-
     cd ..
 
     colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install

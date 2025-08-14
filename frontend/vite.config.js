@@ -1,9 +1,7 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import { svelteSVG } from 'rollup-plugin-svelte-svg'
 import * as dotenv from 'dotenv'
 import { resolve } from 'path'
-import legacy from '@rollup/plugin-legacy';
 
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
@@ -28,9 +26,5 @@ export default defineConfig({
   plugins: [
     legacy({ 'node_modules/leader-line/leader-line.min.js': 'LeaderLine' }),
     svelte(),
-    svelteSVG({
-      svgo: {},
-      enforce: "pre",
-    })
   ],
 })
