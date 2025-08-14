@@ -78,7 +78,7 @@
         {
             "id": 3,
             "topic_name": "tanking/valves/servos",
-            "msg_type": "ValveServos",
+            "msg_type": "TankingActuators",
             "interval": 1000,
             "msg_fields": [
                 {
@@ -87,115 +87,35 @@
                 },
                 {
                     "type": "int8",
-                    "val_name": "valve_feed_position",
-                    "unit": "%",
-                    "display": "status",
-                    "range": [
-                        0,
-                        100
-                    ]
+                    "val_name": "valve_feed_oxidizer",
+                    "unit": "%"
                 },
                 {
                     "type": "int8",
-                    "val_name": "valve_vent_position",
-                    "unit": "%",
-                    "display": "status",
-                    "range": [
-                        0,
-                        100
-                    ]
-                }
-            ]
-        },
-        {
-            "id": 4,
-            "topic_name": "tanking/valves/sensors",
-            "msg_type": "ValveSensors",
-            "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
+                    "val_name": "valve_feed_pressurizer",
+                    "unit": "%"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "temperature",
-                    "unit": "°C",
-                    "range": [
-                        0,
-                        90
-                    ]
+                    "type": "bool",
+                    "val_name": "valve_vent_oxidizer"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "temperature_raspberry",
-                    "unit": "°C",
-                    "range": [
-                        0,
-                        90
-                    ]
+                    "type": "bool",
+                    "val_name": "valve_vent_pressurizer"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "pressure",
-                    "unit": "bar"
-                }
-            ]
-        },
-        {
-            "id": 7,
-            "topic_name": "radio_433/telemetry",
-            "msg_type": "Telemetry433",
-            "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
+                    "type": "bool",
+                    "val_name": "decoupler_oxidizer"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "rssi",
-                    "unit": "dB",
-                    "range": [
-                        -100,
-                        -10
-                    ]
-                },
-                {
-                    "type": "float32",
-                    "val_name": "rssi_remote",
-                    "unit": "dB",
-                    "range": [
-                        -100,
-                        -10
-                    ]
-                },
-                {
-                    "type": "float32",
-                    "val_name": "noise",
-                    "unit": "dB",
-                    "range": [
-                        -100,
-                        -10
-                    ]
-                }
-            ]
-        },
-        {
-            "id": 10,
-            "topic_name": "radiolink/telemetry",
-            "msg_type": "RadiolinkTelemetry",
-            "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
+                    "type": "bool",
+                    "val_name": "decoupler_pressurizer"
                 }
             ]
         },
         {
             "id": 11,
-            "topic_name": "uart/statistics",
+            "topic_name": "tanking/uart_stats",
             "msg_type": "UartStatistics",
             "interval": 1000,
             "msg_fields": [
@@ -259,33 +179,22 @@
         },
         {
             "id": 12,
-            "topic_name": "power",
-            "msg_type": "Power",
+            "topic_name": "tanking/power",
+            "msg_type": "PowerTanking",
             "interval": 1000,
+            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "shunt_voltage",
-                    "unit": "mV"
+                    "type": "gs_interfaces/Power",
+                    "val_name": "v7_4"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "bus_voltage",
-                    "unit": "V"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "power",
-                    "unit": "W"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "current",
-                    "unit": "A"
+                    "type": "gs_interfaces/Power",
+                    "val_name": "v12"
                 }
             ]
         },
@@ -301,19 +210,27 @@
                 },
                 {
                     "type": "bool",
-                    "val_name": "main_valve"
+                    "val_name": "valve_feed_oxidizer"
                 },
                 {
                     "type": "bool",
-                    "val_name": "hose_vent"
+                    "val_name": "valve_feed_pressurizer"
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler"
+                    "val_name": "valve_vent_oxidizer"
                 },
                 {
                     "type": "bool",
-                    "val_name": "oxidizer_switch"
+                    "val_name": "valve_vent_pressurizer"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "decoupler_oxidizer"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "decoupler_pressurizer"
                 }
             ]
         },
@@ -321,7 +238,7 @@
             "id": 14,
             "topic_name": "tanking/abort",
             "msg_type": "TankingAbort",
-            "interval": 500,
+            "interval": 100,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -535,6 +452,21 @@
                     "type": "float32",
                     "val_name": "fuel_kg",
                     "unit": "kg"
+                }
+            ]
+        },
+        {
+            "msg_type": "Power",
+            "msg_fields": [
+                {
+                    "type": "float32",
+                    "val_name": "bus_voltage_v",
+                    "unit": "V"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "current_ma",
+                    "unit": "mA"
                 }
             ]
         }
