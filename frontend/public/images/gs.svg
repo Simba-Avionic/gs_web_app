@@ -1,64 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 269.25 758.84">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 770">
     <defs>
-        <style>
-            .cls-1{fill:var(--text-color);}
+        <style> 
+            .cls-1{fill:var(--text-color);} 
             .cls-2,.cls-8{fill:none;}
             .cls-2,.cls-4,.cls-5,.cls-6,.cls-7,.cls-8{stroke:var(--text-color);}
-            <!-- .cls-3{fill:#1857b8;} -->
-            <!-- .cls-3{fill:#181b1f;} -->
             .cls-3{fill:none;}
-
-            <!-- .cls-4{fill:#fa6400;} -->
-            <!-- .cls-5{fill:#5694f2;} -->
-            <!-- .cls-6{fill:#e0b400;} -->
-            <!-- .cls-7{fill:#77be69;} -->
-            .cls-4,.cls-5,.cls-6,.cls-7{fill:var(--text-color);}
+            .cls-4,.cls-5,.cls-6,.cls-7{fill:var(--text-color);} 
             .cls-8{stroke-width:2px;}
-
-            #oxidizer_liquid {
-                transition: height 1s ease, y 1s ease;
-            }
+            #oxidizer_liquid { transition: height 1s ease, y 1s ease; } 
+            #pressurizer_txt {fill: var(--snd-bg-color); font-size: 1.4rem;}
+            #oxidizer_txt {fill: var(--snd-bg-color); font-size: 1.4rem;}
         </style>
     </defs>
-    <g id="Layer_2" data-name="Layer 2">
-        <g id="Layer_1-2" data-name="Layer 1">
-            <g id="hatch">
-                <rect class="cls-1" x="170.24" y="528.94" width="9.25" height="1.42" />
-                <rect class="cls-1" x="178.64" y="521.08" width="1.41" height="17.14" />
-                <polygon class="cls-1"
-                    points="179.99 529.81 161.62 548.24 160.62 547.24 178.99 528.81 179.99 529.81" />
-                <polygon class="cls-1"
-                    points="179.98 529.47 178.98 530.47 160.61 512.04 161.61 511.04 179.98 529.47" />
-                <path class="cls-1"
-                    d="M164.8,523.35a6.3,6.3,0,1,1-6.28,6.32v0A6.31,6.31,0,0,1,164.8,523.35Zm0,11.18a4.89,4.89,0,1,0-4.87-4.91v0h0a4.84,4.84,0,0,0,4.8,4.88Z" />
+    <g id="SVG" data-name="svg">
+        <g id="rocket_group" data-name="rocket group">
+            <polygon id="outline" class="cls-2"
+                points="199.15 0.64 200.65 2.44 201.95 7.34 205.45 22.74 210.25 49.54 213.85 78.74 216.35 100.34 217.45 118.84 217.75 721.04 239.05 735.04 239.05 750.04 217.85 753.04 217.65 758.34 180.05 758.34 180.05 753.04 158.85 749.84 158.85 735.14 180.65 720.54 180.35 117.94 181.15 103.34 182.95 84.84 185.15 66.64 187.75 46.94 189.95 33.34 192.85 17.64 195.15 7.64 197.35 1.64 199.15 0.64" />
+            <rect id="tank" data-name="oxidizer outline" class="cls-2" x="180.55"
+                y="395.34" width="37.1" height="142.9" />
+            <rect id="oxidizer_liquid" data-name="oxidizer liquid" class="cls-3" x="181.06"
+                y="395.81" width="36.1" height="142.14" transform="rotate(180, 199.11, 466.88)" />
+            <rect id="engine" class="cls-4" x="180.05" y="567.04" width="37.6" height="185.9" />
+            <rect id="avionics" class="cls-5" x="180.55" y="302.64" width="37" height="60.4" />
+            <rect id="payload" class="cls-6" x="180.55" y="252.54" width="37" height="50.1" />
+            <rect id="recovery" class="cls-7" x="180.35" y="121.84" width="37.1" height="106.9" />
+        </g>
+        <g id="_433_signal" data-name=" 433 signal" transform="scale(-1,1) translate(-395 110) ">
+            <path id="_1" data-name=" 1" class="cls-8" d="M229.42,53.09a9.5,9.5,0,0,1,0,13.14" />
+            <path id="_2" data-name=" 2" class="cls-8" d="M235.6,46.76a19,19,0,0,1,0,26.34v0" />
+            <path id="_3" data-name=" 3" class="cls-8" d="M242,40.24a28.44,28.44,0,0,1,0,39.49" />
+            <path id="_4" data-name=" 4" class="cls-8" d="M248.4,33.63a38,38,0,0,1,0,52.71h0" />
+            <path id="_5" data-name=" 5" class="cls-8" d="M255,26.89a47.4,47.4,0,0,1,0,65.84" />
+        </g>
+        <g id="tanking_group">
+            <g id="oxidizer">
+                <g id="decoupler_oxidizer">
+                    <rect class="cls-1" x="170.24" y="528.94" width="9.25" height="1.42" />
+                    <rect class="cls-1" x="178.64" y="521.08" width="1.41" height="17.14" />
+                    <polygon class="cls-1"
+                        points="179.99 529.81 161.62 548.24 160.62 547.24 178.99 528.81 179.99 529.81" />
+                    <polygon class="cls-1"
+                        points="179.98 529.47 178.98 530.47 160.61 512.04 161.61 511.04 179.98 529.47" />
+                    <path class="cls-1"
+                        d="M164.8,523.35a6.3,6.3,0,1,1-6.28,6.32v0A6.31,6.31,0,0,1,164.8,523.35Zm0,11.18a4.89,4.89,0,1,0-4.87-4.91v0h0a4.84,4.84,0,0,0,4.8,4.88Z" />
+                </g>
+                <path id="valve_feed_oxidizer" class="cls-8"
+                    d="M67.23,515.07v27.59l52.1-27.59v27.59Z" />
+                <path id="valve_vent_oxidizer" class="cls-8" d="M103,605.15H83.56L103,641.87H83.56Z" />
+                <g id="oxidizer_tank" data-name="oxidizer tank">
+                    <path class="cls-1"
+                        d="M47.4,643.83c0-7.8-7-14.35-15.7-14.6-5.3-.16-10.5-.16-15.8,0C7.1,629.48,0,636.07,0,643.75V747.34c0,4.23,1,5.23,5.7,5.31,12,.08,24,.08,35.9,0,4.7,0,5.8-1.08,5.8-5.14Z" />
+                    <rect class="cls-1" x="17.3" y="626.49" width="13.6" height="3.57" />
+                    <rect class="cls-1" x="19.7" y="623.51" width="8.8" height="3.07" />
+                    <text id="pressurizer_txt" x="25" y="655" writing-mode="tb">
+                        Oxidizer
+                    </text>
+                </g>
             </g>
-            <g id="rocket_group" data-name="rocket group">
-                <polygon id="outline" class="cls-2"
-                    points="199.15 0.64 200.65 2.44 201.95 7.34 205.45 22.74 210.25 49.54 213.85 78.74 216.35 100.34 217.45 118.84 217.75 721.04 239.05 735.04 239.05 750.04 217.85 753.04 217.65 758.34 180.05 758.34 180.05 753.04 158.85 749.84 158.85 735.14 180.65 720.54 180.35 117.94 181.15 103.34 182.95 84.84 185.15 66.64 187.75 46.94 189.95 33.34 192.85 17.64 195.15 7.64 197.35 1.64 199.15 0.64" />
-                <rect id="tank" data-name="oxidizer outline" class="cls-2" x="180.55"
-                    y="395.34" width="37.1" height="142.9" />
-                <rect id="oxidizer_liquid" data-name="oxidizer liquid" class="cls-3" x="181.06"
-                    y="395.81" width="36.1" height="142.14" transform="rotate(180, 199.11, 466.88)"/>
-                <rect id="engine" class="cls-4" x="180.05" y="567.04" width="37.6" height="185.9" />
-                <rect id="avionics" class="cls-5" x="180.55" y="302.64" width="37" height="60.4" />
-                <rect id="payload" class="cls-6" x="180.55" y="252.54" width="37" height="50.1" />
-                <rect id="recovery" class="cls-7" x="180.35" y="121.84" width="37.1" height="106.9" />
+            <g id="pressurizer" transform="translate(-130 0)">
+                <g id="decoupler_pressurizer" transform="translate(130 -110)">
+                    <rect class="cls-1" x="170.24" y="528.94" width="9.25" height="1.42" />
+                    <rect class="cls-1" x="178.64" y="521.08" width="1.41" height="17.14" />
+                    <polygon class="cls-1"
+                        points="179.99 529.81 161.62 548.24 160.62 547.24 178.99 528.81 179.99 529.81" />
+                    <polygon class="cls-1"
+                        points="179.98 529.47 178.98 530.47 160.61 512.04 161.61 511.04 179.98 529.47" />
+                    <path class="cls-1"
+                        d="M164.8,523.35a6.3,6.3,0,1,1-6.28,6.32v0A6.31,6.31,0,0,1,164.8,523.35Zm0,11.18a4.89,4.89,0,1,0-4.87-4.91v0h0a4.84,4.84,0,0,0,4.8,4.88Z" />
+                </g>
+                <path id="valve_feed_pressurizer" class="cls-8"
+                    d="M67.23,515.07v27.59l52.1-27.59v27.59Z" transform="translate(130 -110)"/>
+                <path id="valve_vent_pressurizer" class="cls-8"
+                    d="M103,605.15H83.56L103,641.87H83.56Z" />
+                <g id="pressurizer_tank" data-name="oxidizer tank">
+                    <path class="cls-1"
+                        d="M47.4,643.83c0-7.8-7-14.35-15.7-14.6-5.3-.16-10.5-.16-15.8,0C7.1,629.48,0,636.07,0,643.75V747.34c0,4.23,1,5.23,5.7,5.31,12,.08,24,.08,35.9,0,4.7,0,5.8-1.08,5.8-5.14Z" />
+                    <rect class="cls-1" x="17.3" y="626.49" width="13.6" height="3.57" />
+                    <rect class="cls-1" x="19.7" y="623.51" width="8.8" height="3.07" />
+                    <text id="pressurizer_txt" x="25" y="650" writing-mode="tb">
+                        Pressurizer
+                    </text>
+                </g>
             </g>
-            <g id="_433_signal" data-name=" 433 signal">
-                <path id="_1" data-name=" 1" class="cls-8" d="M229.42,53.09a9.5,9.5,0,0,1,0,13.14" />
-                <path id="_2" data-name=" 2" class="cls-8" d="M235.6,46.76a19,19,0,0,1,0,26.34v0" />
-                <path id="_3" data-name=" 3" class="cls-8" d="M242,40.24a28.44,28.44,0,0,1,0,39.49" />
-                <path id="_4" data-name=" 4" class="cls-8" d="M248.4,33.63a38,38,0,0,1,0,52.71h0" />
-                <path id="_5" data-name=" 5" class="cls-8" d="M255,26.89a47.4,47.4,0,0,1,0,65.84" />
-            </g>
-            <path id="valve1" class="cls-8" d="M67.23,515.07v27.59l52.1-27.59v27.59Z" />
-            <path id="valve2" class="cls-8" d="M103,605.15H83.56L103,641.87H83.56Z" />
-            <g id="oxidizer_tank" data-name="oxidizer tank">
-                <path class="cls-1"
-                    d="M47.4,643.83c0-7.8-7-14.35-15.7-14.6-5.3-.16-10.5-.16-15.8,0C7.1,629.48,0,636.07,0,643.75V747.34c0,4.23,1,5.23,5.7,5.31,12,.08,24,.08,35.9,0,4.7,0,5.8-1.08,5.8-5.14Z" />
-                <rect class="cls-1" x="17.3" y="626.49" width="13.6" height="3.57" />
-                <rect class="cls-1" x="19.7" y="623.51" width="8.8" height="3.07" />
-            </g>
+
         </g>
     </g>
 </svg>

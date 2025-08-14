@@ -18,10 +18,12 @@ export default defineConfig({
       usePolling: true
     },
     host: process.env.IP_ADDRESS || 'localhost',
-    port: parseInt(process.env.PORT) || 2137
+    port: parseInt(process.env.PORT) || 2137,
+    timezone: process.env.TIMEZONE || 'UTC',
   },
   define: {
-    'process.env.IP_ADDRESS': JSON.stringify(process.env.IP_ADDRESS)
+    'process.env.IP_ADDRESS': JSON.stringify(process.env.IP_ADDRESS),
+    'process.env.TIMEZONE': JSON.stringify(process.env.TIMEZONE)
   },
   plugins: [
     legacy({ 'node_modules/leader-line/leader-line.min.js': 'LeaderLine' }),

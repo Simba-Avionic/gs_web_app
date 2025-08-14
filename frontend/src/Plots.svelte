@@ -2,7 +2,8 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { fetchConfig } from "./lib/Utils.svelte";
-  import Plot from "./Plot.svelte";  // Assuming you have a Plot component
+  import Plot from "./Plot.svelte";
+  import { fade } from "svelte/transition";
 
   export let host;
 
@@ -11,12 +12,15 @@
   let selectedField = null;
   let error = null;
   let loading = true;
-
-  // New array to store multiple plots
   let plots = [];
 
   onMount(async () => {
     try {
+      const savedPlots = localStorage.getItem("plots");
+      if (savedPlots) {
+        plots = JSON.parse(savedPlots);
+      }
+
       topics = await fetchConfig(host);
       loading = false;
     } catch (e) {
@@ -30,22 +34,33 @@
     selectedField = null;
   }
 
+  function savePlots() {
+    localStorage.setItem("plots", JSON.stringify(plots));
+  }
+
   function selectField(field) {
     selectedField = field;
 
-    // Add to plots if not already present
-    if (!plots.find(p => p.val_name === field.val_name && p.msg_type === field.msg_type)) {
+    if (
+      !plots.find(
+        (p) =>
+          p.val_name === field.val_name &&
+          p.msg_type === field.msg_type &&
+          p.topic === field.topic,
+      )
+    ) {
       if (plots.length < 6) {
         plots = [...plots, field];
+        savePlots();
       } else {
         alert("Maximum of 6 plots reached");
       }
     }
   }
 
-  // Optional: Remove a plot from the grid
   function removePlot(field) {
-    plots = plots.filter(p => p !== field);
+    plots = plots.filter((p) => p !== field);
+    savePlots();
   }
 </script>
 
@@ -59,27 +74,45 @@
       {#each topics as topic (topic.id)}
         <div class="msg-type-item">
           <button
-            class="msg-type-button {expandedMsgType === topic.msg_type ? 'expanded' : ''}"
+            class="msg-type-button {expandedMsgType === topic.msg_type
+              ? 'expanded'
+              : ''}"
             on:click={() => toggleExpand(topic.msg_type)}
             aria-expanded={expandedMsgType === topic.msg_type}
             aria-controls={"fields-" + topic.id}
             aria-haspopup="true"
           >
             <span>{topic.msg_type}</span>
-            <span class="arrow {expandedMsgType === topic.msg_type ? 'expanded' : ''}">▶</span>
+            <span
+              class="arrow {expandedMsgType === topic.msg_type
+                ? 'expanded'
+                : ''}">▶</span
+            >
           </button>
 
           {#if expandedMsgType === topic.msg_type}
             <div id={"fields-" + topic.id} class="field-list" transition:slide>
-              {#each topic.msg_fields.filter(f => f.val_name !== "header") as field}
+              {#each topic.msg_fields.filter((f) => f.val_name !== "header") as field}
                 <div
                   class="field-item"
-                  on:click={() => selectField({...field, topic: topic.topic_name, msg_type: topic.msg_type})}
+                  on:click={() =>
+                    selectField({
+                      ...field,
+                      topic: topic.topic_name,
+                      msg_type: topic.msg_type,
+                    })}
                   role="button"
                   tabindex="0"
-                  on:keydown={(e) => e.key === "Enter" && selectField({...field, topic: topic.topic_name, msg_type: topic.msg_type})}
+                  on:keydown={(e) =>
+                    e.key === "Enter" &&
+                    selectField({
+                      ...field,
+                      topic: topic.topic_name,
+                      msg_type: topic.msg_type,
+                    })}
                 >
-                  {field.val_name} {field.unit ? `(${field.unit})` : ''}
+                  {field.val_name}
+                  {field.unit ? `(${field.unit})` : ""}
                 </div>
               {/each}
             </div>
@@ -92,15 +125,13 @@
       {#if plots.length === 0}
         <p>Select fields from the list to plot.</p>
       {:else}
-        {#each plots as field (field.val_name + field.msg_type + field.topic)}
-          <div class="plot-cell">
-            <button class="remove-btn" on:click={() => removePlot(field)} aria-label="Remove plot">×</button>
+        {#each plots as field}
+          <div out:fade={{ duration: 200 }}>
             <Plot
-              host={host}
-              topic={field.topic}
-              msg_type={field.msg_type}
-              field={field.val_name}
+              {host}
+              {field}
               time_range={1}
+              onRemove={() => removePlot(field)}
             />
           </div>
         {/each}
@@ -111,16 +142,15 @@
 
 <style>
   .container {
-  display: flex;
-  flex-direction: row;
-  margin-top: calc(var(--navbar-height) - 20px);
-  height: auto;
-  min-height: calc(100vh - var(--navbar-height));
+    display: flex;
+    flex-direction: row;
+    margin-top: calc(var(--navbar-height) - 20px);
+    height: auto;
+    min-height: calc(100vh - var(--navbar-height));
   }
 
   .msg-type-list {
-      flex-shrink: 0; /* Don't let it resize when content changes */
-  height: 100%; /* Lock to parent height */
+    flex-shrink: 0;
     direction: rtl;
     overflow-y: auto;
     max-height: 100vh;
@@ -129,7 +159,13 @@
     border-right: 1px solid #333;
     padding: 0.5rem;
     box-sizing: border-box;
-    
+  }
+
+  .plots-grid:has(p) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
   }
 
   .msg-type-list > .msg-type-item {
@@ -204,36 +240,23 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 10px;
-    padding: 1rem;
+    gap: 1.5rem;
+    padding: 1.5rem;
     background: var(--bg-color);
     overflow-y: auto;
   }
 
-  .plot-cell {
-    position: relative;
-    background: var(--snd-bg-color);
-    border-radius: 6px;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden; /* just in case */
+  .msg-type-list::-webkit-scrollbar,
+  .plots-grid::-webkit-scrollbar {
+    width: 0; /* Remove vertical scrollbar */
+    height: 0; /* Remove horizontal scrollbar if any */
   }
 
-  .remove-btn {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    background: transparent;
-    border: none;
-    color: #ff6666;
-    font-size: 1.3rem;
-    cursor: pointer;
+  @media (max-width: 1280px) {
+    .plots-grid {
+          gap: 1rem;
+        padding: 1rem;
+    }
   }
 
-  .remove-btn:hover {
-    color: #ff2222;
-  }
 </style>

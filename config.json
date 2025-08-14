@@ -5,7 +5,6 @@
             "topic_name": "tanking/load_cells",
             "msg_type": "LoadCells",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -41,8 +40,6 @@
             "topic_name": "tanking/load_cells/params",
             "msg_type": "LoadCellsParams",
             "interval": 1000,
-            "place": "gs",
-            "grafana": false,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -83,7 +80,6 @@
             "topic_name": "tanking/valves/servos",
             "msg_type": "ValveServos",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -92,12 +88,22 @@
                 {
                     "type": "int8",
                     "val_name": "valve_feed_position",
-                    "unit": "%"
+                    "unit": "%",
+                    "display": "status",
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "int8",
                     "val_name": "valve_vent_position",
-                    "unit": "%"
+                    "unit": "%",
+                    "display": "status",
+                    "range": [
+                        0,
+                        100
+                    ]
                 }
             ]
         },
@@ -106,7 +112,6 @@
             "topic_name": "tanking/valves/sensors",
             "msg_type": "ValveSensors",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -115,12 +120,20 @@
                 {
                     "type": "float32",
                     "val_name": "temperature",
-                    "unit": "°C"
+                    "unit": "°C",
+                    "range": [
+                        0,
+                        90
+                    ]
                 },
                 {
                     "type": "float32",
                     "val_name": "temperature_raspberry",
-                    "unit": "°C"
+                    "unit": "°C",
+                    "range": [
+                        0,
+                        90
+                    ]
                 },
                 {
                     "type": "float32",
@@ -134,7 +147,6 @@
             "topic_name": "radio_433/telemetry",
             "msg_type": "Telemetry433",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -143,17 +155,29 @@
                 {
                     "type": "float32",
                     "val_name": "rssi",
-                    "unit": "dB"
+                    "unit": "dB",
+                    "range": [
+                        -100,
+                        -10
+                    ]
                 },
                 {
                     "type": "float32",
                     "val_name": "rssi_remote",
-                    "unit": "dB"
+                    "unit": "dB",
+                    "range": [
+                        -100,
+                        -10
+                    ]
                 },
                 {
                     "type": "float32",
                     "val_name": "noise",
-                    "unit": "dB"
+                    "unit": "dB",
+                    "range": [
+                        -100,
+                        -10
+                    ]
                 }
             ]
         },
@@ -162,7 +186,6 @@
             "topic_name": "radiolink/telemetry",
             "msg_type": "RadiolinkTelemetry",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -175,8 +198,6 @@
             "topic_name": "uart/statistics",
             "msg_type": "UartStatistics",
             "interval": 1000,
-            "place": "gs",
-            "grafana": false,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -241,7 +262,6 @@
             "topic_name": "power",
             "msg_type": "Power",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -274,7 +294,6 @@
             "topic_name": "tanking/commands",
             "msg_type": "TankingCommands",
             "interval": 500,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -303,7 +322,6 @@
             "topic_name": "tanking/abort",
             "msg_type": "TankingAbort",
             "interval": 500,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -421,7 +439,13 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "alt"
+                    "val_name": "alt",
+                    "display": "status",
+                    "unit": "m",
+                    "range": [
+                        0,
+                        4000
+                    ]
                 }
             ]
         },
