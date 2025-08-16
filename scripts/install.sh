@@ -179,7 +179,7 @@ fi
 sudo usermod -aG dialout $USER
 sudo usermod -aG docker $USER
 
-sudo apt install chromium-browser
+sudo apt install chromium-browser ffmpeg
 
 # Enable app to automatically run when system is booting
 sudo cp ../simba-app.service /etc/systemd/system/

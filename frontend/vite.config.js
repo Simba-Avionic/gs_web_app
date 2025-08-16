@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import * as dotenv from 'dotenv'
 import { resolve } from 'path'
+import legacy from '@rollup/plugin-legacy';
 
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
