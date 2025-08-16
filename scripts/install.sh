@@ -98,15 +98,10 @@ else
 fi
 
 install_npm() {
-    echo "npm is not installed. Installing npm..."
-    sudo apt update
-    sudo apt install -y npm
-    echo "npm installed, installing node..."
-
-    sudo npm cache clean -f
-    sudo npm install -g n
-    sudo n stable
-    echo "node installed successfully!"
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
+  source ~/.bashrc
+  nvm install 20
+  nvm use 20
 }
 
 if command -v npm &> /dev/null; then
@@ -157,7 +152,7 @@ if command -v colcon &> /dev/null; then
     echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
     echo "Running colcon build for the 'gs_interfaces' package..."
-    if ! colcon build --packages-select gs_interfaces; then
+    if ! colcon colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install; then
         echo "colcon build failed. Attempting to install colcon and retry the build."
         install_colcon
         echo "Retrying colcon build..."
@@ -172,19 +167,24 @@ else
     install_colcon
 
     echo "Retrying colcon build for the 'gs_interfaces' package..."
-    colcon build --packages-select gs_interfaces
+    colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
 fi
 
 # Add permissions for docker and serial ports
 sudo usermod -aG dialout $USER
 sudo usermod -aG docker $USER
 
-sudo apt install chromium-browser ffmpeg
+sudo apt install chromium-browser ffmpeg i2c-tools python3-smbus raspi-config
 
 # Enable app to automatically run when system is booting
 sudo cp ../simba-app.service /etc/systemd/system/
 sudo systemctl daemon-reexec
 sudo systemctl enable simba-app.service
 sudo systemctl start simba-app.service
+
+sudo cp ../oled-display.service /etc/systemd/system/
+sudo systemctl daemon-reexec
+sudo systemctl enable oled-display.service
+sudo systemctl start oled-display.service
 
 echo "Application installed successfully, please reboot the system."
