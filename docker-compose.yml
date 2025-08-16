@@ -20,26 +20,8 @@ services:
     networks:
       - net
 
-  grafana:
-    container_name: ${GRAFANA_CONTAINER_NAME}
-    build: grafana
-    ports:
-      - 3001:3000
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    env_file:
-      - .env
-    # depends_on:
-    #   - influxdb
-    networks:
-      - net
-    # volumes:
-    #   - grafanaVolume:/var/lib/grafana
-
 networks:
   net:
 
 volumes:
   myInfluxVolume:
-  # grafanaVolume:

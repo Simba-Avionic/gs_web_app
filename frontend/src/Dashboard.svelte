@@ -1,7 +1,9 @@
 <script>
   import { onMount, onDestroy, tick } from "svelte";
   import RocketField from "./lib/RocketField.svelte";
-  import TelemetryField from "./lib/TelemetryField.svelte";
+  import GaugeField from "./lib/GaugeField.svelte";
+  import StatusField from "./lib/StatusField.svelte";
+
   import {
     fetchSVG,
     createLine,
@@ -20,6 +22,7 @@
 
   let lines = [];
   let topics = [];
+  let statusItems = [];
 
   function createLines() {
     lines.push(createLine("tank", "#rocket-info #tank_pressure"));
@@ -39,7 +42,7 @@
     };
 
     lines.push(
-      createLine("oxidizer_tank", "#valve1", {
+      createLine("oxidizer_tank", "#valve_feed_oxidizer", {
         ...defaultOptions,
         path: "grid",
         startSocket: "top",
@@ -55,7 +58,7 @@
     );
 
     lines.push(
-      createLine("oxidizer_tank", "#valve2", {
+      createLine("oxidizer_tank", "#valve_vent_oxidizer", {
         ...defaultOptions,
         path: "grid",
         startSocket: "top",
@@ -71,7 +74,55 @@
     );
 
     lines.push(
-      createLine("valve1", "#hatch", {
+      createLine("valve_feed_oxidizer", "#decoupler_oxidizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "right",
+        endSocket: "left",
+        startSocketGravity: [25, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+
+    lines.push(
+      createLine("pressurizer_tank", "#valve_feed_pressurizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "top",
+        endSocket: "left",
+        startSocketGravity: [0, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+
+    lines.push(
+      createLine("pressurizer_tank", "#valve_vent_pressurizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "top",
+        endSocket: "top",
+        startSocketGravity: [0, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+
+    lines.push(
+      createLine("valve_feed_pressurizer", "#decoupler_pressurizer", {
         ...defaultOptions,
         path: "grid",
         startSocket: "right",
@@ -88,7 +139,6 @@
   }
 
   function handleTelemetryChange(event) {
-    
     const telemetryData = event.detail.data;
 
     if (telemetryData == null) {
@@ -162,6 +212,21 @@
   onMount(async () => {
     svgContent = await fetchSVG("/images/gs.svg");
     topics = await fetchConfig(host);
+    statusItems = topics.flatMap(topic =>
+      topic.msg_fields
+        .filter(f => ["gauge", "status"].includes(f.display))
+        .map(f => ({
+          id: `${topic.topic_name}_${f.val_name}`,
+          topic: topic.topic_name,
+          field: f.val_name,
+          title: f.val_name.replace(/_/g, " "), // readable label
+          type: f.display,                     // "gauge" or "status"
+          unit: f.unit ?? null,
+          range: f.range ?? null,
+          value: null
+        }))
+    );
+
     observeSVGRender();
     await tick();
     createLines();
@@ -177,6 +242,15 @@
 </script>
 
 <div id="layout-container">
+
+  <div id="status-container">
+    {#each statusItems as item (item.id)}
+      {#if item.type === 'status'}
+        <StatusField {host} topic={item.topic} field={item.field} title={item.title} />
+      {/if}
+    {/each}
+  </div>
+
   <div id="svg-container">
     {@html svgContent}
   </div>
@@ -202,52 +276,46 @@
       <RocketField {host} title="Engine" />
     </div>
   </div>
-
-  <div id="telemetry-info">
-    <div id="telemetry-title">
-      <h3>TELEMETRY</h3>
-    </div>
-    <div class="fields-container">
-      {#each topics as topic (topic.id)}
-        <TelemetryField
-          on:telemetryChange={handleTelemetryChange}
-          {topic}
-          {host}
-        />
-      {/each}
-    </div>
-  </div>
 </div>
 
 <style>
   #layout-container {
     display: grid;
-    grid-template-columns: 25% 30% 45%;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "svg rocket gs"
-      "svg empty gs";
-    gap: 1rem;
-    padding: 2rem;
-    padding-right: 4rem;
+    grid-template-columns: 35% 30% 35%;
+    grid-template-areas: "gs svg rocket";
+    /* gap: 1rem; */
+    padding: 1rem;
     margin-top: var(--navbar-height);
     height: calc(100vh - var(--navbar-height));
     box-sizing: border-box;
   }
 
+  #status-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 100px); /* fixed height for each row */
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  #status-container > * {
+    height: 100%;              /* fill the fixed grid cell */
+    overflow: hidden;          /* prevent overflow if content grows */
+  }
+
   #svg-container {
-    grid-area: svg;
     display: flex;
-    justify-content: left;
+    justify-content: center;
     align-items: center;
-    max-width: 100%;
+    width: 100%;
     height: 100%;
+    overflow: hidden;
   }
 
   #svg-container :global(svg) {
-    max-height: 85vh;
-    width: auto;
+    width: 100%;
     height: auto;
+    max-height: 100%;
   }
 
   #rocket-info {
@@ -258,28 +326,7 @@
     padding: 0 1rem;
     border-radius: 0.75rem;
     max-height: 100%;
-    /* overflow-y: auto; */
-  }
-
-  #telemetry-info {
-    grid-area: gs;
-    border-radius: 0.75rem;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    overflow-y: auto;
-    max-height: calc(100vh - var(--navbar-height));
-    text-align: center;
-    margin-bottom: 1rem;
-    background-color: var(--snd-bg-color);
-  }
-
-  #telemetry-info .fields-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-    position: relative;
+    margin-left: 1.5rem;
   }
 
   .rocket-item {
@@ -296,28 +343,9 @@
     }
   }
 
-  @media (max-width: 1280px) {
-    #telemetry-info .fields-container {
-      grid-template-columns: 1fr; /* Change to one column */
-    }
-
-    #telemetry-info .fields-container::after {
-      display: none;
-    }
-
-    #layout-container {
-      grid-template-columns: 25% 35% 40%; /* Adjust main layout proportions */
-    }
-  }
-
   @media (min-width: 1920px) {
     #rocket-info {
       gap: 1rem;
-    }
-
-    #layout-container {
-      padding: 4rem;
-      padding-right: 6rem;
     }
   }
 </style>

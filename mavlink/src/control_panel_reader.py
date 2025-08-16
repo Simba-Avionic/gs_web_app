@@ -5,14 +5,16 @@ import time
 class ControlPanelReader:
 
     SWITCH_ACTIONS = {
-        ("decoupler", "gs"): 0,    # bit 0
-        ("main_valve", "gs"): 0,      # bit 1
-        ("hose_vent", "gs"): 0,     # bit 2
-        ("tank_vent", "gs"): 0,        # bit 3
-        ("ignition", "rocket"): 0,         # bit 4
-        ("abort", "abort"): 0,         # bit 5
+        ("valve_feed_oxidizer", "gs"): 0,    # bit 0
+        ("valve_vent_oxidizer", "gs"): 0,      # bit 1
+        ("decoupler_oxidizer", "gs"): 0,     # bit 2
+        ("valve_feed_pressurizer", "gs"): 0,        # bit 3
+        ("valve_vent_pressurizer", "gs"): 0,         # bit 4
+        ("decoupler_pressurizer", "gs"): 0,         # bit 5
         ("arm_disarm", "rocket"): 0,     # bit 6
-        ("N2O_He_switch", "gs"): 0           # bit 7
+        ("tank_vent", "rocket"): 0,           # bit 7
+        ("ignition", "rocket"): 0,           # bit 8
+        ("abort", "abort"): 0           # bit 9
     }
 
     def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
@@ -89,7 +91,7 @@ class ControlPanelReader:
             
             # Map each bit to the corresponding key in SWITCH_ACTIONS
             for i, key in enumerate(actions.keys()):
-                if i < 8:  # Only 8 bits in uint8_t
+                if i < 16:  # Only 16 bits in uint16_t
                     actions[key] = (switch_value >> i) & 1
 
             return actions
@@ -133,7 +135,7 @@ class ControlPanelReader:
             self.ser = None
 
 if __name__ == "__main__":
-    reader = ControlPanelReader("/dev/ttyACM0", baudrate=57600)
+    reader = ControlPanelReader("/dev/ttyACM1", baudrate=57600)
     try:
         while True:
             actions = reader.read_switches()

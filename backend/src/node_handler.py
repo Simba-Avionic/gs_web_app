@@ -5,7 +5,7 @@ import gs_interfaces.msg
 from rclpy.node import Node
 from loguru import logger
 from rosidl_runtime_py import message_to_ordereddict
-from fastapi import WebSocket, APIRouter, Request, HTTPException
+from fastapi import WebSocket, APIRouter, Request, HTTPException, Query
 from database.influx_client import (
     InfluxClient,
     InfluxNotAvailableException,
@@ -21,8 +21,10 @@ class NodeHandler(Node):
         super().__init__(self.msg_type)
 
         self.router = APIRouter()
-        self.router.add_api_websocket_route(f"/{self.topic_name}", self.websocket_endpoint)
-        self.router.add_api_websocket_route(f"/{self.topic_name}/query", self.query)
+        self.router.add_api_websocket_route(
+            f"/{self.topic_name}", self.websocket_endpoint)
+        self.router.add_api_route(
+            f"/{self.topic_name}/query", self.query, methods=["GET"])
 
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.run_event_loop, daemon=True).start()
@@ -34,8 +36,10 @@ class NodeHandler(Node):
         self.curr_msg = None
 
     def start_subscription_thread(self):
-        self.subscription_thread = threading.Thread(target=self.create_subscription_and_spin)
-        self.subscription_thread.daemon = True  # Ensure thread exits when the main program does
+        self.subscription_thread = threading.Thread(
+            target=self.create_subscription_and_spin)
+        # Ensure thread exits when the main program does
+        self.subscription_thread.daemon = True
         self.subscription_thread.start()
 
     def create_subscription_and_spin(self):
@@ -58,8 +62,7 @@ class NodeHandler(Node):
         try:
             while True:
                 await asyncio.sleep(self.interval / 1000)
-                # if we don't get new message in 5 times the interval, send "None"
-                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > (self.interval / 200):
+                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > 5:
                     await self.broadcast_message("None")
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
@@ -67,7 +70,8 @@ class NodeHandler(Node):
             self.connected_clients.remove(ws)
 
     async def broadcast_message(self, message):
-        for client in list(self.connected_clients):  # Convert set to list to avoid runtime modification issues
+        # Convert set to list to avoid runtime modification issues
+        for client in list(self.connected_clients):
             try:
                 await client.send_json(message)
             except Exception as e:
@@ -93,11 +97,26 @@ class NodeHandler(Node):
 
         self.connected_clients.clear()
 
-    async def query(self, r: Request, time_range: int = 5):
+    async def query(
+            self, 
+            field_name: str = Query(..., description="Field key to query"), 
+            time_range: int = Query(3, ge=1, le=60)
+        ):
+        """
+        GET endpoint to query last `time_range` minutes of data.
+        """
+        flux_query = f'''
+        from(bucket: "{self.ic.bucket}")
+          |> range(start: -{time_range}m)
+          |> filter(fn: (r) => r._measurement == "{self.msg_type}")
+          |> filter(fn: (r) => r._field == "{field_name}")
+          |> sort(columns: ["_time"], desc: false)
+          |> limit(n: 1000)
+        '''
+
         try:
-            records = []
-            # records = await self.ic.query_(self.msg_type, some_value_name, time_range=time_range)
-            return records  # Return the records, adjust as necessary for your use case
+            records = self.ic.query_data(flux_query)
+            return {"records": records}
         except (
             InfluxNotAvailableException,
             BucketNotFoundException,

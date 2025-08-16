@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import { theme } from './theme.js';
+  import { theme } from './js/theme.js';
 
   let currentTheme;
   theme.subscribe(value => currentTheme = value);
@@ -13,6 +13,7 @@
   const dispatch = createEventDispatcher();
 
   export let host;
+  export let timezone;
   export let currentView;
   let temp;
   let telem_data;
@@ -37,7 +38,7 @@
 
   currentTime = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
-    timeZone: "UTC",
+    timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -50,7 +51,7 @@
     interval = setInterval(() => {
       currentTime = new Intl.DateTimeFormat("en-GB", {
         hour12: false,
-        timeZone: "UTC",
+        timeZone: timezone,
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
@@ -186,20 +187,16 @@
       class={currentView === "dashboard" ? "active" : ""}
       on:click|preventDefault={() => navigate("dashboard")}>Overview</a
     >
-    <!-- <a href="#" class="{currentView === 'inflight' ? 'active' : ''}" on:click|preventDefault={() => navigate("inflight")}
-      >Rocket</a
-    > -->
+    <a
+      href="#"
+      class={currentView === "plots" ? "active" : ""}
+      on:click|preventDefault={() => navigate("plots")}>Plots</a
+    >
     <a
       href="#"
       class={currentView === "map" ? "active" : ""}
       on:click|preventDefault={() => navigate("map")}>Map</a
     >
-    <a
-      href="#"
-      class={currentView === "grafana" ? "active" : ""}
-      on:click|preventDefault={() => navigate("grafana")}>Grafana</a
-    >
-
     <!-- <a href="#" class="{currentView === 'simulation' ? 'active' : ''}" on:click|preventDefault={() => navigate("simulation")}
       >Simulation</a
     >
@@ -309,7 +306,8 @@
   }
 
   .navbar-options .active {
-    background-color: var(--nav-active);
+    background-color: #ff965f;
+    color: #181b1f;
   }
 
   .navbar-time {

@@ -266,13 +266,15 @@ class MavlinkClient(Node):
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.header.frame_id = "control_panel_gs"
             
-            msg.main_valve = bool(gs_switches.get(("main_valve", "gs"), 0))
-            msg.hose_vent = bool(gs_switches.get(("hose_vent", "gs"), 0))
-            msg.decoupler = bool(gs_switches.get(("decoupler", "gs"), 0))
-            msg.oxidizer_switch = bool(gs_switches.get(("N2O_He_switch", "gs"), 0))
+            msg.valve_feed_oxidizer = bool(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
+            msg.valve_feed_pressurizer = bool(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
+            msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
+            msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
+            msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
+            msg.decoupler_pressurizer = bool(gs_switches.get(("decoupler_pressurizer", "gs"), 0))
 
             self.gs_switches_publisher.publish(msg)
-            self.get_logger().info(f"Published GS switches: {msg}")
+            # self.get_logger().info(f"Published GS switches: {msg}")
 
         except Exception as e:
             self.get_logger().error(f"Error handling GS switches: {e}")
@@ -285,8 +287,8 @@ class MavlinkClient(Node):
         self.get_logger().error("⚠️ ABORT TRIGGERED ⚠️")
         
         # Define abort parameters
-        time_period = 10   # Time period in seconds to send abort commands
-        interval = 0.1     # Interval between sends in seconds
+        time_period = 5   # Time period in seconds to send abort commands
+        interval = 0.05     # Interval between sends in seconds
         
         try:
             # Start time tracking
@@ -387,6 +389,7 @@ class MavlinkClient(Node):
     def _send_tank_vent_command(self, value):
         """Send actuator command."""
         try:
+            # actuator for tank vent is 0x04 TODO: delete magic numbers
             msg = self.master.mav.simba_actuator_cmd_encode(0x04, value)
             self.master.mav.send(msg)
             self.get_logger().info(f"Sent MAVLink ACTUATOR {1} command with value {value}")
@@ -400,10 +403,10 @@ class MavlinkClient(Node):
         self._executor.shutdown(wait=True)
 
         if self._receiver_thread and self._receiver_thread.is_alive():
-            self._receiver_thread.join(timeout=2.0)
+            self._receiver_thread.join(timeout=3.0)
 
         if self._control_thread and self._control_thread.is_alive():
-            self._control_thread.join(timeout=2.0)
+            self._control_thread.join(timeout=3.0)
 
         if hasattr(self, 'master') and self.master:
             self.master.close()

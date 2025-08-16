@@ -4,6 +4,10 @@ import signal
 import sys
 import os
 import threading
+import subprocess
+import requests
+from requests.auth import HTTPBasicAuth
+from pydantic import BaseModel
 
 from time import sleep
 from loguru import logger
@@ -18,12 +22,89 @@ from src.server_telemetry import ServerTelemetry
 from rclpy.executors import MultiThreadedExecutor
 from dotenv import dotenv_values, find_dotenv
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY
 
 CONFIG = None
 TOPICS = []  # Global variable to keep track of NodeHandler instances
 env_values = dotenv_values(find_dotenv())
+
+import mimetypes
+mimetypes.add_type("application/vnd.apple.mpegurl", ".m3u8")
+mimetypes.add_type("video/mp2t", ".ts")
+
+from fastapi.staticfiles import StaticFiles
+
+
+# ------------------ CAMERA CONFIG ------------------
+CAMERA_RTSP_URL = "rtsp://admin:simba123@192.168.1.200:554/Streaming/Channels/101"
+CAMERA_HLS_DIR = "static/camera"
+CAMERA_HLS_FILE = os.path.join(CAMERA_HLS_DIR, "stream.m3u8")
+
+# Ensure HLS output directory exists
+os.makedirs(CAMERA_HLS_DIR, exist_ok=True)
+
+
+ffmpeg_process = None
+# ----------------------------------------------------
+class PTZCommand(BaseModel):
+    pan: float  # -1.0 to 1.0 (left to right)
+    tilt: float # -1.0 to 1.0 (down to up)
+    zoom: float # -1.0 to 1.0 (zoom out to in)
+    speed: float # 0 to 1
+
+def send_ptz_command(cmd: PTZCommand):
+    url = f"http://192.168.1.200/PTZCtrl/channels/1/continuous"
+    headers = {"Content-Type": "application/xml"}
+
+    xml_body = f"""<?xml version="1.0" encoding="UTF-8"?>
+    <PTZData>
+      <pan>{cmd.pan}</pan>
+      <tilt>{cmd.tilt}</tilt>
+      <zoom>{cmd.zoom}</zoom>
+      <speed>{cmd.speed}</speed>
+    </PTZData>
+    """
+
+    response = requests.put(url, headers=headers, data=xml_body, auth=HTTPBasicAuth("admin", "simba123"))
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=f"Failed to send PTZ command: {response.text}")
+        # curl -X PUT -T TEST_PTZ.xml http://login:password@ip/PTZCtrl/channels/1/Continuous (in TEST_PTZ.xml : <PTZData><pan>-100</pan><tilt>0</tilt></PTZData>)
+
+
+def start_camera_stream():
+    """Start FFmpeg process to convert RTSP to HLS for browser playback."""
+    global ffmpeg_process
+    logger.info(CAMERA_HLS_FILE)
+
+    if ffmpeg_process and ffmpeg_process.poll() is None:
+        logger.info("Camera streaming already running.")
+        return
+
+    logger.info(f"Starting FFmpeg for camera stream from {CAMERA_RTSP_URL}...")
+    ffmpeg_process = subprocess.Popen([
+    "ffmpeg",
+    "-rtsp_transport", "tcp",
+    "-i", CAMERA_RTSP_URL,
+    "-c", "copy",
+    "-f", "hls",
+    "-hls_time", "2",
+    "-hls_list_size", "3",
+    "-hls_flags", "delete_segments+append_list",
+    CAMERA_HLS_FILE,
+], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def stop_camera_stream():
+    """Stop FFmpeg process."""
+    global ffmpeg_process
+    if ffmpeg_process:
+        ffmpeg_process.terminate()
+        ffmpeg_process.wait()
+        ffmpeg_process = None
+        logger.info("Camera stream stopped.")
+
 
 def shutdown():
     global TOPICS
@@ -78,6 +159,8 @@ async def lifespan(app: FastAPI):
             logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}: {e}")
         sleep(0.1)
 
+    start_camera_stream()
+
     stop_event = threading.Event()
     def executor_spin():
         try:
@@ -113,6 +196,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/camera", StaticFiles(directory=CAMERA_HLS_DIR), name="camera")
+
+
+@app.post("/ptz/move")
+def ptz_move(cmd: PTZCommand):
+    send_ptz_command(cmd)
+    return {"message": "PTZ command sent"}
+
+# --------------- CAMERA ROUTE ----------------
+@app.get("/camera/stream.m3u8")
+def get_camera_stream():
+    if not os.path.isfile(CAMERA_HLS_FILE):
+        raise HTTPException(status_code=404, detail="Camera stream not ready")
+    return FileResponse(CAMERA_HLS_FILE, media_type="application/vnd.apple.mpegurl")
+# ----------------------------------------------
 
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
 def get_tile(layer: str, z: int, x: int, y: int):

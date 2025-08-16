@@ -1,7 +1,20 @@
 <script context="module">
-  export function rosTimeToFormattedTime(secs, nsecs) {
-    const milliseconds = secs * 1000 + nsecs / 1000000;
-    const date = new Date(milliseconds);
+  export function rosTimeToFormattedTime(iso = false, secs, nsecs) {
+    if (typeof secs !== "number" || typeof nsecs !== "number") {
+      console.error("Invalid ROS time:", secs, nsecs);
+      return "--";
+    }
+    const ms = secs * 1000 + nsecs / 1e6;
+    if (isNaN(ms) || ms <= 0) {
+      console.error("Invalid milliseconds:", ms);
+      return "--";
+    }
+
+    const date = new Date(ms);
+
+    if (iso) {
+      return new Date(ms).toISOString();
+    }
 
     const options = {
       year: "numeric",
@@ -288,7 +301,7 @@
       topics = await fetchConfigFromServer(host);
     }
 
-    console.log(topics);
+    // console.log(topics);
     return topics;
   }
 
@@ -358,10 +371,10 @@
   }
 
   export function stripSimbaPrefix(str) {
-    if (typeof str !== 'string') {
-        return String(str);
+    if (typeof str !== "string") {
+      return String(str);
     }
-    
-    return str.replace(/simba_/g, '');
+
+    return str.replace(/simba_/g, "");
   }
 </script>

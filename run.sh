@@ -34,13 +34,6 @@ function run_oled_display() {
 
 function build_ros_msgs() {
     echo "Building ROS 2 messages..."
-    cd gs_interfaces || exit
-    python3 generate_ros2_messages.py
-    if [ $? -ne 0 ]; then
-        echo "Failed to generate ROS 2 messages."
-        exit 1
-    fi
-
     cd ..
 
     colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
@@ -113,7 +106,7 @@ function run_docker_stack() {
     if [ "$1" = "--clean" ]; then
         echo "Cleaning up Docker containers first..."
         chmod +x ./scripts/cleanup_docker.sh
-        ./scripts/cleanup_docker.sh grafana
+        # ./scripts/cleanup_docker.sh grafana
         ./scripts/cleanup_docker.sh influxdb
         if [ $? -ne 0 ]; then
             echo "Docker cleanup failed."
@@ -178,7 +171,7 @@ function run() {
     source_venv
     source_ros
     run_docker_stack &
-    run_mavlink_client &
+    # run_mavlink_client &
     run_server &
     run_app &
     wait
