@@ -1,10 +1,12 @@
 <script>
+  // @ts-nocheck
   import { onMount } from "svelte";
   import Dashboard from './Dashboard.svelte';
   import Gradients from './lib/Gradients.svelte';
   import NavBar from './NavBar.svelte';
   import Map from './Map.svelte'
   import Plots from './Plots.svelte';
+  import Cameras from './Cameras.svelte';
 
   let currentView = 'dashboard';
   const host = process.env.IP_ADDRESS;
@@ -17,13 +19,13 @@
   onMount(() => {
 
     const hash = window.location.hash.slice(1);
-    if (['dashboard', 'inflight', 'map', 'plots'].includes(hash)) {
+    if (['dashboard', 'inflight', 'map', 'plots', 'cameras'].includes(hash)) {
       currentView = hash;
     }
 
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.slice(1);
-      if (['dashboard', 'inflight', 'map', 'plots'].includes(hash)) {
+      if (['dashboard', 'inflight', 'map', 'plots', 'cameras'].includes(hash)) {
         currentView = hash;
       }
     });
@@ -43,8 +45,8 @@
     <Plots {host}/>
   {:else if currentView === 'map'}
     <Map {host} />
-       <!-- {:else if currentView === 'cameras'} -->
-  <!-- //  <Cameras {host} /> -->
+  {:else if currentView === 'cameras'}
+    <Cameras {host} />
   {/if}
   <Gradients />
 </main>

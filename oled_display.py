@@ -44,13 +44,11 @@ while True:
     ip = get_ip()
     simba_status = is_simba_app_active()
     influx_status = check_docker_container("influxdb", "Database")
-    grafana_status = check_docker_container("grafana", "Grafana")
 
     with canvas(device) as draw:
         # draw.rectangle(device.bounding_box, outline="white", fill="black")
         draw.text((4, 0), f"IP: {ip}", fill="white")
         draw.text((4, 16), simba_status, fill="white")
         draw.text((4, 32), influx_status, fill="white")
-        draw.text((4, 48), grafana_status, fill="white")
 
     time.sleep(1)

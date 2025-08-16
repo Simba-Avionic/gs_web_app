@@ -16,3 +16,4 @@ Pillow
 luma.oled
 luma.core
 requests
+netifaces

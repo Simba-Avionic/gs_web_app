@@ -5,7 +5,7 @@
   export let host;
   export let title;
 
-  let isExpanded = false;
+  let isExpanded = true;
   let extractedData = {};
   let hasNonOkStatus = false;
 
@@ -243,10 +243,26 @@
 
   @media (max-width: 1280px) {
     :global(.rocket-telem-class .status-indicator) {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       margin-right: 8px;
+    }
+
+    :global(.rocket-telem-class .timestamp) {
+      font-size: 0.7rem;
+    }
+    
+    .field-value {
+      margin-top: 0.25rem;
+    }
+
+    .field-label {
+      font-size: 0.85rem;
+    }
+
+    .field-data {
+      font-size: 0.85rem;
     }
   }
 </style>

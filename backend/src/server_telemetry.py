@@ -38,7 +38,7 @@ class ServerTelemetry:
 
         self.router = APIRouter()
         self.router.add_api_websocket_route(self.topic_name, self.websocket_endpoint)
-        self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
+        # self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
         self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
 
         self.connected_clients = set()
@@ -47,26 +47,23 @@ class ServerTelemetry:
 
     def get_system_data(self):
         cpu_usage = psutil.cpu_percent()
-
         memory_info = psutil.virtual_memory()
         memory_usage = memory_info.percent
-
         disk_info = psutil.disk_usage('/')
         disk_usage = disk_info.percent
 
+        cpu_temp = None
         try:
-            temp = psutil.sensors_temperatures()
-            cpu_temp = temp['cpu_thermal'][0].current if 'cpu_thermal' in temp else None
+            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                cpu_temp = int(f.read()) / 1000.0
         except Exception:
             cpu_temp = None
-
-        # load_1, load_5, load_15 = psutil.getloadavg()
 
         return {
             "cpu_usage": cpu_usage,
             "memory_usage": memory_usage,
             "disk_usage": disk_usage,
-            "cpu_temperature": cpu_temp
+            "cpu_temperature": cpu_temp,
         }
 
     async def start_sending_data(self):
@@ -113,24 +110,6 @@ class ServerTelemetry:
         if client in self.connected_clients:
             self.connected_clients.remove(client)
             logger.info(f"Removed disconnected client. {len(self.connected_clients)} clients remaining.")
-
-    async def query(self, r: Request, time_range: int = 5):
-        """
-        HTTP endpoint to query historical data from the InfluxDB.
-        """
-        try:
-            records = []
-            # records = await self.ic.query_(self.msg_type, some_value_name, time_range=time_range)
-            return records  # Return the records, adjust as necessary for your use case
-        except (
-            InfluxNotAvailableException,
-            BucketNotFoundException,
-            BadQueryException,
-        ) as e:
-            raise HTTPException(
-                status_code=e.STATUS_CODE,
-                detail=e.DESCRIPTION,
-            )
 
     def stop(self):
         logger.info(f"ServerTelemetry stopped.")

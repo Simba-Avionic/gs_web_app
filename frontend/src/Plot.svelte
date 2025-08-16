@@ -6,7 +6,7 @@
     import { fetchConfig, rosTimeToFormattedTime } from "./lib/Utils.svelte";
     import { theme } from "./js/theme.js";
     import { cssVar, lightThemeColors, darkThemeColors } from "./js/colors.js";
-    
+
     export let host;
     export let field;
     export let time_range = 1;
@@ -32,6 +32,11 @@
             xaxis: {
                 gridcolor: cssVar("--nav-active"),
                 zeroline: false,
+                title: "Time",
+                type: "date",
+                tickformat: "%H:%M:%S",
+                tickfont: { size: 10 },
+                showgrid: true,
             },
             yaxis: {
                 gridcolor: cssVar("--nav-active"),
@@ -55,6 +60,9 @@
 
     function generateTicks(range) {
         const [min, max] = range;
+        if (max - min <= 1) {
+            return [min, max];
+        }
         const step = (max - min) / 2; // divide into 3 intervals -> 4 ticks
         return [min, min + step, max];
     }
@@ -79,7 +87,7 @@
 
             latestValue = yData.length > 0 ? yData[yData.length - 1] : "--";
 
-            const maxPoints = 700;
+            const maxPoints = time_range * 60;
             if (xData.length > maxPoints) {
                 xData = xData.slice(-maxPoints);
                 yData = yData.slice(-maxPoints);
@@ -120,7 +128,6 @@
                         // TODO: automatic range detection
                         range: field.range || [0, 100],
                         tickvals: generateTicks(field.range || [0, 100]),
-
                         tickfont: { size: 10 },
                         showgrid: true,
                         zeroline: false,
@@ -153,13 +160,13 @@
             try {
                 const msg = JSON.parse(event.data);
 
+                const v = msg[field.val_name];
+
                 const t = rosTimeToFormattedTime(
                     true,
                     msg.header.stamp.sec,
                     msg.header.stamp.nanosec,
                 );
-
-                const v = msg[field.val_name];
 
                 xData.push(t);
                 yData.push(v);

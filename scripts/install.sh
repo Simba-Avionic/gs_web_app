@@ -74,6 +74,7 @@ if [ ! -d "venv" ]; then
     echo "Creating virtual environment in 'venv' directory..."
     sudo apt install python3.10-venv
     python3 -m venv venv
+    echo "source $HOME/gs_web_app/venv/bin/activate" >> ~/.bashrc
 else
     echo "'venv' directory already exists. No action needed."
 fi
@@ -98,10 +99,8 @@ else
 fi
 
 install_npm() {
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
-  source ~/.bashrc
-  nvm install 20
-  nvm use 20
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt-get install -y nodejs
 }
 
 if command -v npm &> /dev/null; then
@@ -135,29 +134,24 @@ fi
 
 cd ..
 
-if [ -d "gs_interfaces" ]; then
-    cd gs_interfaces
-    echo "Running generate_ros2_messages.py script"
-    python3 generate_ros2_messages.py
-fi
-
 install_colcon() {
     echo "Installing colcon using apt..."
     sudo apt update
     sudo apt install -y python3-colcon-common-extensions
+    sudo touch "$HOME/gs_web_app/venv/COLCON_IGNORE"
     echo "colcon installed successfully!"
 }
 
-if command -v colcon &> /dev/null; then
+if command -v colcon &> /dev/null || [ -d "$HOME/gs_web_app/build" ]; then
     echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
     echo "Running colcon build for the 'gs_interfaces' package..."
-    if ! colcon colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install; then
+    if ! colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install; then
         echo "colcon build failed. Attempting to install colcon and retry the build."
         install_colcon
         echo "Retrying colcon build..."
         source /opt/ros/humble/setup.bash
-        colcon build --packages-select gs_interfaces
+        colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
     else
         echo "colcon build completed successfully!"
     fi
@@ -170,6 +164,9 @@ else
     colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
 fi
 
+# Setup Mavlink dialect
+./mavlink/setup.sh
+
 # Add permissions for docker and serial ports
 sudo usermod -aG dialout $USER
 sudo usermod -aG docker $USER
@@ -177,12 +174,12 @@ sudo usermod -aG docker $USER
 sudo apt install chromium-browser ffmpeg i2c-tools python3-smbus raspi-config
 
 # Enable app to automatically run when system is booting
-sudo cp ../simba-app.service /etc/systemd/system/
+sudo cp $HOME/gs_web_app/simba-app.service /etc/systemd/system/
 sudo systemctl daemon-reexec
 sudo systemctl enable simba-app.service
 sudo systemctl start simba-app.service
 
-sudo cp ../oled-display.service /etc/systemd/system/
+sudo cp $HOME/gs_web_app/oled-display.service /etc/systemd/system/
 sudo systemctl daemon-reexec
 sudo systemctl enable oled-display.service
 sudo systemctl start oled-display.service

@@ -199,10 +199,10 @@
     >
     <!-- <a href="#" class="{currentView === 'simulation' ? 'active' : ''}" on:click|preventDefault={() => navigate("simulation")}
       >Simulation</a
-    >
+    >  -->
     <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
       >Cameras</a
-    > -->
+    >
   </div>
   <div class="rocket-state">
     <a href="#">ROCKET: </a>
@@ -228,8 +228,8 @@
           : "N/A"}</span
       >
       <span
-        >Temp: {telem_data?.temperature
-          ? `${telem_data?.temperature.toFixed(2)}°C`
+        >Temp: {telem_data?.cpu_temperature
+          ? `${telem_data?.cpu_temperature.toFixed(1)}°C`
           : "N/A"}</span
       >
     </div>
@@ -325,14 +325,14 @@
     display: flex;
     align-items: center;
     font-size: 0.7rem;
-    border: 1px solid var(--border-color);
-    border-radius: 1em;
-    width: 200px;
+    /* border: 0.05rem solid var(--border-color); */
+    /* border-radius: 1em; */
+    width: 150px;
   }
 
   .navbar-telemetry span {
     display: inline-block;
-    padding: 10px 8px;
+    padding: 10px;
   }
 
   .logo {

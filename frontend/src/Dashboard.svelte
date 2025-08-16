@@ -348,4 +348,23 @@
       gap: 1rem;
     }
   }
+
+  @media (max-width: 1280px) {
+    #rocket-info {
+      gap: 0.8rem;
+      padding: 0.5rem;
+    }
+
+    #layout-container {
+      grid-template-columns: 40% 30% 30%;
+    }
+
+    .rocket-item {
+      border: 1px solid var(--border-color);
+      background-color: var(--snd-bg-color);
+      border-radius: 0.75rem;
+      padding: 0.5rem;
+      font-size: 0.95rem;
+  }
+  }
 </style>

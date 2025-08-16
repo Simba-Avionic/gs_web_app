@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Loading DS3231 RTC kernel module ==="
-sudo modprobe rtc-ds3231
+# sudo modprobe rtc-ds3231
 
 # Ensure module loads on boot
 if ! grep -q "rtc-ds3231" /etc/modules; then

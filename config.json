@@ -26,11 +26,13 @@
                 {
                     "type": "float32",
                     "val_name": "combined_vehicle_kg",
+                    "display": "value",
                     "unit": "kg"
                 },
                 {
                     "type": "float32",
                     "val_name": "combined_fuel_kg",
+                    "display": "value",
                     "unit": "kg"
                 }
             ]
@@ -210,27 +212,51 @@
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_feed_oxidizer"
+                    "val_name": "valve_feed_oxidizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_feed_pressurizer"
+                    "val_name": "valve_feed_pressurizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_vent_oxidizer"
+                    "val_name": "valve_vent_oxidizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_vent_pressurizer"
+                    "val_name": "valve_vent_pressurizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler_oxidizer"
+                    "val_name": "decoupler_oxidizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler_pressurizer"
+                    "val_name": "decoupler_pressurizer",
+                    "range": [
+                        0,
+                        1
+                    ]
                 }
             ]
         },

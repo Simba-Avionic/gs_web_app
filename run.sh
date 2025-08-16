@@ -34,7 +34,6 @@ function run_oled_display() {
 
 function build_ros_msgs() {
     echo "Building ROS 2 messages..."
-    cd ..
 
     colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
     if [ $? -ne 0 ]; then
@@ -138,7 +137,7 @@ function run_docker_stack() {
         fi
     fi
 
-    echo "Starting InfluxDB + Grafana stack ..."
+    echo "Starting InfluxDB..."
     docker compose --env-file .env up -d
     if [ $? -ne 0 ]; then
         echo "Failed to start the Docker stack."
@@ -149,6 +148,9 @@ function run_docker_stack() {
 function run_app() {
     echo "Starting the app (npm run dev)..."
     cd frontend || exit
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
     npm run dev
     cd ..
 }
@@ -171,7 +173,7 @@ function run() {
     source_venv
     source_ros
     run_docker_stack &
-    # run_mavlink_client &
+    run_mavlink_client &
     run_server &
     run_app &
     wait
