@@ -76,7 +76,7 @@
   }
 
   function initializeAckWebSocket() {
-    ackSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_ack`);
+    ackSocket = new WebSocket(`ws://${host}/mavlink/simba_ack`);
 
     ackSocket.onmessage = (event) => {
       try {
@@ -138,7 +138,7 @@
   }
 
   function initializeWebSocket() {
-    socket = new WebSocket(`ws://${host}:8000/server/telemetry`);
+    socket = new WebSocket(`ws://${host}/server/telemetry`);
 
     socket.onmessage = (event) => {
       temp = JSON.parse(event.data);
@@ -204,7 +204,7 @@
       >Cameras</a
     >
   </div>
-  <div class="rocket-state">
+  <!-- <div class="rocket-state">
     <a href="#">ROCKET: </a>
     <h3 class={ROCKET_STATES[rocketState]?.class || "state-unknown"}>
       {ROCKET_STATES[rocketState]?.text || "UNKNOWN"}
@@ -214,7 +214,7 @@
         <span class="countdown-value">{countdownValue}</span>
       </div>
     {/if}
-  </div>
+  </div> -->
   <div class="navbar-right">
     <div class="navbar-telemetry">
       <span

@@ -11,6 +11,7 @@
     export let field;
     export let time_range = 1;
     export let onRemove;
+
     let color;
     let resizeHandler;
     let plotDiv;
@@ -39,8 +40,20 @@
                 showgrid: true,
             },
             yaxis: {
+                // title: {
+                //     text: `${field.val_name} ${
+                //         field.unit ? `(${field.unit})` : ""
+                //     }`,
+                //     standoff: 20,
+                //     font: { size: 13 },
+                // },
+                // range: field.range || [0, 100],
+                // tickvals: generateTicks(field.range || [0, 100]),
+                // tickfont: { size: 10 },
+                // showgrid: true,
+                // zeroline: false,
+                // automargin: true,
                 gridcolor: cssVar("--nav-active"),
-                zeroline: false,
             },
         };
         Plotly.relayout(plotDiv, layoutUpdate);
@@ -63,20 +76,20 @@
         if (max - min <= 1) {
             return [min, max];
         }
-        const step = (max - min) / 2; // divide into 3 intervals -> 4 ticks
+        const step = (max - min) / 2;
         return [min, min + step, max];
     }
 
     function setTimeRange(min) {
         time_range = min;
         closeWebSocket();
-        fetchData(); // restart with new range
+        fetchData();
     }
 
     async function fetchData() {
         try {
             const res = await fetch(
-                `http://${host}:8000/${field.topic}/query?field_name=${field.val_name}&time_range=${time_range}`,
+                `http://${host}/${field.topic}/query?field_name=${field.val_name}&time_range=${time_range}`,
             );
             const data = await res.json();
 
@@ -84,6 +97,10 @@
                 new Date(entry._time).toISOString(),
             );
             yData = data.records.map((entry) => entry._value);
+
+            if (field.type === "bool") {
+                yData = yData.map((v) => (v ? 1 : 0));
+            }
 
             latestValue = yData.length > 0 ? yData[yData.length - 1] : "--";
 
@@ -107,8 +124,7 @@
                     },
                 ],
                 {
-                    width: "100%",
-                    margin: { t: 10, b: 40, l: 0, r: 0 },
+                    margin: { t: 10, b: 30, l: 0, r: 0 },
                     title: "",
                     xaxis: {
                         title: "Time",
@@ -119,21 +135,40 @@
                         zeroline: false,
                         gridcolor: cssVar("--nav-active"),
                     },
-                    yaxis: {
-                        title: {
-                            text: `${field.val_name} ${field.unit ? `(${field.unit})` : ""}`,
-                            standoff: 20,
-                            font: { size: 13 },
-                        },
-                        // TODO: automatic range detection
-                        range: field.range || [0, 100],
-                        tickvals: generateTicks(field.range || [0, 100]),
-                        tickfont: { size: 10 },
-                        showgrid: true,
-                        zeroline: false,
-                        automargin: true,
-                        gridcolor: cssVar("--nav-active"),
-                    },
+                    yaxis:
+                        field.type === "bool"
+                            ? {
+                                  title: {
+                                      text: field.val_name,
+                                      standoff: 20,
+                                      font: { size: 13 },
+                                  },
+                                  tickvals: [0, 1],
+                                  ticktext: ["False", "True"],
+                                  tickfont: { size: 10 },
+                                  showgrid: true,
+                                  zeroline: false,
+                                  automargin: true,
+                                  gridcolor: cssVar("--nav-active"),
+                              }
+                            : {
+                                  title: {
+                                      text: `${field.val_name} ${
+                                          field.unit ? `(${field.unit})` : ""
+                                      }`,
+                                      standoff: 20,
+                                      font: { size: 13 },
+                                  },
+                                  range: field.range || [0, 100],
+                                  tickvals: generateTicks(
+                                      field.range || [0, 100],
+                                  ),
+                                  tickfont: { size: 10 },
+                                  showgrid: true,
+                                  zeroline: false,
+                                  automargin: true,
+                                  gridcolor: cssVar("--nav-active"),
+                              },
                     plot_bgcolor: cssVar("--snd-bg-color"),
                     paper_bgcolor: "rgba(0,0,0,0)",
                     font: {
@@ -155,12 +190,28 @@
     }
 
     function openWebSocket() {
-        ws = new WebSocket(`ws://${host}:8000/${field.topic}`);
+        ws = new WebSocket(`ws://${host}/${field.topic}`);
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
 
-                const v = msg[field.val_name];
+                // Support nested val_name like "Power/bus_voltage_v" or "LoadCell/raw_val"
+                let v;
+                if (field.val_name.includes("/")) {
+                    const [first, second] = field.val_name.split("/");
+                    v = msg[first]?.[second];
+                } else {
+                    v = msg[field.val_name];
+                }
+
+                if (v === undefined) {
+                    console.warn("Value not found for", field.val_name, msg);
+                    return;
+                }
+
+                if (field.type === "bool") {
+                    v = v ? 1 : 0;
+                }
 
                 const t = rosTimeToFormattedTime(
                     true,
@@ -190,13 +241,20 @@
         };
 
         ws.onclose = () => {
-            console.log("WebSocket closed");
+            closeWebSocket();
         };
     }
 
     function closeWebSocket() {
         if (ws) {
-            ws.close();
+            ws.onmessage = null;
+            ws.onclose = null;
+            ws.onerror = null;
+            try {
+                ws.close();
+            } catch (err) {
+                console.warn("Error closing WebSocket:", err);
+            }
             ws = null;
         }
     }
@@ -204,15 +262,11 @@
     onMount(() => {
         color = getRandomColor();
         fetchData();
-        resizeHandler = () => {
-            Plotly.Plots.resize(plotDiv);
-        };
-        window.addEventListener("resize", resizeHandler);
     });
 
     onDestroy(() => {
         closeWebSocket();
-        window.removeEventListener("resize", resizeHandler);
+        Plotly.purge(plotDiv);
     });
 </script>
 
@@ -245,9 +299,16 @@
                 : latestValue}
             {field.unit ? field.unit : ""}
         </div>
-        <button class="remove-btn" on:click={onRemove} aria-label="Remove plot"
-            >×</button
+        <button
+            class="remove-btn"
+            on:click={() => {
+                closeWebSocket(); // cleanup internal socket
+                onRemove(); // tell parent to remove this plot
+            }}
+            aria-label="Remove plot"
         >
+            ×
+        </button>
     </div>
 
     <div class="plot" bind:this={plotDiv}></div>

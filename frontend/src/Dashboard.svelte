@@ -212,19 +212,19 @@
   onMount(async () => {
     svgContent = await fetchSVG("/images/gs.svg");
     topics = await fetchConfig(host);
-    statusItems = topics.flatMap(topic =>
+    statusItems = topics.flatMap((topic) =>
       topic.msg_fields
-        .filter(f => ["gauge", "status"].includes(f.display))
-        .map(f => ({
+        .filter((f) => ["gauge", "status", "value"].includes(f.display))
+        .map((f) => ({
           id: `${topic.topic_name}_${f.val_name}`,
           topic: topic.topic_name,
           field: f.val_name,
           title: f.val_name.replace(/_/g, " "), // readable label
-          type: f.display,                     // "gauge" or "status"
+          type: f.display, // "gauge" or "status"
           unit: f.unit ?? null,
           range: f.range ?? null,
-          value: null
-        }))
+          value: null,
+        })),
     );
 
     observeSVGRender();
@@ -242,13 +242,18 @@
 </script>
 
 <div id="layout-container">
-
+  <!-- Status, Gauge, Value -->
   <div id="status-container">
     {#each statusItems as item (item.id)}
-      {#if item.type === 'status'}
-        <StatusField {host} topic={item.topic} field={item.field} title={item.title} />
-      {/if}
+    {#if item.type === "value"}
+      <GaugeField {host} {item} />
+    {/if}
     {/each}
+    <!-- {#each statusItems as item (item.id)}
+      {#if item.type === "status"}
+        <StatusField {host} {item} />
+      {/if}
+    {/each} -->
   </div>
 
   <div id="svg-container">
@@ -292,16 +297,11 @@
 
   #status-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(4, 100px); /* fixed height for each row */
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, minmax(110px, 1fr));
     gap: 1rem;
-    padding: 1rem;
   }
 
-  #status-container > * {
-    height: 100%;              /* fill the fixed grid cell */
-    overflow: hidden;          /* prevent overflow if content grows */
-  }
 
   #svg-container {
     display: flex;
@@ -347,6 +347,10 @@
     #rocket-info {
       gap: 1rem;
     }
+      #status-container {
+    gap: 3rem;
+    padding: 3rem;
+  }
   }
 
   @media (max-width: 1280px) {
@@ -365,6 +369,6 @@
       border-radius: 0.75rem;
       padding: 0.5rem;
       font-size: 0.95rem;
-  }
+    }
   }
 </style>

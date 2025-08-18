@@ -9,8 +9,11 @@
   import Cameras from './Cameras.svelte';
 
   let currentView = 'dashboard';
-  const host = process.env.IP_ADDRESS;
+  const ip = process.env.IP_ADDRESS;
+  const port = process.env.SERVER_PORT || 8000;
   const timezone = process.env.TIMEZONE || 'UTC';
+
+  const host = `${ip}:${port}`;
 
   function handleNavigation(event) {
     currentView = event.detail;

@@ -308,7 +308,7 @@
   async function fetchConfigFromServer(host) {
     let topics = [];
     try {
-      const response = await fetch(`http://${host}:8000/config`);
+      const response = await fetch(`http://${host}/config`);
       const data = await response.json();
       topics = data.topics;
 

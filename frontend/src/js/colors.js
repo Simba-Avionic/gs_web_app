@@ -15,11 +15,10 @@ export const colors = [
 
 
 export const lightThemeColors = [
-  "#388729", "#5aa54b", "#77be69",  // green
+  "#388729", "#5aa54b",  // green
   "#f24865", "#c41934", "#de304d",   // red
-  "#5694f2", "#1857b8", "#3373d9",   // blue
-  "#ff9830", "#fa6400", "#ff7809",   // orange
-  "#b876d9", "#8936b2", "#a352cb",   // purple
+  "#5694f2", "#1857b8",   // blue
+  "#8936b2",   // purple
 ];
 
 export const darkThemeColors = [

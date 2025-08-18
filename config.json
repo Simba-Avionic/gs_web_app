@@ -11,16 +11,49 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "gs_interfaces/LoadCell",
-                    "val_name": "tenso_l"
+                    "type": "int",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_l/raw_val"
                 },
                 {
-                    "type": "gs_interfaces/LoadCell",
-                    "val_name": "tenso_r"
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_l/raw_kg"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_l/vehicle_kg"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_l/fuel_kg"
+                },
+                {
+                    "type": "int",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_r/raw_val"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_r/raw_kg"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_r/vehicle_kg"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "LoadCell",
+                    "val_name": "tenso_r/fuel_kg"
                 },
                 {
                     "type": "float32",
                     "val_name": "combined_raw_kg",
+                    "display": "value",
                     "unit": "kg"
                 },
                 {
@@ -90,28 +123,46 @@
                 {
                     "type": "int8",
                     "val_name": "valve_feed_oxidizer",
-                    "unit": "%"
+                    "unit": "%",
+                    "display": "value",
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "int8",
                     "val_name": "valve_feed_pressurizer",
-                    "unit": "%"
+                    "unit": "%",
+                    "display": "value",
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_vent_oxidizer"
+                    "val_name": "valve_vent_oxidizer",
+                    "display": "status",
+                    "mapping": ["closed", "open"]
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_vent_pressurizer"
+                    "val_name": "valve_vent_pressurizer",
+                    "display": "status",
+                    "mapping": ["closed", "open"]
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler_oxidizer"
+                    "val_name": "decoupler_oxidizer",
+                    "display": "status",
+                    "mapping": ["closed", "open"]
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler_pressurizer"
+                    "val_name": "decoupler_pressurizer",
+                    "display": "status",
+                    "mapping": ["closed", "open"]
                 }
             ]
         },
@@ -184,19 +235,42 @@
             "topic_name": "tanking/power",
             "msg_type": "PowerTanking",
             "interval": 1000,
-            "place": "gs",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
                 },
                 {
-                    "type": "gs_interfaces/Power",
-                    "val_name": "v7_4"
+                    "type": "float",
+                    "msg_def": "Power",
+                    "val_name": "v7_4/bus_voltage_v",
+                    "unit": "V",
+                    "range": [
+                        0,
+                        10
+                    ]
                 },
                 {
-                    "type": "gs_interfaces/Power",
-                    "val_name": "v12"
+                    "type": "float",
+                    "msg_def": "Power",
+                    "val_name": "v7_4/current_ma",
+                    "unit": "mA"
+                },
+                {
+                    "type": "float",
+                    "msg_def": "Power",
+                    "val_name": "v12/bus_voltage_v",
+                    "unit": "V",
+                    "range": [
+                        0,
+                        15
+                    ]
+                },
+                {
+                    "type": "float",
+                    "msg_def": "Power",
+                    "val_name": "v12/current_ma",
+                    "unit": "mA"
                 }
             ]
         },
@@ -281,7 +355,6 @@
             "topic_name": "mavlink/simba_actuator",
             "msg_type": "SimbaActuator",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -298,7 +371,6 @@
             "topic_name": "mavlink/simba_tank_temperature",
             "msg_type": "SimbaTankTemperature",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -326,7 +398,6 @@
             "topic_name": "mavlink/simba_tank_pressure",
             "msg_type": "SimbaTankPressure",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -349,7 +420,6 @@
             "topic_name": "mavlink/simba_altitude_orientation",
             "msg_type": "SimbaAltitudeOrientation",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -366,7 +436,6 @@
             "topic_name": "mavlink/simba_gps",
             "msg_type": "SimbaGps",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -383,7 +452,7 @@
                 {
                     "type": "float32",
                     "val_name": "alt",
-                    "display": "status",
+                    "display": "value",
                     "unit": "m",
                     "range": [
                         0,
@@ -397,7 +466,6 @@
             "topic_name": "mavlink/simba_heartbeat",
             "msg_type": "SimbaHeartbeat",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -422,7 +490,6 @@
             "topic_name": "mavlink/simba_max_altitude",
             "msg_type": "SimbaMaxAltitude",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -439,7 +506,6 @@
             "topic_name": "mavlink/simba_ack",
             "msg_type": "SimbaAck",
             "interval": 1000,
-            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",

@@ -21,6 +21,7 @@
     "hls.js": "^1.6.10",
     "leader-line": "^1.0.8",
     "plotly.js-dist-min": "^3.1.0",
-    "svelte-dnd-action": "^0.9.52"
+    "svelte-dnd-action": "^0.9.52",
+    "svelte-gauge": "^2.0.1"
   }
 }

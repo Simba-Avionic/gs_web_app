@@ -3,12 +3,9 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
 from typing import List, Any, Dict
 from influxdb_client.client.query_api import QueryApi
-from loguru import logger
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
-from datetime import datetime
 from dotenv import dotenv_values, find_dotenv
-import json
 
 class InfluxClient:
 
@@ -33,7 +30,7 @@ class InfluxClient:
         def add_fields(prefix, value):
             if isinstance(value, dict):
                 for key, sub_value in value.items():
-                    add_fields(f"{prefix}_{key}" if prefix else key, sub_value)
+                    add_fields(f"{prefix}/{key}" if prefix else key, sub_value)
             else:
                 if prefix == "header":
                     stamp = value['stamp']['sec'] * 1000 + value['stamp']['nanosec'] / 1000000
@@ -60,7 +57,6 @@ class InfluxClient:
             if e.status and e.status == 404:
                 raise BucketNotFoundException()
             raise InfluxNotAvailableException()
-        # logger.debug(f"{p}")
         return res
     
     def query_data(self, flux_query: str) -> List[Dict[str, Any]]:
@@ -78,8 +74,6 @@ class InfluxClient:
         """
         query_api: QueryApi = self._client.query_api()
         
-        # logger.debug(f"Running flux query: {flux_query}")
-        
         try:
             tables = query_api.query(flux_query, org=self.org)
         except NewConnectionError:
@@ -94,11 +88,8 @@ class InfluxClient:
         results = []
         for table in tables:
             for record in table.records:
-                # Convert each record to a dict with all values
                 rec_dict = {
                     **record.values
                 }
                 results.append(rec_dict)
-
-        # logger.debug(f"Got {len(results)} results")
         return results

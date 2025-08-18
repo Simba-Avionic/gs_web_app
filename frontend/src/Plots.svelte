@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { slide } from "svelte/transition";
   import { fetchConfig } from "./lib/Utils.svelte";
   import Plot from "./Plot.svelte";
@@ -7,12 +7,17 @@
 
   export let host;
 
+  let sockets = [];
   let topics = [];
+  let plots = [];
   let expandedMsgType = null;
   let selectedField = null;
   let error = null;
   let loading = true;
-  let plots = [];
+
+  function updateTopicStatus(name, status) {
+    topics = topics.map((t) => (t.topic_name === name ? { ...t, status } : t));
+  }
 
   onMount(async () => {
     try {
@@ -21,7 +26,29 @@
         plots = JSON.parse(savedPlots);
       }
 
-      topics = await fetchConfig(host);
+      topics = (await fetchConfig(host)).map((t) => ({
+        ...t,
+        status: "red",
+        lastSeen: 0,
+      }));
+
+      topics.forEach((topic) => {
+        const ws = new WebSocket(`ws://${host}/${topic.topic_name}`);
+        sockets.push(ws);
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data !== "None" && data !== null && data !== undefined) {
+            updateTopicStatus(topic.topic_name, "green");
+          } else {
+            updateTopicStatus(topic.topic_name, "red");
+          }
+        };
+
+        ws.onclose = () => updateTopicStatus(topic.topic_name, "red");
+        ws.onerror = (err) => updateTopicStatus(topic.topic_name, "red");
+      });
+
       loading = false;
     } catch (e) {
       error = e.message;
@@ -53,15 +80,21 @@
         plots = [...plots, field];
         savePlots();
       } else {
-        alert("Maximum of 6 plots reached");
+        alert(`Maximum of 6 plots reached`);
       }
     }
   }
 
   function removePlot(field) {
     plots = plots.filter((p) => p !== field);
+    console.log("Removed plot:", field);
+    console.log(plots);
     savePlots();
   }
+
+  onDestroy(() => {
+    sockets.forEach((ws) => ws.close());
+  });
 </script>
 
 {#if loading}
@@ -82,7 +115,15 @@
             aria-controls={"fields-" + topic.id}
             aria-haspopup="true"
           >
-            <span>{topic.msg_type}</span>
+            <div class="msg-type-label">
+              <div
+                class="status-indicator {topic.status === 'green'
+                  ? 'green-status'
+                  : 'red-status'}"
+              ></div>
+              <span>{topic.msg_type}</span>
+            </div>
+
             <span
               class="arrow {expandedMsgType === topic.msg_type
                 ? 'expanded'
@@ -125,7 +166,7 @@
       {#if plots.length === 0}
         <p>Select fields from the list to plot.</p>
       {:else}
-        {#each plots as field}
+        {#each plots as field, i}
           <div out:fade={{ duration: 200 }}>
             <Plot
               {host}
@@ -144,9 +185,14 @@
   .container {
     display: flex;
     flex-direction: row;
-    margin-top: calc(var(--navbar-height) - 20px);
-    height: auto;
+    margin-top: calc(var(--navbar-height));
     min-height: calc(100vh - var(--navbar-height));
+  }
+
+  .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
   }
 
   .msg-type-list {
@@ -190,6 +236,12 @@
     justify-content: space-between;
     font-weight: 600;
     font-size: 0.85rem;
+  }
+
+  .msg-type-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .msg-type-button:hover {
@@ -236,7 +288,6 @@
   /* New styles for the plot grid */
   .plots-grid {
     flex-grow: 1;
-    height: calc(100vh - var(--navbar-height));
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -244,6 +295,7 @@
     padding: 1.5rem;
     background: var(--bg-color);
     overflow-y: auto;
+    height: calc(100vh - var(--navbar-height) - 2rem);
   }
 
   .msg-type-list::-webkit-scrollbar,
@@ -254,9 +306,20 @@
 
   @media (max-width: 1280px) {
     .plots-grid {
-          gap: 1rem;
-        padding: 1rem;
+      gap: 1rem;
+      padding: 1rem;
     }
   }
 
+  @media (min-width: 1280px) {
+    .msg-type-item {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .plots-grid {
+      /* grid-template-columns: repeat(3, 1fr); */
+    }
+  }
 </style>

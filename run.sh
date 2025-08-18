@@ -83,23 +83,6 @@ function run_database() {
     fi
 }
 
-function run_grafana() {
-    cd grafana || exit
-    echo "Generating Grafana dashboards..."
-    python3 generate_dashboards.py
-
-    cd ..
-    
-    echo "Starting Grafana (docker-compose up -d)..."
-    docker compose --env-file .env up -d grafana
-    if [ $? -ne 0 ]; then
-        echo "Failed to start the grafana."
-        exit 1
-    fi
-    
-    cd ..
-}
-
 function run_docker_stack() {
 
     if [ "$1" = "--clean" ]; then
@@ -148,9 +131,6 @@ function run_docker_stack() {
 function run_app() {
     echo "Starting the app (npm run dev)..."
     cd frontend || exit
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
     npm run dev
     cd ..
 }
@@ -173,28 +153,14 @@ function run() {
     source_venv
     source_ros
     run_docker_stack &
-    run_mavlink_client &
+    # run_mavlink_client &
     run_server &
     run_app &
     wait
 }
 
 function run_with_test_msgs() {
-    source_venv
-    source_ros
-    run_server &
-    run_app &
-    publish_test_ros_msgs &
-    wait
-}
-
-function run_all() {
-    source_venv
-    build_msgs
-    run_docker_stack
-    # run_mavlink_client &
-    run_app &
-    run_server &
+    run
     publish_test_ros_msgs &
     wait
 }
@@ -211,7 +177,6 @@ function show_help() {
     echo "  run_docker_stack [--cleanup]   Start InfluxDB + Grafana stack (with optional cleanup)"
     echo "  run                            Start the server and app"
     echo "  run_with_test_msgs             Start the server, app, and custom messages"
-    echo "  run_all                        Build messages, start the server, app, and custom messages"
     echo "  help                           Show this help message"
 }
 
@@ -251,9 +216,6 @@ case $1 in
         ;;
     run_with_test_msgs)
         run_with_test_msgs
-        ;;
-    run_all)
-        run_all
         ;;
     run_mavlink_receiver)
         run_mavlink_receiver

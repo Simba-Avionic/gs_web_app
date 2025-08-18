@@ -42,7 +42,7 @@
             attributionControl: false,
         }).setView([54.4034, 18.5166], 13);
         const layer = L.tileLayer(
-            `http://${host}:8000/tiles/tiles_tricity/{z}/{x}/{y}.png`,
+            `http://${host}/tiles/tiles_tricity/{z}/{x}/{y}.png`,
             {
                 minZoom: 10,
                 maxZoom: 15,
@@ -59,7 +59,7 @@
         path = loadPathFromLocalStorage();
         pathLine = L.polyline(path, { color: "orange" }).addTo(map);
 
-        gpsSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_gps`);
+        gpsSocket = new WebSocket(`ws://${host}/mavlink/simba_gps`);
         gpsSocket.onmessage = (event) => {
             try {
                 gpsData = JSON.parse(event.data);
@@ -81,7 +81,7 @@
             }
         };
 
-        maxAltitudeSocket = new WebSocket(`ws://${host}:8000/mavlink/simba_max_altitude`);
+        maxAltitudeSocket = new WebSocket(`ws://${host}/mavlink/simba_max_altitude`);
         maxAltitudeSocket.onmessage = (event) => {
             try {
                 maxAltitudeData = JSON.parse(event.data);
@@ -119,7 +119,7 @@
 
     async function fetchConfig() {
         try {
-            const response = await fetch(`http://${host}:8000/config`);
+            const response = await fetch(`http://${host}/config`);
             const data = await response.json();
             
             // Filter topics to only include GPS and max altitude topics

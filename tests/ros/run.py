@@ -16,6 +16,8 @@ from rclpy.executors import MultiThreadedExecutor
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from shared.paths import CONFIG_JSON_PATH
 
+MSG_DEFS = {}
+
 def load_main_config(path_to_conf):
     config = None
     with open(path_to_conf, "r") as f:
@@ -37,45 +39,47 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
     """
     for field in field_config:
         field_type = field['type']
-        field_name = field['val_name']
+        val_name = field['val_name']
+        msg_def_name = field.get('msg_def')
+
+        if msg_def_name:
+            parts = val_name.split('/') # 0 - v7_4, 1 - bus_voltage_v
+
+            nested_msg_type = import_message_type(msg_def_name)
+            nested_msg = nested_msg_type()
+            populate_message_fields(
+                nested_msg, MSG_DEFS[msg_def_name], stamp, msg_def_name
+            )
+            setattr(msg, parts[0], nested_msg)
+            continue
+
+        if '/' in val_name:
+            val_name = val_name.split('/')[-1]
 
         if field_type == 'std_msgs/Header':
             msg.header.stamp = stamp
             msg.header.frame_id = msg_type_name
         elif field_type in ('float32', 'float64', 'float'):
-            if field_name == 'lat':
-                setattr(msg, field_name, random.uniform(54.20, 54.45))
-            elif field_name == 'lon':
-                setattr(msg, field_name, random.uniform(18.50, 18.75))
-            elif field_name == 'combined_fuel_kg':
-                setattr(msg, field_name, random.uniform(0, 20))
+            if val_name == 'lat':
+                setattr(msg, val_name, random.uniform(54.20, 54.45))
+            elif val_name == 'lon':
+                setattr(msg, val_name, random.uniform(18.50, 18.75))
+            elif val_name == 'combined_fuel_kg':
+                setattr(msg, val_name, random.uniform(0, 20))
             else:
-                setattr(msg, field_name, random.uniform(-100.0, 100.0))
+                setattr(msg, val_name, random.uniform(-100.0, 100.0))
         elif field_type in ('int8', 'uint8', 'uint32', 'int32', 'uint32', 'uint64', 'int', 'int16', 'uint16','int64'):
-            if 'status' in field_name:
-                setattr(msg, field_name, random.randint(0, 7))
-            elif field_name == 'state':
-                setattr(msg, field_name, random.randint(0, 5))
+            if 'status' in val_name:
+                setattr(msg, val_name, random.randint(0, 7))
+            elif val_name == 'state':
+                setattr(msg, val_name, random.randint(0, 5))
             else:
-                setattr(msg, field_name, random.randint(0, 100))
+                setattr(msg, val_name, random.randint(0, 100))
         elif field_type == 'bool':
-            setattr(msg, field_name, random.choice([True, False]))
+            setattr(msg, val_name, random.choice([True, False]))
         else:
-            # Dynamically import and set nested message types
-            _, message_name = field_type.split('/')
-            nested_msg_type = import_message_type(message_name)
-            nested_msg = nested_msg_type()
+            print(f'Unknown field type: {field_type} for field {val_name}')
 
-            if hasattr(nested_msg, '__slots__'):
-                data = nested_msg_type.get_fields_and_field_types()
-                msg_fields = [
-                    {'val_name': key, 'type': value} 
-                    for key, value in data.items()
-                ]
-                populate_message_fields(
-                    nested_msg, msg_fields, stamp, msg_type_name
-                )
-            setattr(msg, field_name, nested_msg)
 
 class DynamicNode(Node):
     def __init__(self, config):
@@ -105,6 +109,9 @@ def main():
     rclpy.init()
 
     config = load_main_config(CONFIG_JSON_PATH)
+    
+    for msg_def in config['msg_defs']:
+        MSG_DEFS[msg_def['msg_type']] = msg_def['msg_fields']
 
     node_threads = []
     for node_config in config['topics']:

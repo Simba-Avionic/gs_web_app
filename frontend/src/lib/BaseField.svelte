@@ -4,16 +4,14 @@
     import { slide } from "svelte/transition";
     import { rosTimeToFormattedTime } from "./Utils.svelte";
 
-    // Common props
     export let dataWarning = false;
-    export let className; // Accept custom classes
+    export let className;
     export let title;
     export let host;
-    export let topicNames = []; // List of topics to subscribe to
+    export let topicNames = [];
     export let isExpanded = false;
-    export let processData = (topicName, data) => {}; // Override this in child components
+    export let processData = (topicName, data) => {};
 
-    // Common state
     const dispatch = createEventDispatcher();
     let topicStatusMap = {};
     let lastUpdated = null;
@@ -26,88 +24,66 @@
         isExpanded = !isExpanded;
     }
 
-    //   let initStartTime;
-
     function setupWebSockets() {
-        // initStartTime = performance.now();
+        topicNames.map((topicName) => {
+            topicStatusMap[topicName] = false;
 
-        // Create all WebSocket instances immediately instead of sequentially
-        const connectionPromises = topicNames.map((topicName) => {
-            return new Promise((resolve) => {
+            const socket = new WebSocket(`ws://${host}/${topicName}`);
+
+            socket.onopen = () => {
+                console.log(`Connected to ${topicName}`);
                 topicStatusMap[topicName] = false;
+            };
 
-                const socket = new WebSocket(`ws://${host}:8000/${topicName}`);
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (
+                        data !== "None" &&
+                        data !== null &&
+                        data !== undefined
+                    ) {
+                        telemetryData[topicName] = data;
 
-                socket.onopen = () => {
-                    console.log(`Connected to ${topicName}`);
-                    topicStatusMap[topicName] = false;
-                    resolve();
-                };
+                        processData(topicName, data);
 
-                socket.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (
-                            data !== "None" &&
-                            data !== null &&
-                            data !== undefined
-                        ) {
-                            // Store raw data
-                            telemetryData[topicName] = data;
+                        try {
+                            lastUpdated = {
+                                sec: data.header.stamp.sec,
+                                nanosec: data.header.stamp.nanosec,
+                            };
+                        } catch (e) {}
 
-                            // Process data (implemented by child component)
-                            processData(topicName, data);
-
-                            // Update timestamp
-                            try {
-                                lastUpdated = {
-                                    sec: data.header.stamp.sec,
-                                    nanosec: data.header.stamp.nanosec,
-                                };
-                            } catch (e) {
-                                // Silent catch - not all messages have headers
-                            }
-
-                            // Only update connection status if it was previously false
-                            if (!topicStatusMap[topicName]) {
-                                topicStatusMap[topicName] = true;
-                                updateStatus();
-                            }
-
-                            dispatch("dataReceived", { topicName, data });
-                            dispatch("telemetryChange", { data });
-                        } else {
-                            if (topicStatusMap[topicName]) {
-                                topicStatusMap[topicName] = false;
-                                updateStatus();
-                            }
+                        if (!topicStatusMap[topicName]) {
+                            topicStatusMap[topicName] = true;
+                            updateStatus();
                         }
-                    } catch (e) {
-                        console.error(
-                            `Error processing data from ${topicName}:`,
-                            e,
-                        );
+
+                        dispatch("dataReceived", { topicName, data });
+                        dispatch("telemetryChange", { data });
+                    } else {
+                        if (topicStatusMap[topicName]) {
+                            topicStatusMap[topicName] = false;
+                            updateStatus();
+                        }
                     }
-                };
+                } catch (e) {
+                    console.error(
+                        `Error processing data from ${topicName}:`,
+                        e,
+                    );
+                }
+            };
 
-                socket.onclose = () => {
-                    console.log(`Disconnected from ${topicName}`);
-                    if (topicStatusMap[topicName]) {
-                        topicStatusMap[topicName] = false;
-                        updateStatus();
-                    }
-                    resolve();
-                };
+            socket.onclose = () => {
+                console.log(`Disconnected from ${topicName}`);
+                if (topicStatusMap[topicName]) {
+                    topicStatusMap[topicName] = false;
+                    updateStatus();
+                }
+            };
 
-                sockets[topicName] = socket;
-            });
-        });
-
-        // Update status once all connections are attempted
-        Promise.all(connectionPromises).then(() => {
-            updateStatus();
-            //   const elapsed = performance.now() - initStartTime;
-            //   console.log(`All WebSocket connections initialized in ${elapsed.toFixed(2)}ms`);
+            sockets[topicName] = socket;
         });
     }
 
@@ -238,7 +214,6 @@
         box-sizing: border-box;
     }
 
-    /* Status indicators */
     .status-indicator {
         width: 10px;
         height: 10px;
