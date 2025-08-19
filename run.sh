@@ -153,7 +153,7 @@ function run() {
     source_venv
     source_ros
     run_docker_stack &
-    # run_mavlink_client &
+    run_mavlink_client &
     run_server &
     run_app &
     wait

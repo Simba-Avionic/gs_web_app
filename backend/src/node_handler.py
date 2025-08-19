@@ -100,8 +100,9 @@ class NodeHandler(Node):
     async def query(
             self, 
             field_name: str = Query(..., description="Field key to query"), 
-            time_range: int = Query(3, ge=1, le=60)
+            time_range: int = Query(1, ge=1, le=10)
         ):
+
         """
         GET endpoint to query last `time_range` minutes of data.
         """
@@ -110,8 +111,8 @@ class NodeHandler(Node):
           |> range(start: -{time_range}m)
           |> filter(fn: (r) => r._measurement == "{self.msg_type}")
           |> filter(fn: (r) => r._field == "{field_name}")
-          |> sort(columns: ["_time"], desc: false)
-          |> limit(n: 1000)
+          |> aggregateWindow(every: 1s, fn: last, createEmpty: false)
+          |> limit(n: {time_range * 60})
         '''
 
         try:

@@ -18,6 +18,8 @@
     let latestValue = "--";
     let ws;
     let currentTheme;
+    let buffer = [];
+    let flushInterval;
 
     $: $theme, updateTheme();
 
@@ -40,19 +42,16 @@
                 showgrid: true,
             },
             yaxis: {
-                // title: {
-                //     text: `${field.val_name} ${
-                //         field.unit ? `(${field.unit})` : ""
-                //     }`,
-                //     standoff: 20,
-                //     font: { size: 13 },
-                // },
-                // range: field.range || [0, 100],
-                // tickvals: generateTicks(field.range || [0, 100]),
-                // tickfont: { size: 10 },
-                // showgrid: true,
-                // zeroline: false,
-                // automargin: true,
+                title: {
+                    text: field.val_name,
+                    standoff: 20,
+                    font: { size: 13 },
+                },
+                tickvals: [0, 1],
+                ticktext: ["False", "True"],
+                tickfont: { size: 10 },
+                automargin: true,
+                autorange: false,
                 gridcolor: cssVar("--nav-active"),
             },
         };
@@ -146,6 +145,7 @@
                                   tickvals: [0, 1],
                                   ticktext: ["False", "True"],
                                   tickfont: { size: 10 },
+                                  autorange: false,
                                   showgrid: true,
                                   zeroline: false,
                                   automargin: true,
@@ -191,11 +191,11 @@
 
     function openWebSocket() {
         ws = new WebSocket(`ws://${host}/${field.topic}`);
+
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
 
-                // Support nested val_name like "Power/bus_voltage_v" or "LoadCell/raw_val"
                 let v;
                 if (field.val_name.includes("/")) {
                     const [first, second] = field.val_name.split("/");
@@ -203,11 +203,7 @@
                 } else {
                     v = msg[field.val_name];
                 }
-
-                if (v === undefined) {
-                    console.warn("Value not found for", field.val_name, msg);
-                    return;
-                }
+                if (v === undefined) return;
 
                 if (field.type === "bool") {
                     v = v ? 1 : 0;
@@ -219,33 +215,47 @@
                     msg.header.stamp.nanosec,
                 );
 
-                xData.push(t);
-                yData.push(v);
-                latestValue = v;
-
-                const maxPoints = time_range * 60;
-                if (xData.length > maxPoints) {
-                    xData.shift();
-                    yData.shift();
-                }
-
-                Plotly.extendTraces(
-                    plotDiv,
-                    { x: [[t]], y: [[v]] },
-                    [0],
-                    maxPoints,
-                );
+                buffer.push({ t, v });
             } catch (err) {
                 console.error("WS parse error:", err);
             }
         };
 
-        ws.onclose = () => {
-            closeWebSocket();
-        };
+        ws.onclose = () => closeWebSocket();
+
+        // Start flush loop (every 1s)
+        flushInterval = setInterval(() => {
+            if (buffer.length === 0) return;
+
+            // You can decide whether to plot the last value only,
+            // or plot all buffered values. Example: last value only:
+            const last = buffer[buffer.length - 1];
+            buffer = [];
+
+            xData.push(last.t);
+            yData.push(last.v);
+            latestValue = last.v;
+
+            const maxPoints = time_range * 60;
+            if (xData.length > maxPoints) {
+                xData.shift();
+                yData.shift();
+            }
+
+            Plotly.extendTraces(
+                plotDiv,
+                { x: [[last.t]], y: [[last.v]] },
+                [0],
+                maxPoints,
+            );
+        }, 1000);
     }
 
     function closeWebSocket() {
+        if (flushInterval) {
+            clearInterval(flushInterval);
+            flushInterval = null;
+        }
         if (ws) {
             ws.onmessage = null;
             ws.onclose = null;
