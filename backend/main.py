@@ -6,7 +6,7 @@ import os
 import threading
 import subprocess
 import requests
-from requests.auth import HTTPBasicAuth
+from requests.auth import HTTPDigestAuth
 from pydantic import BaseModel
 
 from time import sleep
@@ -67,11 +67,9 @@ def send_ptz_command(cmd: PTZCommand):
     </PTZData>
     """
 
-    response = requests.put(url, headers=headers, data=xml_body, auth=HTTPBasicAuth("admin", "simba123"))
+    response = requests.put(url, headers=headers, data=xml_body, auth=HTTPDigestAuth("admin", "simba123"))
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail=f"Failed to send PTZ command: {response.text}")
-        # curl -X PUT -T TEST_PTZ.xml http://login:password@ip/PTZCtrl/channels/1/Continuous (in TEST_PTZ.xml : <PTZData><pan>-100</pan><tilt>0</tilt></PTZData>)
-
 
 def start_camera_stream():
     """Start FFmpeg process to convert RTSP to HLS for browser playback."""

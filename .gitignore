@@ -10,3 +10,4 @@ install
 temp
 tiles_tricity
 docker/**
+backend/static

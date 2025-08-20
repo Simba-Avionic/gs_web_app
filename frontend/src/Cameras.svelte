@@ -43,7 +43,7 @@
 
   async function sendPTZ(pan, tilt, zoom = 0, speed = 0.5) {
     try {
-      const response = await fetch(`http://${host1}/ptz/move`, {
+      const response = await fetch(`http://${host}/ptz/move`, {
         // controls first camera
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,7 +51,7 @@
       });
       if (!response.ok) {
         const err = await response.json();
-        alert("PTZ Error: " + err.detail);
+        // alert("PTZ Error: " + err.detail);
       }
     } catch (e) {
       console.log("Network error sending PTZ command.");
