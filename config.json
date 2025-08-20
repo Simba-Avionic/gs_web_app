@@ -128,7 +128,8 @@
                     "range": [
                         0,
                         100
-                    ]
+                    ],
+                    "controls": "valve_feed_oxidizer"
                 },
                 {
                     "type": "int8",
@@ -138,31 +139,38 @@
                     "range": [
                         0,
                         100
-                    ]
+                    ],
+                    "controls": "valve_feed_pressurizer"
                 },
                 {
                     "type": "bool",
                     "val_name": "valve_vent_oxidizer",
                     "display": "status",
-                    "mapping": ["closed", "open"]
+                    "mapping": ["closed", "open"],
+                    "controls": "valve_vent_oxidizer",
+                    "offset": [0, 30]
                 },
                 {
                     "type": "bool",
                     "val_name": "valve_vent_pressurizer",
                     "display": "status",
-                    "mapping": ["closed", "open"]
+                    "mapping": ["closed", "open"],
+                    "controls": "valve_vent_pressurizer",
+                    "offset": [-25, 50]
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_oxidizer",
                     "display": "status",
-                    "mapping": ["closed", "open"]
+                    "mapping": ["closed", "open"],
+                    "controls": "decoupler_oxidizer"
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_pressurizer",
                     "display": "status",
-                    "mapping": ["closed", "open"]
+                    "mapping": ["closed", "open"],
+                    "controls": "decoupler_pressurizer"
                 }
             ]
         },
