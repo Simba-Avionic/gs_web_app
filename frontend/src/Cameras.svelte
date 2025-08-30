@@ -9,6 +9,9 @@
   let hls1;
   let hls2;
 
+  let ptzInterval = null;
+  let recordingProcess = null;
+
   function setupVideo(videoEl, camera) {
     const streamUrl = `http://${host}/${camera}/stream.m3u8`;
 
@@ -26,8 +29,9 @@
   }
 
   onMount(() => {
-    hls1 = setupVideo(videoEl1, "camera1");
+    hls1 = setupVideo(videoEl1, "camera");
     hls2 = setupVideo(videoEl2, "camera2");
+    stopPTZ();
   });
 
   onDestroy(() => {
@@ -41,7 +45,7 @@
     }
   });
 
-  async function sendPTZ(pan, tilt, zoom = 0, speed = 0.5) {
+  async function sendPTZ(pan, tilt, zoom = 0, speed = 10) {
     try {
       const response = await fetch(`http://${host}/ptz/move`, {
         // controls first camera
@@ -59,38 +63,96 @@
     }
   }
 
+  function startPTZ(pan, tilt) {
+    stopPTZ(); // make sure no other interval is running
+    ptzInterval = setInterval(() => sendPTZ(pan, tilt), 100);
+  }
+
+  function stopPTZ() {
+    if (ptzInterval) {
+      clearInterval(ptzInterval);
+      ptzInterval = null;
+    }
+    sendPTZ(0, 0, 0, 0); // send stop command
+  }
+
   function moveLeft() {
-    sendPTZ(-0.5, 0);
+    sendPTZ(-10, 0);
+    stopPTZ();
   }
   function moveRight() {
-    sendPTZ(0.5, 0);
+    sendPTZ(10, 0);
+    stopPTZ();
   }
   function moveUp() {
-    sendPTZ(0, 0.5);
+    sendPTZ(0, 10);
+    stopPTZ();
   }
   function moveDown() {
-    sendPTZ(0, -0.5);
+    sendPTZ(0, -10);
+    stopPTZ();
   }
-  function stop() {
-    sendPTZ(0, 0, 0, 0);
+
+  async function startRecording() {
+    if (recordingProcess) return; // already recording
+
+    const response = await fetch(`http://${host}/start_recording`, {
+      method: "POST",
+    });
+    // handle response if needed
+  }
+
+  async function stopRecording() {
+    if (!recordingProcess) return;
+
+    const response = await fetch(`http://${host}/stop_recording`, {
+      method: "POST",
+    });
+    recordingProcess = null;
   }
 </script>
 
 <div class="main-container">
   <div class="videos">
+    <button on:click={startRecording}>Start Recording</button>
+    <button on:click={stopRecording}>Stop Recording</button>
     <div class="video-container">
       <video bind:this={videoEl1} autoplay muted playsinline controls></video>
       <div class="ptz-controls">
         <div class="row">
-          <button on:click={moveUp}>🠉</button>
+          <button
+            on:mousedown={() => startPTZ(0, 10)}
+            on:mouseup={stopPTZ}
+            on:mouseleave={stopPTZ}
+            on:touchstart={() => startPTZ(0, 10)}
+            on:touchend={stopPTZ}>▲</button
+          >
         </div>
         <div class="row">
-          <button on:click={moveLeft}>🠈</button>
-          <button on:click={stop}>⏹</button>
-          <button on:click={moveRight}>🠊</button>
+          <button
+            on:mousedown={() => startPTZ(-10, 0)}
+            on:mouseup={stopPTZ}
+            on:mouseleave={stopPTZ}
+            on:touchstart={() => startPTZ(-10, 0)}
+            on:touchend={stopPTZ}>◀</button
+          >
+          <button on:click={stopPTZ}>■</button>
+          <button
+            on:mousedown={() => startPTZ(10, 0)}
+            on:mouseup={stopPTZ}
+            on:mouseleave={stopPTZ}
+            on:touchstart={() => startPTZ(10, 0)}
+            on:touchend={stopPTZ}>▶</button
+          >
         </div>
         <div class="row">
-          <button on:click={moveDown}>🠋</button>
+          <button
+            on:mousedown={() => startPTZ(0, -10)}
+            on:mouseup={stopPTZ}
+            on:mouseleave={stopPTZ}
+            on:touchstart={() => startPTZ(0, -10)}
+            on:touchend={stopPTZ}>▼</button
+          >
         </div>
       </div>
     </div>
@@ -98,15 +160,15 @@
       <video bind:this={videoEl2} autoplay muted playsinline controls></video>
       <div class="ptz-controls">
         <div class="row">
-          <button on:click={moveUp}>🠉</button>
+          <button on:click={moveUp}>▲</button>
         </div>
         <div class="row">
-          <button on:click={moveLeft}>🠈</button>
-          <button on:click={stop}>⏹</button>
-          <button on:click={moveRight}>🠊</button>
+          <button on:click={moveLeft}>◀</button>
+          <button on:click={stop}>■</button>
+          <button on:click={moveRight}>▶</button>
         </div>
         <div class="row">
-          <button on:click={moveDown}>🠋</button>
+          <button on:click={moveDown}>▼</button>
         </div>
       </div>
     </div>

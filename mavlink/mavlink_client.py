@@ -46,6 +46,10 @@ class MavlinkClient(Node):
             gs_msgs.TankingAbort, 'tanking/abort', 10)
         self.get_logger().info("Created publisher for tanking abort")
 
+        self.tare_publisher = self.create_publisher(
+            gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
+        self.get_logger().info("Created publisher for tare commands")
+
         self._running = True
         self._receiver_thread = None
         self._start_receiver_thread()
@@ -187,7 +191,6 @@ class MavlinkClient(Node):
                             self._executor.submit(self._handle_rocket_switch_action, action_name, state)
 
                     elif category == "abort" and state == 1:
-                        self.get_logger().debug(f"ABORT!!!")
                         self._executor.submit(self._handle_abort)
 
                 previous_rocket_states = {
@@ -261,19 +264,27 @@ class MavlinkClient(Node):
             if gs_switches is None:
                 return
         
-            msg = gs_msgs.TankingCommands()
+            tank_msg = gs_msgs.TankingCommands()
+            tank_msg.header.stamp = self.get_clock().now().to_msg()
+            tank_msg.header.frame_id = "control_panel_gs"
             
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.header.frame_id = "control_panel_gs"
-            
-            msg.valve_feed_oxidizer = bool(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
-            msg.valve_feed_pressurizer = bool(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
-            msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
-            msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
-            msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
-            msg.decoupler_pressurizer = bool(gs_switches.get(("decoupler_pressurizer", "gs"), 0))
+            tank_msg.valve_feed_oxidizer = bool(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
+            tank_msg.valve_feed_pressurizer = bool(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
+            tank_msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
+            tank_msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
+            tank_msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
+            tank_msg.decoupler_pressurizer = bool(gs_switches.get(("decoupler_pressurizer", "gs"), 0))
 
-            self.gs_switches_publisher.publish(msg)
+            self.gs_switches_publisher.publish(tank_msg)
+
+            tare_msg = gs_msgs.LoadCellsTare()
+            tare_msg.header.stamp = self.get_clock().now().to_msg()
+            tare_msg.header.frame_id = "control_panel_gs"
+            tare_msg.tare_rocket = bool(gs_switches.get(("tare_rocket", "gs"), 0))
+            tare_msg.tare_oxidizer = bool(gs_switches.get(("tare_oxidizer", "gs"), 0))
+            tare_msg.tare_pressurizer = bool(gs_switches.get(("tare_pressurizer", "gs"), 0))
+
+            self.tare_publisher.publish(tare_msg)
             # self.get_logger().info(f"Published GS switches: {msg}")
 
         except Exception as e:
@@ -288,7 +299,7 @@ class MavlinkClient(Node):
         
         # Define abort parameters
         time_period = 5   # Time period in seconds to send abort commands
-        interval = 0.05     # Interval between sends in seconds
+        interval = 0.5     # Interval between sends in seconds
         
         try:
             # Start time tracking
@@ -309,7 +320,7 @@ class MavlinkClient(Node):
                 try:
                     abort_msg = gs_msgs.TankingAbort()
                     abort_msg.header.stamp = self.get_clock().now().to_msg()
-                    abort_msg.header.frame_id = "emergency_abort"
+                    abort_msg.header.frame_id = "control_panel_gs"
                     abort_msg.abort = True
                     
                     self.abort_publisher.publish(abort_msg)

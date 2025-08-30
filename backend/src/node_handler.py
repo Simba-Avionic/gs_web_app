@@ -5,7 +5,7 @@ import gs_interfaces.msg
 from rclpy.node import Node
 from loguru import logger
 from rosidl_runtime_py import message_to_ordereddict
-from fastapi import WebSocket, APIRouter, Request, HTTPException, Query
+from fastapi import WebSocket, APIRouter, Query, HTTPException
 from database.influx_client import (
     InfluxClient,
     InfluxNotAvailableException,
@@ -32,6 +32,7 @@ class NodeHandler(Node):
         self.start_subscription_thread()
 
         self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
+
         self.connected_clients = set()
         self.curr_msg = None
 
@@ -70,7 +71,6 @@ class NodeHandler(Node):
             self.connected_clients.remove(ws)
 
     async def broadcast_message(self, message):
-        # Convert set to list to avoid runtime modification issues
         for client in list(self.connected_clients):
             try:
                 await client.send_json(message)
@@ -98,14 +98,10 @@ class NodeHandler(Node):
         self.connected_clients.clear()
 
     async def query(
-            self, 
-            field_name: str = Query(..., description="Field key to query"), 
-            time_range: int = Query(1, ge=1, le=10)
-        ):
-
-        """
-        GET endpoint to query last `time_range` minutes of data.
-        """
+        self,
+        field_name: str = Query(..., description="Field key to query"),
+        time_range: int = Query(1, ge=1, le=10),
+    ):
         flux_query = f'''
         from(bucket: "{self.ic.bucket}")
           |> range(start: -{time_range}m)
@@ -114,7 +110,6 @@ class NodeHandler(Node):
           |> aggregateWindow(every: 1s, fn: last, createEmpty: false)
           |> limit(n: {time_range * 60})
         '''
-
         try:
             records = self.ic.query_data(flux_query)
             return {"records": records}
@@ -123,7 +118,4 @@ class NodeHandler(Node):
             BucketNotFoundException,
             BadQueryException,
         ) as e:
-            raise HTTPException(
-                status_code=e.STATUS_CODE,
-                detail=e.DESCRIPTION,
-            )
+            raise HTTPException(status_code=e.STATUS_CODE, detail=e.DESCRIPTION)

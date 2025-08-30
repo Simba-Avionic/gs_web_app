@@ -5,16 +5,19 @@ import time
 class ControlPanelReader:
 
     SWITCH_ACTIONS = {
-        ("valve_feed_oxidizer", "gs"): 0,    # bit 0
-        ("valve_vent_oxidizer", "gs"): 0,      # bit 1
-        ("decoupler_oxidizer", "gs"): 0,     # bit 2
-        ("valve_feed_pressurizer", "gs"): 0,        # bit 3
-        ("valve_vent_pressurizer", "gs"): 0,         # bit 4
-        ("decoupler_pressurizer", "gs"): 0,         # bit 5
-        ("arm_disarm", "rocket"): 0,     # bit 6
-        ("tank_vent", "rocket"): 0,           # bit 7
-        ("ignition", "rocket"): 0,           # bit 8
-        ("abort", "abort"): 0           # bit 9
+        ("valve_feed_oxidizer", "gs"): 0,       # bit 0
+        ("valve_vent_oxidizer", "gs"): 0,       # bit 1
+        ("decoupler_oxidizer", "gs"): 0,        # bit 2
+        ("valve_feed_pressurizer", "gs"): 0,    # bit 3
+        ("valve_vent_pressurizer", "gs"): 0,    # bit 4
+        ("decoupler_pressurizer", "gs"): 0,     # bit 5
+        ("arm_disarm", "rocket"): 0,            # bit 6
+        ("tank_vent", "rocket"): 0,             # bit 7
+        ("ignition", "rocket"): 0,              # bit 8
+        ("abort", "abort"): 0,                  # bit 9
+        ("tare_rocket", "gs"): 0,               # bit 10
+        ("tare_oxidizer", "gs"): 0,             # bit 11
+        ("tare_pressurizer", "gs"): 0,          # bit 12
     }
 
     def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
@@ -49,13 +52,14 @@ class ControlPanelReader:
                     raw = test_ser.readline().decode().strip()
                     if raw:
                         try:
-                            # Validate data format (expecting string of 0s and 1s)
-                            if self._is_valid_binary_string(raw):
-                                print(
-                                    f"Found active control panel on {port}: {raw}")
+                            # Validate data format (expecting uint16_t in decimal form)
+                            val = int(raw)
+                            if 0 <= val <= 65535:
+                                print(f"Found active control panel on {port}: {val}")
                                 self.ser = test_ser
                                 return
-                        except Exception:
+                        except ValueError:
+                            # Not a valid integer
                             pass
                     time.sleep(0.1)
 
@@ -63,13 +67,7 @@ class ControlPanelReader:
 
             except (serial.SerialException, OSError) as e:
                 print(f"Error on port {port}: {e}")
-
-        raise serial.SerialException(
-            "No active control panel found on any port")
-
-    def _is_valid_binary_string(self, data):
-        """Check if the data is a valid binary string (only 0s and 1s)."""
-        return all(bit in '01' for bit in data)
+        print("Couldn't find a control panel port!!!")
 
     def read_switches(self):
         """
@@ -84,10 +82,11 @@ class ControlPanelReader:
             return None
 
         try:
-            switch_value = int(self.ser.readline().decode().strip())  # Read a line and decode
-
+            switch_value = self.ser.readline().decode(errors="ignore").strip() # Read a line and decode
             if switch_value == '':
                 return
+
+            switch_value = int(switch_value)
             
             # Map each bit to the corresponding key in SWITCH_ACTIONS
             for i, key in enumerate(actions.keys()):

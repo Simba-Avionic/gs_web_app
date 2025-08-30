@@ -70,12 +70,12 @@ function publish_test_ros_msgs() {
 }
 
 function run_mavlink_client() {
-    echo "Starting the MAVLink client..."
+    echo "Starting MAVLink client..."
     python3 mavlink/mavlink_client.py
 }
 
 function run_database() {
-    echo "Starting the database (docker-compose up -d)..."
+    echo "Starting database (docker-compose up -d)..."
     docker compose --env-file .env up -d influxdb
     if [ $? -ne 0 ]; then
         echo "Failed to start the database."
@@ -129,14 +129,14 @@ function run_docker_stack() {
 }
 
 function run_app() {
-    echo "Starting the app (npm run dev)..."
+    echo "Starting app (npm run dev)..."
     cd frontend || exit
     npm run dev
     cd ..
 }
 
 function run_server() {
-    echo "Starting the server (python3 main.py)..."
+    echo "Starting server (python3 main.py)..."
     cd backend || exit
     python3 main.py
     cd ..
@@ -152,10 +152,10 @@ function build_msgs() {
 function run() {
     source_venv
     source_ros
+    run_app &
     run_docker_stack &
     run_mavlink_client &
     run_server &
-    run_app &
     wait
 }
 

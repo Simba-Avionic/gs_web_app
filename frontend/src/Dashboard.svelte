@@ -144,8 +144,9 @@
     const telemetryData = data;
     if (!telemetryData) return;
 
-    const { header } = telemetryData;
-    const { frame_id } = header;
+    // TODO: FIX IT!!!
+    // console.log(data);
+    return;
 
     const config = svgItems.find((item) => item.msg_type === frame_id);
     if (!config) return; // ignore unknown messages
@@ -183,9 +184,9 @@
       const y = ((bbox.y + bbox.height + 5) / viewBox.height) * 100 + offsetY;
 
       // Set using percentage units
-      textEl.setAttribute("x", x + "%");
-      textEl.setAttribute("y", y + "%");
-      textEl.textContent = textContent;
+      // textEl.setAttribute("x", x + "%");
+      // textEl.setAttribute("y", y + "%");
+      // textEl.textContent = textContent;
       textEl.setAttribute("fill", color);
     }
 
@@ -198,7 +199,7 @@
       if (!valve) return;
 
       if (field.type !== "bool") {
-        if (value > 60) {
+        if (value > 50) {
           valve.style.stroke = "url(#gradient_green)";
           updateText(field, `${svgId}`, "OPEN", "url(#gradient_green)");
         } else {

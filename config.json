@@ -18,17 +18,17 @@
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_l/raw_kg"
+                    "val_name": "tenso_l/raw_mass_kg"
                 },
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_l/vehicle_kg"
+                    "val_name": "tenso_l/vehicle_mass_kg"
                 },
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_l/fuel_kg"
+                    "val_name": "tenso_l/fuel_mass_kg"
                 },
                 {
                     "type": "int",
@@ -38,33 +38,33 @@
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_r/raw_kg"
+                    "val_name": "tenso_r/raw_mass_kg"
                 },
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_r/vehicle_kg"
+                    "val_name": "tenso_r/vehicle_mass_kg"
                 },
                 {
                     "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_r/fuel_kg"
+                    "val_name": "tenso_r/fuel_mass_kg"
                 },
                 {
                     "type": "float32",
-                    "val_name": "combined_raw_kg",
+                    "val_name": "combined_raw_mass_kg",
                     "display": "value",
                     "unit": "kg"
                 },
                 {
                     "type": "float32",
-                    "val_name": "combined_vehicle_kg",
+                    "val_name": "combined_vehicle_mass_kg",
                     "display": "value",
                     "unit": "kg"
                 },
                 {
                     "type": "float32",
-                    "val_name": "combined_fuel_kg",
+                    "val_name": "combined_fuel_mass_kg",
                     "display": "value",
                     "unit": "kg"
                 }
@@ -175,6 +175,30 @@
             ]
         },
         {
+            "id": 4,
+            "topic_name": "tanking/load_cells/tare",
+            "msg_type": "LoadCellsTare",
+            "interval": 500,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "tare_rocket"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "tare_oxidizer"
+                },
+                {
+                    "type": "bool",
+                    "val_name": "tare_pressurizer"
+                }
+            ]
+        },
+        {
             "id": 11,
             "topic_name": "tanking/uart_stats",
             "msg_type": "UartStatistics",
@@ -262,7 +286,11 @@
                     "type": "float",
                     "msg_def": "Power",
                     "val_name": "v7_4/current_ma",
-                    "unit": "mA"
+                    "unit": "mA",
+                    "range": [
+                        0,
+                        3500
+                    ]
                 },
                 {
                     "type": "float",
@@ -278,7 +306,11 @@
                     "type": "float",
                     "msg_def": "Power",
                     "val_name": "v12/current_ma",
-                    "unit": "mA"
+                    "unit": "mA",
+                    "range": [
+                        0,
+                        3500
+                    ]
                 }
             ]
         },
@@ -540,17 +572,17 @@
                 },
                 {
                     "type": "float32",
-                    "val_name": "raw_kg",
+                    "val_name": "raw_mass_kg",
                     "unit": "kg"
                 },
                 {
                     "type": "float32",
-                    "val_name": "vehicle_kg",
+                    "val_name": "vehicle_mass_kg",
                     "unit": "kg"
                 },
                 {
                     "type": "float32",
-                    "val_name": "fuel_kg",
+                    "val_name": "fuel_mass_kg",
                     "unit": "kg"
                 }
             ]

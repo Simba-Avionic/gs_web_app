@@ -25,8 +25,6 @@
       const data = JSON.parse(event.data);
       if (data[item.field] !== undefined) {
         value = data[item.field];
-      } else {
-        value = null;
       }
     };
   });
