@@ -152,7 +152,7 @@
                       msg_type: topic.msg_type,
                     })}
                 >
-                  {field.val_name}
+                  {field.alt_name ? field.alt_name : field.val_name}
                   {field.unit ? `(${field.unit})` : ""}
                 </div>
               {/each}

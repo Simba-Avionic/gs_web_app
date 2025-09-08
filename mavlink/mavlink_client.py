@@ -174,8 +174,6 @@ class MavlinkClient(Node):
         while self._running and rclpy.ok():
             try:
                 switch_states = self._control_panel_reader.read_switches()
-                # print(f"Current switch states: {switch_states}")
-
                 if not switch_states:
                     time.sleep(0.1)
                     continue
@@ -191,7 +189,7 @@ class MavlinkClient(Node):
                             self._executor.submit(self._handle_rocket_switch_action, action_name, state)
 
                     elif category == "abort" and state == 1:
-                        self._executor.submit(self._handle_abort)
+                        self._executor.submit(self._handle_rocket_abort)
 
                 previous_rocket_states = {
                     key: value for key, value in switch_states.items()
@@ -287,51 +285,39 @@ class MavlinkClient(Node):
             self.tare_publisher.publish(tare_msg)
             # self.get_logger().info(f"Published GS switches: {msg}")
 
+            abort_msg = gs_msgs.TankingAbort()
+            abort_msg.header.stamp = self.get_clock().now().to_msg()
+            abort_msg.header.frame_id = "control_panel_gs"
+            abort_msg.abort = bool(gs_switches.get(("abort", "abort"), 0))
+            
+            self.abort_publisher.publish(abort_msg)
+
         except Exception as e:
             self.get_logger().error(f"Error handling GS switches: {e}")
 
-    def _handle_abort(self):
+    def _handle_rocket_abort(self):
         """
         Emergency abort handler. Sends abort commands rapidly through both MAVLink and ROS.
         This is a critical safety function that should operate with highest priority.
         """
         self.get_logger().error("⚠️ ABORT TRIGGERED ⚠️")
-        
-        # Define abort parameters
         time_period = 5   # Time period in seconds to send abort commands
         interval = 0.5     # Interval between sends in seconds
         
         try:
-            # Start time tracking
             start_time = time.time()
             
             # Send abort commands repeatedly for time_period
             while time.time() - start_time < time_period:
-                # 1. Send MAVLink abort command
                 try:
                     abort_state = simba.SIMBA_ROCKET_STATE_ABORTED
                     msg = self.master.mav.simba_cmd_change_state_encode(abort_state)
                     self.master.mav.send(msg)
-                    # self.get_logger().info("Sent MAVLink ABORT command")
                 except Exception as e:
                     self.get_logger().error(f"Error sending MAVLink ABORT command: {e}")
                 
-                # 2. Publish ROS abort message
-                try:
-                    abort_msg = gs_msgs.TankingAbort()
-                    abort_msg.header.stamp = self.get_clock().now().to_msg()
-                    abort_msg.header.frame_id = "control_panel_gs"
-                    abort_msg.abort = True
-                    
-                    self.abort_publisher.publish(abort_msg)
-                    # self.get_logger().info("Published ROS ABORT message")
-                except Exception as e:
-                    self.get_logger().error(f"Error publishing ROS ABORT message: {e}")
-                
-                # Short delay before next send
                 time.sleep(interval)
             
-            # After rapid-fire period, send one final abort with acknowledgment check
             try:
                 # Send final MAVLink abort command
                 abort_state = simba.SIMBA_ROCKET_STATE_ABORTED
@@ -356,7 +342,7 @@ class MavlinkClient(Node):
                 self.master.mav.send(msg)
             except:
                 pass
-
+                
     def _wait_for_ack(self, expected_state, timeout=5.0):
         """
         Wait for an acknowledgment of a state change command.

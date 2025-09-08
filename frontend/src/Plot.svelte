@@ -6,6 +6,7 @@
     import { fetchConfig, rosTimeToFormattedTime } from "./lib/Utils.svelte";
     import { theme } from "./js/theme.js";
     import { cssVar, lightThemeColors, darkThemeColors } from "./js/colors.js";
+    import { getPlotLayout } from "./js/plot_config.js";
 
     export let host;
     export let field;
@@ -28,34 +29,7 @@
 
     function updateTheme() {
         if (!plotDiv || !plotDiv.hasChildNodes()) return;
-
-        const layoutUpdate = {
-            plot_bgcolor: cssVar("--snd-bg-color"),
-            font: { color: cssVar("--text-color") },
-            xaxis: {
-                gridcolor: cssVar("--nav-active"),
-                zeroline: false,
-                title: "Time",
-                type: "date",
-                tickformat: "%H:%M:%S",
-                tickfont: { size: 10 },
-                showgrid: true,
-            },
-            yaxis: {
-                title: {
-                    text: field.val_name,
-                    standoff: 20,
-                    font: { size: 13 },
-                },
-                tickvals: [0, 1],
-                ticktext: ["False", "True"],
-                tickfont: { size: 10 },
-                automargin: true,
-                autorange: false,
-                gridcolor: cssVar("--nav-active"),
-            },
-        };
-        Plotly.relayout(plotDiv, layoutUpdate);
+        Plotly.relayout(plotDiv, getPlotLayout(field));
     }
 
     function getRandomColor() {
@@ -68,15 +42,6 @@
                 Math.floor(Math.random() * lightThemeColors.length)
             ];
         }
-    }
-
-    function generateTicks(range) {
-        const [min, max] = range;
-        if (max - min <= 1) {
-            return [min, max];
-        }
-        const step = (max - min) / 2;
-        return [min, min + step, max];
     }
 
     function setTimeRange(min) {
@@ -122,61 +87,7 @@
                         hoverinfo: "x+y",
                     },
                 ],
-                {
-                    margin: { t: 10, b: 30, l: 0, r: 0 },
-                    title: "",
-                    xaxis: {
-                        title: "Time",
-                        type: "date",
-                        tickformat: "%H:%M:%S",
-                        tickfont: { size: 10 },
-                        showgrid: true,
-                        zeroline: false,
-                        gridcolor: cssVar("--nav-active"),
-                    },
-                    yaxis:
-                        field.type === "bool"
-                            ? {
-                                  title: {
-                                      text: field.val_name,
-                                      standoff: 20,
-                                      font: { size: 13 },
-                                  },
-                                  tickvals: [0, 1],
-                                  ticktext: ["False", "True"],
-                                  tickfont: { size: 10 },
-                                  autorange: false,
-                                  showgrid: true,
-                                  zeroline: false,
-                                  automargin: true,
-                                  gridcolor: cssVar("--nav-active"),
-                              }
-                            : {
-                                  title: {
-                                      text: `${field.val_name} ${
-                                          field.unit ? `(${field.unit})` : ""
-                                      }`,
-                                      standoff: 20,
-                                      font: { size: 13 },
-                                  },
-                                  range: field.range || [0, 100],
-                                  tickvals: generateTicks(
-                                      field.range || [0, 100],
-                                  ),
-                                  tickfont: { size: 10 },
-                                  showgrid: true,
-                                  zeroline: false,
-                                  automargin: true,
-                                  gridcolor: cssVar("--nav-active"),
-                              },
-                    plot_bgcolor: cssVar("--snd-bg-color"),
-                    paper_bgcolor: "rgba(0,0,0,0)",
-                    font: {
-                        color: cssVar("--text-color"),
-                        family: "Inter, system-ui, Helvetica, sans-serif",
-                    },
-                    autosize: true,
-                },
+                getPlotLayout(field),
                 {
                     responsive: true,
                     displayModeBar: false,
@@ -223,12 +134,9 @@
 
         ws.onclose = () => closeWebSocket();
 
-        // Start flush loop (every 1s)
         flushInterval = setInterval(() => {
             if (buffer.length === 0) return;
 
-            // You can decide whether to plot the last value only,
-            // or plot all buffered values. Example: last value only:
             const last = buffer[buffer.length - 1];
             buffer = [];
 
@@ -301,7 +209,7 @@
             >
         </div>
         <div class="plot-info">
-            <h5>{field.msg_type} — {field.val_name}</h5>
+            <h5>{field.msg_type} — {field.alt_name ? field.alt_name : field.val_name}</h5>
         </div>
         <div class="latest-value">
             {typeof latestValue === "number"

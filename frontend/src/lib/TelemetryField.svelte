@@ -26,7 +26,7 @@
         {#each topic.msg_fields as field}
           {#if field.val_name !== "header"}
             <div class="field-value">
-              <span>{field.val_name}:</span>
+              <span>{field.alt_name ? field.alt_name : field.val_name}:</span>
               <span>
                 {@html renderField(telemetryData[topic.topic_name], field)}
                 {#if field.unit}

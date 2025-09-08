@@ -16,10 +16,17 @@
         <g id="rocket_group" data-name="rocket group">
             <polygon id="outline" class="cls-2"
                 points="199.15 0.64 200.65 2.44 201.95 7.34 205.45 22.74 210.25 49.54 213.85 78.74 216.35 100.34 217.45 118.84 217.75 721.04 239.05 735.04 239.05 750.04 217.85 753.04 217.65 758.34 180.05 758.34 180.05 753.04 158.85 749.84 158.85 735.14 180.65 720.54 180.35 117.94 181.15 103.34 182.95 84.84 185.15 66.64 187.75 46.94 189.95 33.34 192.85 17.64 195.15 7.64 197.35 1.64 199.15 0.64" />
-            <rect id="tank" data-name="oxidizer outline" class="cls-2" x="180.55"
-                y="395.34" width="37.1" height="142.9" />
+            
+            <rect id="tank_oxidizer" data-name="oxidizer outline" class="cls-2" x="180.55"
+                y="435.34" width="37.1" height="102.9" />
             <rect id="oxidizer_liquid" data-name="oxidizer liquid" class="cls-3" x="181.06"
-                y="395.81" width="36.1" height="142.14" transform="rotate(180, 199.11, 466.88)" />
+                y="395.81" width="36.1" height="102.14" transform="rotate(180, 199.11, 466.88)" />
+            
+            <rect id="tank_pressurizer" data-name="pressurizer outline" class="cls-2" x="180.55"
+                y="395.34" width="37.1" height="40" />
+            <rect id="pressurizer_liquid" data-name="pressurizer liquid" class="cls-3" x="181.06"
+                y="495.81" width="36.1" height="40" transform="rotate(180, 199.11, 466.88)" />
+            
             <rect id="engine" class="cls-4" x="180.05" y="567.04" width="37.6" height="185.9" />
             <rect id="avionics" class="cls-5" x="180.55" y="302.64" width="37" height="60.4" />
             <rect id="payload" class="cls-6" x="180.55" y="252.54" width="37" height="50.1" />

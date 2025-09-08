@@ -66,6 +66,8 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
                 setattr(msg, val_name, random.uniform(18.50, 18.75))
             elif val_name == 'combined_fuel_kg':
                 setattr(msg, val_name, random.uniform(0, 20))
+            elif 'kg' in val_name:
+                setattr(msg, val_name, random.uniform(0, 30))
             else:
                 setattr(msg, val_name, random.uniform(-100.0, 100.0))
         elif field_type in ('int8', 'uint8', 'uint32', 'int32', 'uint32', 'uint64', 'int', 'int16', 'uint16','int64'):
@@ -73,6 +75,8 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
                 setattr(msg, val_name, random.randint(0, 7))
             elif val_name == 'state':
                 setattr(msg, val_name, random.randint(0, 5))
+            elif 'kg' in val_name:
+                setattr(msg, val_name, random.randint(0, 100))
             else:
                 setattr(msg, val_name, random.randint(0, 100))
         elif field_type == 'bool':

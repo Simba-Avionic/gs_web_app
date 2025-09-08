@@ -174,12 +174,12 @@ sudo usermod -aG docker $USER
 sudo apt install chromium-browser ffmpeg i2c-tools python3-smbus raspi-config
 
 # Enable app to automatically run when system is booting
-sudo cp $HOME/gs_web_app/simba-app.service /etc/systemd/system/
+sudo cp $HOME/gs_web_app/services/simba-app.service /etc/systemd/system/
 sudo systemctl daemon-reexec
 sudo systemctl enable simba-app.service
 sudo systemctl start simba-app.service
 
-sudo cp $HOME/gs_web_app/oled-display.service /etc/systemd/system/
+sudo cp $HOME/gs_web_app/services/oled-display.service /etc/systemd/system/
 sudo systemctl daemon-reexec
 sudo systemctl enable oled-display.service
 sudo systemctl start oled-display.service

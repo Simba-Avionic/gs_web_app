@@ -1,11 +1,13 @@
 <script>
   import { onMount, onDestroy } from "svelte";
+  import { subscribeToTopic } from "../js/ws_manager.js";
   import Gauge from "svelte-gauge";
 
   export let host;
   export let item;
 
-  let ws;
+  let unsubscribe;
+
   let value = null;
   let titleEl;
 
@@ -19,30 +21,31 @@
   }
 
   onMount(() => {
-    ws = new WebSocket(`ws://${host}/${item.topic}`);
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data[item.field] !== undefined) {
-        value = data[item.field];
-      }
-    };
+    unsubscribe = subscribeToTopic(host, item.topic, (data) => {
+      value = data[item.field];
+    });
   });
 
   onDestroy(() => {
-    if (ws) ws.close();
+    unsubscribe?.();
   });
 </script>
 
 <div class="gauge-container" class:no-data={value === null || value === "None"}>
-  <div bind:this={titleEl} class="gauge-title">{item.title}</div>
+  <div class="gauge-title">
+    <span
+      bind:this={titleEl}
+    >
+      {item.title}
+    </span>
+  </div>
   <Gauge
     {value}
     start={item.range ? item.range[0] : 0}
     stop={item.range ? item.range[1] : 100}
     stroke={10}
     labels={item.range ? generateTicks(item.range) : []}
-    color={value ? "#388729" : "#c41934"}
+    color={value !== null ? "#388729" : "#c41934"}
     segments={item.range ? [item.range] : [[0, 100]]}
     startAngle={60}
     stopAngle={300}
@@ -59,16 +62,13 @@
     text-align: center;
     padding: 0.55rem;
     white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow: hidden;
     position: relative;
   }
 
   .gauge-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    width: 90%;
-    height: 100%;
     box-sizing: border-box;
   }
 
@@ -76,12 +76,13 @@
     max-width: 100%;
     max-height: 100%;
   }
+
   .gauge-content {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: calc(var(--gauge-radius) / 4);
+    font-size: calc(var(--gauge-radius) / 5);
     text-align: center;
     font-weight: bold;
   }
