@@ -5,7 +5,7 @@
 
 <div class="main-container">
   <div class="videos">
-    <CameraView host={host} camera="camera" hasPTZ={true} />
+    <CameraView host={host} camera="camera1" hasPTZ={true} />
     <CameraView host={host} camera="camera2" hasPTZ={false} />
   </div>
 </div>
@@ -30,16 +30,8 @@
     height: 100%;
   }
 
-  @media (max-width: 2560px) {
-    video { max-width: 1280px; }
-  }
-  @media (max-width: 1920px) {
-    video { max-width: 960px; }
-  }
-  @media (max-width: 1280px) {
-    video { max-width: 640px; }
-  }
-  @media (max-width: 1024px) {
-    video { max-width: 512px; }
-  }
+  .videos > * {
+  flex: 1;          /* take equal available space */
+  min-height: 0;    /* prevent flexbox from overflowing */
+}
 </style>

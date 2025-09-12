@@ -3,7 +3,7 @@
   import { onMount, onDestroy } from "svelte";
 
   export let host;
-  export let camera;        // e.g. "camera" or "camera2"
+  export let camera; // e.g. "camera" or "camera2"
   export let hasPTZ = false;
 
   let videoEl;
@@ -11,14 +11,10 @@
 
   // PTZ state
   let ptzInterval = null;
-
-  // Recording state
-  let mediaRecorder;
-  let recordedChunks = [];
   let isRecording = false;
 
   function setupVideo() {
-    const streamUrl = `http://${host}/${camera}/stream.m3u8`;
+    const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
 
     if (Hls.isSupported()) {
       hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
@@ -43,15 +39,11 @@
 
   // ---------------- PTZ ----------------
   async function sendPTZ(pan, tilt, zoom = 0, speed = 10) {
-    try {
-      await fetch(`http://${host}/ptz/move`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pan, tilt, zoom, speed }),
-      });
-    } catch (e) {
-      console.error("PTZ error:", e);
-    }
+    await fetch(`http://${host}/ptz/${camera}/move`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pan, tilt, zoom, speed }),
+    });
   }
 
   function startPTZ(pan, tilt) {
@@ -68,36 +60,24 @@
   }
 
   // ---------------- Recording ----------------
-  function startRecording() {
-    if (isRecording) return;
-    const stream = videoEl.captureStream();
-    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm; codecs=vp9" });
-    recordedChunks = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) recordedChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: "video/webm" });
-      const url = URL.createObjectURL(blob);
-
-      // Auto-download file
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${camera}_recording.webm`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    mediaRecorder.start();
-    isRecording = true;
+  async function startRecording() {
+    const res = await fetch(`http://${host}/camera/${camera}/start_recording`, {
+      method: "POST",
+    });
+    const data = await res.json();
+    if (data.status === "recording started") isRecording = true;
   }
 
-  function stopRecording() {
-    if (!isRecording) return;
-    mediaRecorder.stop();
-    isRecording = false;
+  async function stopRecording() {
+    const res = await fetch(`http://${host}/camera/${camera}/stop_recording`, {
+      method: "POST",
+    });
+    const data = await res.json();
+    if (data.status === "recording stopped") {
+      isRecording = false;
+      // Auto-download
+      window.location.href = `http://${host}/camera/${camera}/download_recording`;
+    }
   }
 </script>
 
@@ -108,7 +88,8 @@
     muted
     playsinline
     controls
-    class:is-recording={isRecording}></video>
+    class:is-recording={isRecording}
+  ></video>
 
   <div class="controls">
     <div class="ptz-record-wrapper">
@@ -121,7 +102,8 @@
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
               on:touchstart={() => startPTZ(0, 10)}
-              on:touchend={stopPTZ}>▲</button>
+              on:touchend={stopPTZ}>▲</button
+            >
           </div>
           <div class="row">
             <button
@@ -129,14 +111,16 @@
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
               on:touchstart={() => startPTZ(-10, 0)}
-              on:touchend={stopPTZ}>◀</button>
+              on:touchend={stopPTZ}>◀</button
+            >
             <button on:click={stopPTZ}>■</button>
             <button
               on:mousedown={() => startPTZ(10, 0)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
               on:touchstart={() => startPTZ(10, 0)}
-              on:touchend={stopPTZ}>▶</button>
+              on:touchend={stopPTZ}>▶</button
+            >
           </div>
           <div class="row">
             <button
@@ -144,18 +128,23 @@
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
               on:touchstart={() => startPTZ(0, -10)}
-              on:touchend={stopPTZ}>▼</button>
+              on:touchend={stopPTZ}>▼</button
+            >
           </div>
         </div>
       {:else}
         <div class="ptz-controls">
-          <div class="row"><button on:click={() => sendPTZ(0, 10)}>▲</button></div>
+          <div class="row">
+            <button on:click={() => sendPTZ(0, 10)}>▲</button>
+          </div>
           <div class="row">
             <button on:click={() => sendPTZ(-10, 0)}>◀</button>
             <button on:click={() => sendPTZ(0, 0)}>■</button>
             <button on:click={() => sendPTZ(10, 0)}>▶</button>
           </div>
-          <div class="row"><button on:click={() => sendPTZ(0, -10)}>▼</button></div>
+          <div class="row">
+            <button on:click={() => sendPTZ(0, -10)}>▼</button>
+          </div>
         </div>
       {/if}
 
@@ -164,11 +153,11 @@
         <button
           class="record-btn"
           title="Start Recording"
-          on:click={startRecording}>Record 🔴</button>
-        <button
-          class="stop-btn"
-          title="Stop Recording"
-          on:click={stopRecording}>Stop ⬛</button>
+          on:click={startRecording}>Record</button
+        >
+        <button class="stop-btn" title="Stop Recording" on:click={stopRecording}
+          >Stop</button
+        >
       </div>
     </div>
   </div>
@@ -196,7 +185,7 @@
   }
 
   video.is-recording {
-    border-color: red;
+    border-color: #c41934;
   }
 
   .controls {
@@ -242,5 +231,26 @@
     flex-direction: column;
     gap: 10px;
     justify-content: center;
+  }
+
+  @media (max-width: 2560px) {
+    video {
+      max-width: 960px;
+    }
+  }
+  @media (max-width: 1920px) {
+    video {
+      max-width: 640px;
+    }
+  }
+  @media (max-width: 1280px) {
+    video {
+      max-width: 480px;
+    }
+  }
+  @media (max-width: 1024px) {
+    video {
+      max-width: 512px;
+    }
   }
 </style>

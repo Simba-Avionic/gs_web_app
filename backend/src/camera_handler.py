@@ -6,33 +6,85 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from loguru import logger
 from pydantic import BaseModel
-import mimetypes
+from datetime import datetime
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 # ------------------ CAMERA CONFIG ------------------
-CAMERA_RTSP_URL = "rtsp://admin:simba123@192.168.1.200:554/Streaming/Channels/101"
-CAMERA_HLS_DIR = "temp/camera"
-CAMERA_HLS_FILE = os.path.join(CAMERA_HLS_DIR, "stream.m3u8")
-OUTPUT_FILE = "recording.mp4"
+BASE_HLS_DIR = "temp"
 
-os.makedirs(CAMERA_HLS_DIR, exist_ok=True)
+CAMERAS = {
+    "camera1": {
+        "ip": os.getenv("CAMERA1_IP"),
+        "rtsp": f"rtsp://admin:simba123@{os.getenv('CAMERA1_IP')}:554/Streaming/Channels/101",
+        "hls_dir": "temp/camera1",
+        "recordings_dir": "temp/camera1/recordings",
+    },
+    "camera2": {
+        "ip": os.getenv("CAMERA2_IP"),
+        "rtsp": f"rtsp://admin:simba123@{os.getenv('CAMERA2_IP')}:554/Streaming/Channels/101",
+        "hls_dir": "temp/camera2",
+        "recordings_dir": "temp/camera2/recordings",
+    },
+}
 
-ffmpeg_process = None
+for cam in CAMERAS.values():
+    os.makedirs(cam["hls_dir"], exist_ok=True)
+    os.makedirs(cam["recordings_dir"], exist_ok=True)
 
-mimetypes.add_type("application/vnd.apple.mpegurl", ".m3u8")
-mimetypes.add_type("video/mp2t", ".ts")
+# state per camera
+processes = {
+    cam_id: {"stream": None, "recording": None, "current_file": None}
+    for cam_id in CAMERAS
+}
 
-recording_process = None
-
+# ------------------ MODELS ------------------
 class PTZCommand(BaseModel):
     pan: int
     tilt: int
     zoom: int
     speed: int
 
-def send_ptz_command(cmd: PTZCommand):
-    url = f"http://192.168.1.200/ISAPI/PTZCtrl/channels/1/continuous"
-    headers = {"Content-Type": "application/xml"}
+# ------------------ HELPERS ------------------
+def get_camera(cam_id: str):
+    if cam_id not in CAMERAS:
+        raise HTTPException(status_code=404, detail="Unknown camera")
+    return CAMERAS[cam_id], processes[cam_id]
 
+# in your cameras.py (where router is defined)
+
+def start_all_camera_streams():
+    for cam_id, cam in CAMERAS.items():
+        hls_file = os.path.join(cam["hls_dir"], "stream.m3u8")
+        proc = processes[cam_id]
+        if not proc["stream"] or proc["stream"].poll() is not None:
+            logger.info(f"Starting FFmpeg for {cam_id}")
+            proc["stream"] = subprocess.Popen(
+                [
+                    "ffmpeg",
+                    "-rtsp_transport", "tcp",
+                    "-i", cam["rtsp"],
+                    "-c", "copy",
+                    "-f", "hls",
+                    "-hls_time", "1",
+                    "-hls_list_size", "5",
+                    "-hls_flags", "delete_segments+append_list",
+                    hls_file,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+
+# ------------------ ROUTER ------------------
+router = APIRouter()
+
+@router.post("/ptz/{cam_id}/move")
+def ptz_move(cam_id: str, cmd: PTZCommand):
+    cam, _ = get_camera(cam_id)
+    url = f"http://{cam['ip']}/ISAPI/PTZCtrl/channels/1/continuous"
+    headers = {"Content-Type": "application/xml"}
     xml_body = f"""
     <PTZData>
       <pan>{cmd.pan}</pan>
@@ -41,7 +93,6 @@ def send_ptz_command(cmd: PTZCommand):
       <speed>{cmd.speed}</speed>
     </PTZData>
     """
-
     response = requests.put(
         url,
         headers=headers,
@@ -49,81 +100,70 @@ def send_ptz_command(cmd: PTZCommand):
         auth=HTTPDigestAuth("admin", "simba123"),
     )
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=f"Failed to send PTZ command: {response.text}"
-        )
-
-def start_camera_stream():
-    """Start FFmpeg process to convert RTSP to HLS for browser playback."""
-    global ffmpeg_process
-    logger.info(CAMERA_HLS_FILE)
-
-    if ffmpeg_process and ffmpeg_process.poll() is None:
-        logger.info("Camera streaming already running.")
-        return
-
-    logger.info(f"Starting FFmpeg for camera stream from {CAMERA_RTSP_URL}...")
-    ffmpeg_process = subprocess.Popen(
-        [
-            "ffmpeg",
-            "-rtsp_transport", "tcp",
-            "-i", CAMERA_RTSP_URL,
-            "-c", "copy",
-            "-f", "hls",
-            "-hls_time", "1",
-            "-hls_list_size", "5",
-            "-hls_flags", "delete_segments+append_list",
-            CAMERA_HLS_FILE,
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-def stop_camera_stream():
-    """Stop FFmpeg process."""
-    global ffmpeg_process
-    if ffmpeg_process:
-        ffmpeg_process.terminate()
-        ffmpeg_process.wait()
-        ffmpeg_process = None
-        logger.info("Camera stream stopped.")
-
-
-# ---------------- FASTAPI ROUTER -----------------
-router = APIRouter()
-
-@router.post("/ptz/move")
-def ptz_move(cmd: PTZCommand):
-    send_ptz_command(cmd)
+        raise HTTPException(status_code=response.status_code, detail=f"Failed PTZ: {response.text}")
     return {"message": "PTZ command sent"}
 
-@router.get("/camera/stream.m3u8")
-def get_camera_stream():
-    if not os.path.isfile(CAMERA_HLS_FILE):
-        raise HTTPException(status_code=404, detail="Camera stream not ready")
-    return FileResponse(CAMERA_HLS_FILE, media_type="application/vnd.apple.mpegurl")
+@router.get("/camera/{cam_id}/stream.m3u8")
+def get_camera_stream(cam_id: str):
+    cam, proc = get_camera(cam_id)
+    hls_file = os.path.join(cam["hls_dir"], "stream.m3u8")
 
+    if not os.path.isfile(hls_file):
+        # start FFmpeg if not already
+        if not proc["stream"] or proc["stream"].poll() is not None:
+            logger.info(f"Starting FFmpeg for {cam_id}")
+            proc["stream"] = subprocess.Popen(
+                [
+                    "ffmpeg",
+                    "-rtsp_transport", "tcp",
+                    "-i", cam["rtsp"],
+                    "-c", "copy",
+                    "-f", "hls",
+                    "-hls_time", "1",
+                    "-hls_list_size", "5",
+                    "-hls_flags", "delete_segments+append_list",
+                    hls_file,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+    return FileResponse(hls_file, media_type="application/vnd.apple.mpegurl")
 
-@router.post("/start_recording")
-def start_recording():
-    global recording_process
-    if recording_process:
+@router.post("/camera/{cam_id}/start_recording")
+def start_recording(cam_id: str):
+    cam, proc = get_camera(cam_id)
+    if proc["recording"]:
         return {"status": "already recording"}
-    recording_process = subprocess.Popen([
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(cam["recordings_dir"], f"{cam_id}_{timestamp}.mp4")
+    proc["current_file"] = filename
+
+    proc["recording"] = subprocess.Popen([
         "ffmpeg",
         "-rtsp_transport", "tcp",
-        "-i", CAMERA_RTSP_URL,
+        "-i", cam["rtsp"],
         "-c", "copy",
-        OUTPUT_FILE
+        filename
     ])
-    return {"status": "recording started"}
+    return {"status": "recording started", "file": filename}
 
-@router.post("/stop_recording")
-def stop_recording():
-    global recording_process
-    if recording_process:
-        recording_process.terminate()
-        recording_process = None
-        return {"status": "recording stopped"}
+@router.post("/camera/{cam_id}/stop_recording")
+def stop_recording(cam_id: str):
+    _, proc = get_camera(cam_id)
+    if proc["recording"]:
+        proc["recording"].terminate()
+        proc["recording"] = None
+        return {"status": "recording stopped", "file": proc["current_file"]}
     return {"status": "not recording"}
+
+@router.get("/camera/{cam_id}/download_recording")
+def download_recording(cam_id: str):
+    _, proc = get_camera(cam_id)
+    if not proc["current_file"] or not os.path.exists(proc["current_file"]):
+        raise HTTPException(status_code=404, detail="No recording available")
+    return FileResponse(
+        proc["current_file"],
+        media_type="video/mp4",
+        filename=os.path.basename(proc["current_file"])
+    )

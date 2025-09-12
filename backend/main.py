@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
-from src.camera_handler import router as camera_router, start_camera_stream, stop_camera_stream, CAMERA_HLS_DIR
+from src.camera_handler import router as camera_router, start_all_camera_streams, BASE_HLS_DIR
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY
@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Couldn't create/start NodeHandler for {msg['msg_type']}: {e}")
 
-    start_camera_stream()
+    start_all_camera_streams()
 
     stop_event = threading.Event()
     def executor_spin():
@@ -115,7 +115,7 @@ app.add_middleware(
 )
 
 app.include_router(camera_router)
-app.mount("/camera", StaticFiles(directory=CAMERA_HLS_DIR), name="camera")
+app.mount("/camera", StaticFiles(directory=BASE_HLS_DIR), name="camera")
 
 
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
