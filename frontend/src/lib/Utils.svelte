@@ -325,6 +325,26 @@
     return topics;
   }
 
+  export async function fetchMessageDefs(host) {
+    let msg_defs = [];
+    try {
+      const response = await fetch(`http://${host}/config`);
+      const data = await response.json();
+      msg_defs = data.msg_defs;
+
+      try {
+        // localStorage.setItem("topics", JSON.stringify(topics));
+        console.log("Saved topics to LocalStorage");
+      } catch (saveError) {
+        console.error("Error saving to LocalStorage:", saveError);
+      }
+    } catch (fetchError) {
+      console.error("Error fetching config:", fetchError);
+      msg_defs = []; // Fallback to empty array
+    }
+    return msg_defs;
+  }
+
   export function renderField(telemData, field) {
     const value = telemData[field.val_name];
 

@@ -4,16 +4,28 @@
   import { fetchConfig } from "./lib/Utils.svelte";
   import Plot from "./Plot.svelte";
   import { fade } from "svelte/transition";
+  import { fetchMessageDefs } from "./lib/Utils.svelte";
 
   export let host;
 
   let sockets = [];
   let topics = [];
+  let msg_defs = [];
   let plots = [];
   let expandedMsgType = null;
+  let expandedNestedField = null;
   let selectedField = null;
   let error = null;
   let loading = true;
+
+  function getNestedFields(msgDef) {
+    const def = msg_defs?.find((d) => d.msg_type === msgDef);
+    return def ? def.msg_fields.filter((f) => f.val_name !== "header") : [];
+  }
+
+  function toggleNestedField(field) {
+    expandedNestedField = expandedNestedField === field ? null : field;
+  }
 
   function updateTopicStatus(name, status) {
     topics = topics.map((t) => (t.topic_name === name ? { ...t, status } : t));
@@ -31,6 +43,10 @@
         status: "red",
         lastSeen: 0,
       }));
+
+      msg_defs = await fetchMessageDefs(host);
+
+      console.log(msg_defs);
 
       topics.forEach((topic) => {
         const ws = new WebSocket(`ws://${host}/${topic.topic_name}`);
@@ -134,26 +150,70 @@
           {#if expandedMsgType === topic.msg_type}
             <div id={"fields-" + topic.id} class="field-list" transition:slide>
               {#each topic.msg_fields.filter((f) => f.val_name !== "header") as field}
-                <div
-                  class="field-item"
-                  on:click={() =>
-                    selectField({
-                      ...field,
-                      topic: topic.topic_name,
-                      msg_type: topic.msg_type,
-                    })}
-                  role="button"
-                  tabindex="0"
-                  on:keydown={(e) =>
-                    e.key === "Enter" &&
-                    selectField({
-                      ...field,
-                      topic: topic.topic_name,
-                      msg_type: topic.msg_type,
-                    })}
-                >
-                  {field.alt_name ? field.alt_name : field.val_name}
-                  {field.unit ? `(${field.unit})` : ""}
+                <div class="field-item-wrapper">
+                  <div
+                    class="field-item"
+                    on:click={() =>
+                      field.msg_def
+                        ? toggleNestedField(field)
+                        : selectField({
+                            ...field,
+                            topic: topic.topic_name,
+                            msg_type: topic.msg_type,
+                          })}
+                    role="button"
+                    tabindex="0"
+                    on:keydown={(e) =>
+                      e.key === "Enter" &&
+                      (field.msg_def
+                        ? toggleNestedField(field)
+                        : selectField({
+                            ...field,
+                            topic: topic.topic_name,
+                            msg_type: topic.msg_type,
+                          }))}
+                  >
+                    <span
+                      >{field.alt_name ?? field.val_name}
+                      {field.unit ? `(${field.unit})` : ""}</span
+                    >
+
+                    {#if field.msg_def}
+                      <span
+                        class="arrow {expandedNestedField === field
+                          ? 'expanded'
+                          : ''}"
+                      >
+                        ▶
+                      </span>
+                    {/if}
+                  </div>
+
+                  {#if expandedNestedField === field && field.msg_def}
+                    <div class="nested-field-list" transition:slide>
+                      {#each getNestedFields(field.msg_def) as nestedField}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                        <div
+                          class="field-item nested"
+                          on:click={() =>
+                            selectField({
+                              ...nestedField,
+                              topic: topic.topic_name,
+                              msg_type: topic.msg_type,
+                              parent: field.val_name,
+                            })}
+                        >
+                          <span
+                            >{nestedField.alt_name ?? nestedField.val_name}
+                            {nestedField.unit
+                              ? `(${nestedField.unit})`
+                              : ""}</span
+                          >
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -187,6 +247,11 @@
     flex-direction: row;
     margin-top: calc(var(--navbar-height));
     min-height: calc(100vh - var(--navbar-height));
+  }
+
+  .field-item.nested {
+    padding-left: 1rem;
+    font-size: 0.85rem;
   }
 
   .status-indicator {
@@ -275,6 +340,9 @@
     color: var(--text-color);
     font-size: 0.9rem;
     background-color: var(--snd-bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* pushes arrow to the right */
   }
 
   .field-item:last-child {

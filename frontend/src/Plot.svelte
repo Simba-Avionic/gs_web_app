@@ -53,7 +53,7 @@
     async function fetchData() {
         try {
             const res = await fetch(
-                `http://${host}/${field.topic}/query?field_name=${field.val_name}&time_range=${time_range}`,
+                `http://${host}/${field.topic}/query?field_name=${field.parent ? `${field.parent}/${field.val_name}` : field.val_name}&time_range=${time_range}`,
             );
             const data = await res.json();
 
@@ -94,7 +94,7 @@
                 },
             );
 
-            openWebSocket();
+            // openWebSocket();
         } catch (error) {
             console.error("Error fetching or plotting data:", error);
         }
@@ -106,14 +106,23 @@
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);
-
                 let v;
-                if (field.val_name.includes("/")) {
-                    const [first, second] = field.val_name.split("/");
-                    v = msg[first]?.[second];
-                } else {
-                    v = msg[field.val_name];
+
+                // TESTING ...
+                const stamp = msg.header.stamp;
+                const msgTimeMs = stamp.sec * 1000 + stamp.nanosec / 1e6;
+                const nowMs = Date.now(); // aktualny czas w ms
+                const delayMs = nowMs - msgTimeMs; // opóźnienie w ms
+                console.log(`Opóźnienie: ${delayMs.toFixed(2)} ms`);
+
+                try {
+                    v = field.parent
+                        ? msg[field.parent][field.val_name]
+                        : msg[field.val_name];
+                } catch (err) {
+                    return;
                 }
+
                 if (v === undefined) return;
 
                 if (field.type === "bool") {
@@ -180,10 +189,15 @@
     onMount(() => {
         color = getRandomColor();
         fetchData();
+
+        const fetchInterval = setInterval(() => {
+            fetchData();
+        }, 1000);
     });
 
     onDestroy(() => {
         closeWebSocket();
+        clearInterval(fetchInterval);
         Plotly.purge(plotDiv);
     });
 </script>
@@ -209,7 +223,11 @@
             >
         </div>
         <div class="plot-info">
-            <h5>{field.msg_type} — {field.alt_name ? field.alt_name : field.val_name}</h5>
+            <h5>
+                {field.msg_type} — {field.alt_name
+                    ? field.alt_name
+                    : field.val_name}
+            </h5>
         </div>
         <div class="latest-value">
             {typeof latestValue === "number"

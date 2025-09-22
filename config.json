@@ -11,51 +11,22 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "int",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_l/raw_val"
+                    "val_name": "tenso_l"
                 },
                 {
-                    "type": "float",
                     "msg_def": "LoadCell",
-                    "val_name": "tenso_l/raw_mass_kg"
-                },
-                {
-                    "type": "float",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_l/vehicle_mass_kg"
-                },
-                {
-                    "type": "float",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_l/fuel_mass_kg"
-                },
-                {
-                    "type": "int",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_r/raw_val"
-                },
-                {
-                    "type": "float",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_r/raw_mass_kg"
-                },
-                {
-                    "type": "float",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_r/vehicle_mass_kg"
-                },
-                {
-                    "type": "float",
-                    "msg_def": "LoadCell",
-                    "val_name": "tenso_r/fuel_mass_kg"
+                    "val_name": "tenso_r"
                 },
                 {
                     "type": "float32",
                     "val_name": "combined_raw_mass_kg",
                     "alt_name": "Combined Mass",
                     "display": "value",
-                    "range": [0, 20],
+                    "range": [
+                        0,
+                        20
+                    ],
                     "unit": "kg"
                 },
                 {
@@ -63,7 +34,10 @@
                     "val_name": "combined_vehicle_mass_kg",
                     "alt_name": "Combined Vehicle Mass",
                     "display": "value",
-                    "range": [0, 30],
+                    "range": [
+                        0,
+                        30
+                    ],
                     "unit": "kg",
                     "controls": "oxidizer_liquid"
                 },
@@ -72,7 +46,10 @@
                     "val_name": "combined_fuel_mass_kg",
                     "alt_name": "Combined Fuel Mass",
                     "display": "value",
-                    "range": [0, 10],
+                    "range": [
+                        0,
+                        10
+                    ],
                     "unit": "kg",
                     "controls": "pressurizer_liquid"
                 }
@@ -155,30 +132,48 @@
                     "type": "bool",
                     "val_name": "valve_vent_oxidizer",
                     "display": "status",
-                    "mapping": ["closed", "open"],
+                    "mapping": [
+                        "closed",
+                        "open"
+                    ],
                     "controls": "valve_vent_oxidizer",
-                    "offset": [0, 30]
+                    "offset": [
+                        0,
+                        30
+                    ]
                 },
                 {
                     "type": "bool",
                     "val_name": "valve_vent_pressurizer",
                     "display": "status",
-                    "mapping": ["closed", "open"],
+                    "mapping": [
+                        "closed",
+                        "open"
+                    ],
                     "controls": "valve_vent_pressurizer",
-                    "offset": [-25, 50]
+                    "offset": [
+                        -25,
+                        50
+                    ]
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_oxidizer",
                     "display": "status",
-                    "mapping": ["closed", "open"],
+                    "mapping": [
+                        "closed",
+                        "open"
+                    ],
                     "controls": "decoupler_oxidizer"
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_pressurizer",
                     "display": "status",
-                    "mapping": ["closed", "open"],
+                    "mapping": [
+                        "closed",
+                        "open"
+                    ],
                     "controls": "decoupler_pressurizer"
                 }
             ]
@@ -282,44 +277,12 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "float",
                     "msg_def": "Power",
-                    "val_name": "v7_4/bus_voltage_v",
-                    "unit": "V",
-                    "range": [
-                        0,
-                        10
-                    ]
+                    "val_name": "v7_4"
                 },
                 {
-                    "type": "float",
                     "msg_def": "Power",
-                    "val_name": "v7_4/current_ma",
-                    "unit": "mA",
-                    "range": [
-                        0,
-                        3500
-                    ]
-                },
-                {
-                    "type": "float",
-                    "msg_def": "Power",
-                    "val_name": "v12/bus_voltage_v",
-                    "unit": "V",
-                    "range": [
-                        0,
-                        15
-                    ]
-                },
-                {
-                    "type": "float",
-                    "msg_def": "Power",
-                    "val_name": "v12/current_ma",
-                    "unit": "mA",
-                    "range": [
-                        0,
-                        3500
-                    ]
+                    "val_name": "v12"
                 }
             ]
         },
@@ -396,6 +359,26 @@
                 {
                     "type": "bool",
                     "val_name": "abort"
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "topic_name": "radiolink/telemetry",
+            "msg_type": "RadiolinkTelemetry",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "msg_def": "WirelessTelemetry",
+                    "val_name": "launchpad_antenna"
+                },
+                {
+                    "msg_def": "WirelessTelemetry",
+                    "val_name": "mission_control_antenna"
                 }
             ]
         },
@@ -607,12 +590,162 @@
                 {
                     "type": "float32",
                     "val_name": "bus_voltage_v",
-                    "unit": "V"
+                    "unit": "V",
+                    "range": [
+                        0,
+                        15
+                    ]
                 },
                 {
                     "type": "float32",
                     "val_name": "current_ma",
-                    "unit": "mA"
+                    "unit": "mA",
+                    "range": [
+                        0,
+                        3500
+                    ]
+                }
+            ]
+        },
+        {
+            "msg_type": "WirelessTelemetry",
+            "msg_fields": [
+                {
+                    "type": "float32",
+                    "val_name": "rx_bytes_mb",
+                    "unit": "MB"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_bytes_mb",
+                    "unit": "MB"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_bytes_kb",
+                    "unit": "KB"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_bytes_kb",
+                    "unit": "KB"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "rx_packets"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "tx_packets"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "rx_drop"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "tx_drop"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "rx_error"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "tx_error"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "link_downs"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_mbps",
+                    "unit": "Mbps"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_mbps",
+                    "unit": "Mbps"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_kbps",
+                    "unit": "Kbps"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_kbps",
+                    "unit": "Kbps"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_packets_per_sec"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_packets_per_sec"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_drops_per_sec"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_drops_per_sec"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_errors_per_sec"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_errors_per_sec"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "signal_strength",
+                    "unit": "dBm",
+                    "range": [
+                        -100,
+                        0
+                    ]
+                },
+                {
+                    "type": "int32",
+                    "val_name": "signal_to_noise",
+                    "range": [
+                        0,
+                        110
+                    ]
+                },
+                {
+                    "type": "float32",
+                    "val_name": "tx_rate",
+                    "unit": "Mbps"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "rx_rate",
+                    "unit": "Mbps"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "tx_ccq",
+                    "unit": "%",
+                    "range": [
+                        0,
+                        100
+                    ]
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "rx_ccq",
+                    "unit": "%",
+                    "range": [
+                        0,
+                        100
+                    ]
                 }
             ]
         }

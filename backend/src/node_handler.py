@@ -1,8 +1,10 @@
 import time
 import asyncio
 import threading
+from datetime import datetime, timezone
 import gs_interfaces.msg
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from loguru import logger
 from rosidl_runtime_py import message_to_ordereddict
 from fastapi import WebSocket, APIRouter, Query, HTTPException
@@ -44,10 +46,16 @@ class NodeHandler(Node):
         self.subscription_thread.start()
 
     def create_subscription_and_spin(self):
+        qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1      # tylko 1 ostatnia wiadomość w kolejce
+        )
         self.subscription = self.create_subscription(
-            getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, 10)
+            getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, qos)
 
     async def msg_callback(self, msg):
+        # msg.header.stamp = self.get_clock().now().to_msg()
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
         if self.ic.db_alive():
