@@ -3,6 +3,7 @@ import asyncio
 import threading
 from datetime import datetime, timezone
 import gs_interfaces.msg
+from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from loguru import logger
@@ -56,6 +57,12 @@ class NodeHandler(Node):
 
     async def msg_callback(self, msg):
         # msg.header.stamp = self.get_clock().now().to_msg()
+        now = datetime.now(timezone.utc)
+        ros_time = Time()
+        ros_time.sec = int(now.timestamp())                     # sekundy od epoki
+        ros_time.nanosec = now.microsecond * 1000               # mikrosekundy -> nanosekundy
+        msg.header.stamp = ros_time
+        
         self.curr_msg = message_to_ordereddict(msg)
         await self.broadcast_message(self.curr_msg)
         if self.ic.db_alive():

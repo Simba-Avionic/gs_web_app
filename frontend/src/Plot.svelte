@@ -94,7 +94,7 @@
                 },
             );
 
-            // openWebSocket();
+            openWebSocket();
         } catch (error) {
             console.error("Error fetching or plotting data:", error);
         }
@@ -190,9 +190,9 @@
         color = getRandomColor();
         fetchData();
 
-        const fetchInterval = setInterval(() => {
-            fetchData();
-        }, 1000);
+        // const fetchInterval = setInterval(() => {
+        //     fetchData();
+        // }, 1000);
     });
 
     onDestroy(() => {
