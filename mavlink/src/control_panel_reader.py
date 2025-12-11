@@ -20,7 +20,7 @@ class ControlPanelReader:
         ("tare_pressurizer", "gs"): 0,          # bit 12
     }
 
-    def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
+    def __init__(self, port=None, baudrate=57600, timeout=0.1, num_retries=3):
         self.baudrate = baudrate
         self.num_retries = num_retries
         self.ser = None
@@ -122,7 +122,7 @@ class ControlPanelReader:
         if actions is None:
             return None
         return {key: value for key, value in actions.items()
-                if key[1] == "gs"}
+                if key[1] == "gs" or key[1] == "abort"}
 
     def close(self):
         self.running = False

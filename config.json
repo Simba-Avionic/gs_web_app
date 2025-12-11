@@ -347,6 +347,36 @@
             ]
         },
         {
+            "id": 22,
+            "topic_name": "tanking/sensors",
+            "msg_type": "TankingSensors",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "pressure_bar",
+                    "unit": "bar",
+                    "range": [0, 100]
+                },
+                {
+                    "type": "float32",
+                    "val_name": "temperature_hydra",
+                    "unit": "\u00b0C",
+                    "range": [-10, 50]
+                },
+                {
+                    "type": "float32",
+                    "val_name": "temperature_bottle",
+                    "unit": "\u00b0C",
+                    "range": [-10, 50]
+                }
+            ]
+        },
+        {
             "id": 14,
             "topic_name": "tanking/abort",
             "msg_type": "TankingAbort",
@@ -441,13 +471,15 @@
                 {
                     "type": "float32",
                     "val_name": "pressure",
-                    "unit": "bar"
+                    "unit": "bar",
+                    "range": [0, 100]
                 },
                 {
                     "type": "float32",
                     "val_name": "d_pressure",
                     "alt_name": "Delta Pressure",
-                    "unit": "bar"
+                    "unit": "bar",
+                    "range": [0, 100]
                 }
             ]
         },
