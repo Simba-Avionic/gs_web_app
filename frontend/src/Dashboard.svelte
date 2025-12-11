@@ -154,8 +154,7 @@
       const svgId = field.controls; // e.g. "valve1"
       const value = telemetryData[fieldName];
 
-      console.log(svgId);
-
+      // console.log(svgId);
 
       const svgElem = svg.getElementById(svgId);
       if (!svgElem) return;

@@ -3,7 +3,7 @@ import subprocess
 import requests
 from requests.auth import HTTPDigestAuth
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from loguru import logger
 from pydantic import BaseModel
 from datetime import datetime
@@ -108,8 +108,9 @@ def get_camera_stream(cam_id: str):
     cam, proc = get_camera(cam_id)
     hls_file = os.path.join(cam["hls_dir"], "stream.m3u8")
 
+    # If the manifest file doesn't exist yet, start FFmpeg and return 202
     if not os.path.isfile(hls_file):
-        # start FFmpeg if not already
+        # start FFmpeg if not already running
         if not proc["stream"] or proc["stream"].poll() is not None:
             logger.info(f"Starting FFmpeg for {cam_id}")
             proc["stream"] = subprocess.Popen(
@@ -127,7 +128,18 @@ def get_camera_stream(cam_id: str):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-    return FileResponse(hls_file, media_type="application/vnd.apple.mpegurl")
+        # Tell the client the stream is being prepared (client should retry)
+        return JSONResponse(
+            status_code=202,
+            content={"status": "starting", "detail": "Stream is being prepared. Retry shortly."},
+        )
+
+    # Serve the manifest with a CORS header as well (safe fallback)
+    return FileResponse(
+        hls_file,
+        media_type="application/vnd.apple.mpegurl",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 @router.post("/camera/{cam_id}/start_recording")
 def start_recording(cam_id: str):

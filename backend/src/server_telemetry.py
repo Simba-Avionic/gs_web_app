@@ -3,7 +3,6 @@ import asyncio
 from loguru import logger
 from fastapi import WebSocket, APIRouter, Request, HTTPException
 from database.influx_client import (
-    InfluxClient,
     InfluxNotAvailableException,
     BucketNotFoundException,
     BadQueryException,
@@ -11,7 +10,7 @@ from database.influx_client import (
 
 class ServerTelemetry:
 
-    def __init__(self) -> None:
+    def __init__(self, influx_client) -> None:
         
         self.topic_name = "/server/telemetry"
         self.msg_name = "ServerTelemetry" 
@@ -39,7 +38,7 @@ class ServerTelemetry:
         self.router = APIRouter()
         self.router.add_api_websocket_route(self.topic_name, self.websocket_endpoint)
         # self.router.add_api_websocket_route(f"{self.topic_name}/query", self.query)
-        self.ic = InfluxClient(self.msg_name, self.topic_name, self.msg_fields)
+        self.ic = influx_client
 
         self.connected_clients = set()
         self.stop_event = asyncio.Event()

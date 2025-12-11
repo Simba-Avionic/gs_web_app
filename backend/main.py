@@ -1,6 +1,6 @@
 import rclpy
 import json
-import signal
+import asyncio
 import sys
 import os
 import threading
@@ -43,12 +43,6 @@ def load_main_config(path_to_conf):
         CONFIG = json.load(f)
 
 
-def signal_handler(sig, frame):
-    logger.info('SIGINT received, shutting down...')
-    shutdown()
-    sys.exit(0)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     rclpy.init()
@@ -58,8 +52,96 @@ async def lifespan(app: FastAPI):
     global TOPICS
     TOPICS = []
 
+    # FastAPI event loop where websocket broadcasts occur
+    app_loop = asyncio.get_event_loop()
+    import queue
+    write_queue = queue.Queue()
+
+    # Start a single writer thread that consumes the write_queue
+    from database.influx_client import InfluxClient
+    db_client = InfluxClient()
+
+    def influx_writer_task(q, shared_ic):
+        import time
+        from queue import Empty
+        logger.info("Influx writer thread started.")
+        BATCH_MAX = 100
+        BATCH_TIMEOUT = 2
+
+        while True:
+            # first blocking get
+            try:
+                item = q.get()
+            except Exception as e:
+                logger.warning(f"Writer queue get error: {e}")
+                time.sleep(0.05)
+                continue
+
+            total_gets = 1  # we have consumed one get()
+            if item is None:
+                q.task_done()
+                break
+
+            batch = [item]
+            start = time.time()
+            # try to drain more items
+            while len(batch) < BATCH_MAX:
+                remaining = BATCH_TIMEOUT - (time.time() - start)
+                if remaining <= 0:
+                    break
+                try:
+                    more = q.get(timeout=remaining)
+                    batch.append(more)
+                    total_gets += 1
+                except Empty:
+                    break
+                except Exception as e:
+                    logger.debug(f"Writer queue get (non-empty) error: {e}")
+                    break
+
+            # Detect sentinel(s) and strip them
+            stop_after = any(x is None for x in batch)
+            batch = [x for x in batch if x is not None]
+
+            # Build Points using shared client helper and write them in one call
+            points = []
+            for item in batch:
+                # expecting items shaped as (measurement, msg)
+                try:
+                    measurement, msg = item
+                except Exception:
+                    logger.warning(f"Unexpected queue item shape: {item}")
+                    continue
+                try:
+                    p = shared_ic._point_from_msg(msg, measurement)
+                    points.append(p)
+                except Exception as e:
+                    logger.warning(f"Failed to build point: {e}")
+
+            if points:
+                try:
+                    shared_ic.insert_points(points)
+                    logger.debug(f"Influx batch write with {len(points)} points")
+                except Exception as e:
+                    logger.warning(f"Influx batch write failed: {e}")
+
+            # mark task_done for each q.get() call we did
+            for _ in range(total_gets):
+                try:
+                    q.task_done()
+                except Exception:
+                    pass
+
+            if stop_after:
+                break
+
+        logger.info("Influx writer thread stopping.")
+
+    writer_thread = threading.Thread(target=influx_writer_task, args=(write_queue, db_client), daemon=True)
+    writer_thread.start()
+
     try:
-        st = ServerTelemetry()
+        st = ServerTelemetry(db_client)
         app.include_router(st.router)
         logger.info("ServerTelemetry initialized successfully!")
     except Exception as e:
@@ -67,7 +149,7 @@ async def lifespan(app: FastAPI):
 
     for msg in CONFIG["topics"]:
         try:
-            nh = NodeHandler(msg)
+            nh = NodeHandler(msg, app_loop=app_loop, write_queue=write_queue, influx_client=db_client)
             executor.add_node(nh)
             app.include_router(nh.router)
             TOPICS.append(nh)
@@ -77,22 +159,20 @@ async def lifespan(app: FastAPI):
 
     start_all_camera_streams()
 
-    stop_event = threading.Event()
-    def executor_spin():
-        try:
-            executor.spin()
-        except Exception as e:
-            logger.error(f"Executor stopped unexpectedly: {e}")
-        finally:
-            stop_event.set()
-    
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
     yield
 
-    # executor.shutdown()
-    stop_event.wait(timeout=5)
+    # Shutdown sequence
+    try:
+        write_queue.put(None)
+        writer_thread.join(timeout=3)
+    except Exception as e:
+        logger.warning(f"Error stopping writer thread: {e}")
+
+    executor.shutdown()
+    executor_thread.join(timeout=3)
 
     for nh in TOPICS:
         try:

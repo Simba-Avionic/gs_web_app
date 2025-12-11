@@ -3,47 +3,166 @@
   import { onMount, onDestroy } from "svelte";
 
   export let host;
-  export let camera; // e.g. "camera" or "camera2"
+  export let camera; // e.g. "camera1" or "camera2"
   export let hasPTZ = false;
 
+  let containerEl; // new: wrapper element to observe
   let videoEl;
   let hls;
+  let streamUnavailable = false;
+  let probeAbort = null;
+  let setupInProgress = false;
+  let io = null; // IntersectionObserver
 
   // PTZ state
   let ptzInterval = null;
   let isRecording = false;
 
-  function setupVideo() {
-    const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
+  async function probeStream(url, timeoutMs = 2500) {
+    const controller = new AbortController();
+    probeAbort = controller;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (Hls.isSupported()) {
-      hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
-      hls.loadSource(streamUrl);
-      hls.attachMedia(videoEl);
-      videoEl.play().catch((err) => console.error("Autoplay failed:", err));
-    } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
-      videoEl.src = streamUrl;
-      videoEl.play().catch((err) => console.error("Autoplay failed:", err));
+    try {
+      const res = await fetch(url, { method: "GET", cache: "no-cache", signal: controller.signal });
+      clearTimeout(timeout);
+      probeAbort = null;
+      return res && res.ok;
+    } catch (err) {
+      clearTimeout(timeout);
+      probeAbort = null;
+      return false;
     }
   }
 
-  onMount(setupVideo);
+  async function doSetupVideo() {
+    // ensure only one setup runs at a time
+    if (setupInProgress) return;
+    setupInProgress = true;
 
-  onDestroy(() => {
+    const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
+
+    try {
+      const ok = await probeStream(streamUrl);
+      if (!ok) {
+        console.warn("Stream not available:", streamUrl);
+        streamUnavailable = true;
+        setupInProgress = false;
+        return;
+      }
+
+      streamUnavailable = false;
+
+      if (Hls.isSupported()) {
+        // If an earlier hls exists, destroy it before creating a new one
+        if (hls) {
+          try { hls.destroy(); } catch (e) {}
+          hls = null;
+        }
+
+        hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
+
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          if (data && data.fatal) {
+            console.warn("HLS fatal error:", data);
+            try { hls.destroy(); } catch (e) {}
+            hls = null;
+            streamUnavailable = true;
+          }
+        });
+
+        hls.loadSource(streamUrl);
+        hls.attachMedia(videoEl);
+        videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
+      } else if (videoEl && videoEl.canPlayType && videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+        try {
+          videoEl.src = streamUrl;
+          videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
+        } catch (err) {
+          console.warn("Error attaching native HLS source:", err);
+          streamUnavailable = true;
+        }
+      } else {
+        console.warn("No HLS support in browser for", streamUrl);
+        streamUnavailable = true;
+      }
+    } catch (err) {
+      console.warn("Error setting up video stream:", err);
+      streamUnavailable = true;
+    } finally {
+      setupInProgress = false;
+    }
+  }
+
+  function teardownVideo() {
+    // Abort probe if running
+    if (probeAbort) {
+      try { probeAbort.abort(); } catch (err) {}
+      probeAbort = null;
+    }
+    // Destroy hls if attached
     if (hls) {
-      hls.destroy();
+      try { hls.destroy(); } catch (err) {}
       hls = null;
     }
+    // If a video src was set (native), clear it
+    if (videoEl) {
+      try {
+        videoEl.pause();
+        videoEl.removeAttribute("src");
+        videoEl.load && videoEl.load();
+      } catch (err) {}
+    }
+  }
+
+  onMount(() => {
+    // Setup IntersectionObserver to only probe/attach when visible in DOM
+    try {
+      io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0) {
+            // element became visible -> attempt to setup
+            doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
+          } else {
+            // element not visible -> teardown to avoid background activity/errors
+            teardownVideo();
+          }
+        });
+      }, { root: null, threshold: 0.01 });
+
+      if (containerEl) io.observe(containerEl);
+    } catch (err) {
+      // IntersectionObserver not available or failed — fall back to immediate setup
+      console.debug("IntersectionObserver unavailable; falling back to immediate camera setup", err);
+      doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
+    }
+  });
+
+  onDestroy(() => {
+    // disconnect observer
+    try {
+      if (io && containerEl) {
+        io.unobserve(containerEl);
+        io.disconnect();
+        io = null;
+      }
+    } catch (err) {}
+
+    teardownVideo();
     stopPTZ();
   });
 
   // ---------------- PTZ ----------------
   async function sendPTZ(pan, tilt, zoom = 0, speed = 10) {
-    await fetch(`http://${host}/ptz/${camera}/move`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pan, tilt, zoom, speed }),
-    });
+    try {
+      await fetch(`http://${host}/ptz/${camera}/move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pan, tilt, zoom, speed }),
+      });
+    } catch (err) {
+      console.warn("PTZ request failed:", err);
+    }
   }
 
   function startPTZ(pan, tilt) {
@@ -56,40 +175,54 @@
       clearInterval(ptzInterval);
       ptzInterval = null;
     }
-    sendPTZ(0, 0, 0, 0);
+    sendPTZ(0, 0, 0, 0).catch(() => {});
   }
 
   // ---------------- Recording ----------------
   async function startRecording() {
-    const res = await fetch(`http://${host}/camera/${camera}/start_recording`, {
-      method: "POST",
-    });
-    const data = await res.json();
-    if (data.status === "recording started") isRecording = true;
+    try {
+      const res = await fetch(`http://${host}/camera/${camera}/start_recording`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.status === "recording started") isRecording = true;
+    } catch (err) {
+      console.warn("startRecording failed:", err);
+    }
   }
 
   async function stopRecording() {
-    const res = await fetch(`http://${host}/camera/${camera}/stop_recording`, {
-      method: "POST",
-    });
-    const data = await res.json();
-    if (data.status === "recording stopped") {
-      isRecording = false;
-      // Auto-download
-      window.location.href = `http://${host}/camera/${camera}/download_recording`;
+    try {
+      const res = await fetch(`http://${host}/camera/${camera}/stop_recording`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.status === "recording stopped") {
+        isRecording = false;
+        window.location.href = `http://${host}/camera/${camera}/download_recording`;
+      }
+    } catch (err) {
+      console.warn("stopRecording failed:", err);
     }
   }
 </script>
 
-<div class="video-container">
-  <video
-    bind:this={videoEl}
-    autoplay
-    muted
-    playsinline
-    controls
-    class:is-recording={isRecording}
-  ></video>
+<div class="video-container" bind:this={containerEl}>
+  {#if streamUnavailable}
+    <div class="stream-placeholder">
+      <div>Camera {camera} is not available</div>
+      <div class="hint">Stream file not found or server not responding</div>
+    </div>
+  {:else}
+    <video
+      bind:this={videoEl}
+      autoplay
+      muted
+      playsinline
+      controls
+      class:is-recording={isRecording}
+    ></video>
+  {/if}
 
   <div class="controls">
     <div class="ptz-record-wrapper">
@@ -186,6 +319,25 @@
 
   video.is-recording {
     border-color: #c41934;
+  }
+
+  .stream-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    color: #eee;
+    border-radius: 5px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stream-placeholder .hint {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #bbb;
   }
 
   .controls {

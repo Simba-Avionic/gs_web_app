@@ -29,7 +29,45 @@
 
     function updateTheme() {
         if (!plotDiv || !plotDiv.hasChildNodes()) return;
-        Plotly.relayout(plotDiv, getPlotLayout(field));
+        // Build a minimal relayout object containing only theme-related keys.
+        // This avoids clobbering runtime axis ranges / zoom / autoscale state.
+        const layout = getPlotLayout(field);
+
+        const relayoutObj = {};
+
+        if (layout.plot_bgcolor !== undefined)
+            relayoutObj["plot_bgcolor"] = layout.plot_bgcolor;
+        if (layout.paper_bgcolor !== undefined)
+            relayoutObj["paper_bgcolor"] = layout.paper_bgcolor;
+        if (layout.font && layout.font.color)
+            relayoutObj["font.color"] = layout.font.color;
+
+        // xaxis visual tweaks
+        if (layout.xaxis) {
+            if (layout.xaxis.tickfont)
+                relayoutObj["xaxis.tickfont"] = layout.xaxis.tickfont;
+            if (layout.xaxis.gridcolor)
+                relayoutObj["xaxis.gridcolor"] = layout.xaxis.gridcolor;
+            if (layout.xaxis.tickformat)
+                relayoutObj["xaxis.tickformat"] = layout.xaxis.tickformat;
+        }
+
+        // yaxis visual tweaks (including tick text/vals for bools)
+        if (layout.yaxis) {
+            if (layout.yaxis.tickfont)
+                relayoutObj["yaxis.tickfont"] = layout.yaxis.tickfont;
+            if (layout.yaxis.gridcolor)
+                relayoutObj["yaxis.gridcolor"] = layout.yaxis.gridcolor;
+            if (layout.yaxis.tickvals)
+                relayoutObj["yaxis.tickvals"] = layout.yaxis.tickvals;
+            if (layout.yaxis.ticktext)
+                relayoutObj["yaxis.ticktext"] = layout.yaxis.ticktext;
+        }
+
+        // If we didn't detect anything to update, skip the relayout call.
+        if (Object.keys(relayoutObj).length === 0) return;
+
+        Plotly.relayout(plotDiv, relayoutObj);
     }
 
     function getRandomColor() {
@@ -57,22 +95,44 @@
             );
             const data = await res.json();
 
-            xData = data.records.map((entry) =>
+            // Raw x/y from server (ISO timestamps expected)
+            let rawX = data.records.map((entry) =>
                 new Date(entry._time).toISOString(),
             );
-            yData = data.records.map((entry) => entry._value);
+            let rawY = data.records.map((entry) => entry._value);
 
             if (field.type === "bool") {
-                yData = yData.map((v) => (v ? 1 : 0));
+                rawY = rawY.map((v) => (v ? 1 : 0));
             }
 
-            latestValue = yData.length > 0 ? yData[yData.length - 1] : "--";
+            latestValue = rawY.length > 0 ? rawY[rawY.length - 1] : "--";
 
-            const maxPoints = time_range * 60;
-            if (xData.length > maxPoints) {
-                xData = xData.slice(-maxPoints);
-                yData = yData.slice(-maxPoints);
-            }
+            // Compute time-window (ms) relative to newest sample we received
+            const newestMs = rawX.length
+                ? Date.parse(rawX[rawX.length - 1])
+                : Date.now();
+            const windowStartMs = newestMs - time_range * 60 * 1000;
+
+            // Filter by timestamp (time-based window), preserve order
+            const paired = rawX.map((x, i) => ({
+                tMs: Date.parse(x),
+                tIso: x,
+                v: rawY[i],
+            }));
+            const filtered = paired.filter((p) => p.tMs >= windowStartMs);
+
+            // If nothing falls into the window (rare), fall back to the most recent N samples
+            const finalPairs = filtered.length
+                ? filtered
+                : paired.slice(
+                      -Math.min(
+                          paired.length,
+                          Math.max(1, Math.floor(time_range * 60)),
+                      ),
+                  );
+
+            xData = finalPairs.map((p) => p.tIso);
+            yData = finalPairs.map((p) => p.v);
 
             Plotly.newPlot(
                 plotDiv,
@@ -94,7 +154,16 @@
                 },
             );
 
-            // openWebSocket();
+            // Enforce x-axis range to the time window we've selected
+            if (xData.length) {
+                const startIso = new Date(Date.parse(xData[0])).toISOString();
+                const endIso = new Date(
+                    Date.parse(xData[xData.length - 1]),
+                ).toISOString();
+                Plotly.relayout(plotDiv, { "xaxis.range": [startIso, endIso] });
+            }
+
+            openWebSocket();
         } catch (error) {
             console.error("Error fetching or plotting data:", error);
         }
@@ -107,13 +176,6 @@
             try {
                 const msg = JSON.parse(event.data);
                 let v;
-
-                // TESTING ...
-                const stamp = msg.header.stamp;
-                const msgTimeMs = stamp.sec * 1000 + stamp.nanosec / 1e6;
-                const nowMs = Date.now(); // aktualny czas w ms
-                const delayMs = nowMs - msgTimeMs; // opóźnienie w ms
-                console.log(`Opóźnienie: ${delayMs.toFixed(2)} ms`);
 
                 try {
                     v = field.parent
@@ -149,22 +211,52 @@
             const last = buffer[buffer.length - 1];
             buffer = [];
 
+            // append latest
             xData.push(last.t);
             yData.push(last.v);
             latestValue = last.v;
 
-            const maxPoints = time_range * 60;
-            if (xData.length > maxPoints) {
-                xData.shift();
-                yData.shift();
-            }
+            // Compute time window based on last timestamp
+            const lastMs = Date.parse(last.t);
+            const windowStartMs = lastMs - time_range * 60 * 1000;
 
-            Plotly.extendTraces(
-                plotDiv,
-                { x: [[last.t]], y: [[last.v]] },
-                [0],
-                maxPoints,
-            );
+            // Filter existing arrays by time window using paired array
+            const paired = xData.map((x, i) => ({
+                tMs: Date.parse(x),
+                tIso: x,
+                v: yData[i],
+            }));
+            const filtered = paired.filter((p) => p.tMs >= windowStartMs);
+
+            // If nothing matches (edge cases), keep last few samples
+            const finalPairs = filtered.length
+                ? filtered
+                : paired.slice(
+                      -Math.min(
+                          paired.length,
+                          Math.max(1, Math.floor(time_range * 60)),
+                      ),
+                  );
+
+            // Replace arrays with filtered results
+            xData = finalPairs.map((p) => p.tIso);
+            yData = finalPairs.map((p) => p.v);
+
+            // Extend trace with the new point (no maxPoints param — we trim arrays explicitly)
+            try {
+                Plotly.extendTraces(plotDiv, { x: [[last.t]], y: [[last.v]] }, [
+                    0,
+                ]);
+                // Explicitly set x-axis window to time_range minutes ending at last.t
+                Plotly.relayout(plotDiv, {
+                    "xaxis.range": [
+                        new Date(windowStartMs).toISOString(),
+                        last.t,
+                    ],
+                });
+            } catch (err) {
+                console.warn("Plotly update error:", err);
+            }
         }, 1000);
     }
 
@@ -187,17 +279,12 @@
     }
 
     onMount(() => {
-        color = getRandomColor();
+        color = field.color ?? getRandomColor();
         fetchData();
-
-        const fetchInterval = setInterval(() => {
-            fetchData();
-        }, 1000);
     });
 
     onDestroy(() => {
         closeWebSocket();
-        clearInterval(fetchInterval);
         Plotly.purge(plotDiv);
     });
 </script>
