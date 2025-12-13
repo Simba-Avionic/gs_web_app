@@ -18,14 +18,16 @@
                 points="199.15 0.64 200.65 2.44 201.95 7.34 205.45 22.74 210.25 49.54 213.85 78.74 216.35 100.34 217.45 118.84 217.75 721.04 239.05 735.04 239.05 750.04 217.85 753.04 217.65 758.34 180.05 758.34 180.05 753.04 158.85 749.84 158.85 735.14 180.65 720.54 180.35 117.94 181.15 103.34 182.95 84.84 185.15 66.64 187.75 46.94 189.95 33.34 192.85 17.64 195.15 7.64 197.35 1.64 199.15 0.64" />
             
             <rect id="tank_oxidizer" data-name="oxidizer outline" class="cls-2" x="180.55"
-                y="435.34" width="37.1" height="102.9" />
-            <rect id="oxidizer_liquid" data-name="oxidizer liquid" class="cls-3" x="181.06"
-                y="395.81" width="36.1" height="102.14" transform="rotate(180, 199.11, 466.88)" />
+                y="400" width="37.1" height="140" />
             
-            <rect id="tank_pressurizer" data-name="pressurizer outline" class="cls-2" x="180.55"
-                y="395.34" width="37.1" height="40" />
-            <rect id="pressurizer_liquid" data-name="pressurizer liquid" class="cls-3" x="181.06"
-                y="495.81" width="36.1" height="40" transform="rotate(180, 199.11, 466.88)" />
+            <rect id="oxidizer_liquid" data-name="oxidizer liquid" class="cls-3" x="181.06"
+                y="400" width="36.1" height="140" transform="rotate(180, 199.11, 470)" />
+            
+            <!-- <rect id="tank_pressurizer" data-name="pressurizer outline" class="cls-2" x="180.55"
+                y="395.34" width="37.1" height="40" /> -->
+            
+            <!-- <rect id="pressurizer_liquid" data-name="pressurizer liquid" class="cls-3" x="181.06"
+                y="495.81" width="36.1" height="40" transform="rotate(180, 199.11, 466.88)" /> -->
             
             <rect id="engine" class="cls-4" x="180.05" y="567.04" width="37.6" height="185.9" />
             <rect id="avionics" class="cls-5" x="180.55" y="302.64" width="37" height="60.4" />
@@ -40,6 +42,15 @@
             <path id="_5" data-name=" 5" class="cls-8" d="M255,26.89a47.4,47.4,0,0,1,0,65.84" />
         </g>
         <g id="tanking_group">
+            <!-- Testing texts -->
+            <text id="valve_feed_oxidizer_txt" x="92" y="500" text-anchor="middle" dominant-baseline="middle" style="font-size: 1.4rem; fill: var(--text-color);">
+                OPEN
+            </text>
+
+            <text id="valve_vent_oxidizer_txt" x="133" y="625" text-anchor="middle" dominant-baseline="middle" style="font-size: 1.4rem; fill: var(--text-color);">
+                OPEN
+            </text>
+
             <g id="oxidizer">
                 <g id="decoupler_oxidizer">
                     <rect class="cls-1" x="170.24" y="528.94" width="9.25" height="1.42" />
@@ -54,7 +65,7 @@
                 <path id="valve_feed_oxidizer" class="cls-8"
                     d="M67.23,515.07v27.59l52.1-27.59v27.59Z" />
                 <path id="valve_vent_oxidizer" class="cls-8" d="M103,605.15H83.56L103,641.87H83.56Z" />
-                <g id="oxidizer_tank" data-name="oxidizer tank">
+                <g id="oxidizer_tank" data-name="oxidizer tank" transform="translate(-80 0)">
                     <path class="cls-1"
                         d="M47.4,643.83c0-7.8-7-14.35-15.7-14.6-5.3-.16-10.5-.16-15.8,0C7.1,629.48,0,636.07,0,643.75V747.34c0,4.23,1,5.23,5.7,5.31,12,.08,24,.08,35.9,0,4.7,0,5.8-1.08,5.8-5.14Z" />
                     <rect class="cls-1" x="17.3" y="626.49" width="13.6" height="3.57" />
@@ -64,6 +75,7 @@
                     </text>
                 </g>
             </g>
+            <!-- 
             <g id="pressurizer">
                 <g id="decoupler_pressurizer" transform="translate(0 -110)">
                     <rect class="cls-1" x="170.24" y="528.94" width="9.25" height="1.42" />
@@ -88,7 +100,8 @@
                         Pressurizer
                     </text>
                 </g>
-            </g>
+            </g> 
+            -->
 
         </g>
     </g>

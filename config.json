@@ -38,8 +38,7 @@
                         0,
                         30
                     ],
-                    "unit": "kg",
-                    "controls": "oxidizer_liquid"
+                    "unit": "kg"
                 },
                 {
                     "type": "float32",
@@ -51,7 +50,7 @@
                         10
                     ],
                     "unit": "kg",
-                    "controls": "pressurizer_liquid"
+                    "controls": "oxidizer_liquid"
                 }
             ]
         },
@@ -125,8 +124,7 @@
                     "range": [
                         0,
                         100
-                    ],
-                    "controls": "valve_feed_pressurizer"
+                    ]
                 },
                 {
                     "type": "bool",
@@ -149,11 +147,6 @@
                     "mapping": [
                         "closed",
                         "open"
-                    ],
-                    "controls": "valve_vent_pressurizer",
-                    "offset": [
-                        -25,
-                        50
                     ]
                 },
                 {
@@ -173,8 +166,7 @@
                     "mapping": [
                         "closed",
                         "open"
-                    ],
-                    "controls": "decoupler_pressurizer"
+                    ]
                 }
             ]
         },
@@ -360,19 +352,22 @@
                     "type": "float32",
                     "val_name": "pressure_bar",
                     "unit": "bar",
-                    "range": [0, 100]
+                    "range": [0, 100],
+                    "display": "value"
                 },
                 {
                     "type": "float32",
                     "val_name": "temperature_hydra",
                     "unit": "\u00b0C",
-                    "range": [-10, 50]
+                    "range": [-10, 50],
+                    "display": "value"
                 },
                 {
                     "type": "float32",
                     "val_name": "temperature_bottle",
                     "unit": "\u00b0C",
-                    "range": [-10, 50]
+                    "range": [-10, 50],
+                    "display": "value"
                 }
             ]
         },

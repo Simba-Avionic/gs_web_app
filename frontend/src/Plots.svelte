@@ -114,14 +114,13 @@
   function selectField(field) {
     selectedField = field;
 
-    if (
-      !plots.find(
-        (p) =>
-          p.val_name === field.val_name &&
-          p.msg_type === field.msg_type &&
-          p.topic === field.topic,
-      )
-    ) {
+    const same = (p, f) =>
+      p.val_name === f.val_name &&
+      p.msg_type === f.msg_type &&
+      p.topic === f.topic &&
+      ( (p.parent ?? null) === (f.parent ?? null) );
+
+    if (!plots.find((p) => same(p, field))) {
       if (plots.length < 6) {
         const newPlot = {
           ...field,

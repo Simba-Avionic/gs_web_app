@@ -121,7 +121,7 @@ async def lifespan(app: FastAPI):
             if points:
                 try:
                     shared_ic.insert_points(points)
-                    logger.debug(f"Influx batch write with {len(points)} points")
+                    # logger.debug(f"Influx batch write with {len(points)} points")
                 except Exception as e:
                     logger.warning(f"Influx batch write failed: {e}")
 
