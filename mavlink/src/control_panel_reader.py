@@ -18,6 +18,8 @@ class ControlPanelReader:
         ("tare_rocket", "gs"): 0,               # bit 10
         ("tare_oxidizer", "gs"): 0,             # bit 11
         ("tare_pressurizer", "gs"): 0,          # bit 12
+        ("dump", "rocket"): 0,                  # bit 13
+        ("cameras", "rocket"): 0,               # bit 14
     }
 
     def __init__(self, port=None, baudrate=57600, timeout=0.1, num_retries=3):

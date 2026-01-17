@@ -343,56 +343,6 @@ class MavlinkClient(Node):
             except:
                 pass
                 
-    def _wait_for_ack(self, expected_state, timeout=5.0):
-        """
-        Wait for an acknowledgment of a state change command.
-        
-        Args:
-            expected_state: The state value we're expecting to be acknowledged
-            timeout: Maximum time to wait for acknowledgment in seconds
-            
-        Returns:
-            bool: True if ack received, False if timeout or error
-        """
-        self.get_logger().info(f"Waiting for acknowledgment of state {expected_state} (timeout: {timeout}s)")
-        
-        start_time = time.time()
-        
-        try:
-            while time.time() - start_time < timeout:
-                # Use non-blocking recv with a short timeout to check for messages
-                msg = self.master.recv_match(type='simba_ack', blocking=True, timeout=0.1)
-                
-                if msg is not None:
-                    self.get_logger().info(f"Received ACK message: {msg}")
-                    
-                    # Check if this is an acknowledgment for our command
-                    if hasattr(msg, 'state') and msg.state == expected_state:
-                        self.get_logger().info(f"State change to {expected_state} acknowledged")
-                        return True
-                    elif hasattr(msg, 'state'):
-                        self.get_logger().info(f"Received ACK for different state: {msg.state}, waiting for {expected_state}")
-                    
-                # Small sleep to prevent CPU spinning
-                time.sleep(0.01)
-            
-            self.get_logger().warning(f"Timeout waiting for acknowledgment of state {expected_state}")
-            return False
-            
-        except Exception as e:
-            self.get_logger().error(f"Error while waiting for acknowledgment: {e}")
-            return False
-
-    def _send_tank_vent_command(self, value):
-        """Send actuator command."""
-        try:
-            # actuator for tank vent is 0x04 TODO: delete magic numbers
-            msg = self.master.mav.simba_actuator_cmd_encode(0x04, value)
-            self.master.mav.send(msg)
-            self.get_logger().info(f"Sent MAVLink ACTUATOR {1} command with value {value}")
-        except Exception as e:
-            self.get_logger().error(f"Error sending MAVLink ACTUATOR command: {e}")
-
     def shutdown(self):
         """Clean shutdown of the MAVLink client."""
         self.get_logger().info("Shutting down MAVLink client...")
