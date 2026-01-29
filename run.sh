@@ -129,9 +129,9 @@ function run_docker_stack() {
 }
 
 function run_app() {
-    echo "Starting app (npm run dev)..."
+    echo "Starting app (npm run build)..."
     cd frontend || exit
-    npm run dev
+    npm run build
     cd ..
 }
 
@@ -169,7 +169,7 @@ function show_help() {
     echo "Usage: $0 [option]"
     echo "Options:"
     echo "  build_ros_msgs                 Build ROS 2 messages and gs_interfaces package"
-    echo "  run_app                        Start the app (npm run dev)"
+    echo "  run_app                        Start the app (npm run build)"
     echo "  run_server                     Start the server (python3 main.py)"
     echo "  publish_test_ros_msgs          Run custom messages (python3 tests/ros/run.py)"
     echo "  generate_mavlink               Generate MAVLink definitions using setup.sh"

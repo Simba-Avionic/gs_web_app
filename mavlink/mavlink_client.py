@@ -57,7 +57,6 @@ class MavlinkClient(Node):
         self._control_thread = None
         self._start_main_loop_thread()
 
-
     def _start_main_loop_thread(self):
         self._control_thread = threading.Thread(
             target=self._main_loop)
@@ -258,7 +257,15 @@ class MavlinkClient(Node):
     def _handle_gs_switches(self):
         
         try:
-            gs_switches = self._control_panel_reader.get_gs_actions()
+            gs_bitmask = self._control_panel_reader.get_gs_actions()
+            # Send MAVLink GS heartbeat with bitmask
+            timestamp = int(time.time() * 1000)  # Uptime in ms
+            msg = self.master.mav.simba_gs_heartbeat_encode(timestamp, gs_bitmask)
+            self.master.mav.send(msg)
+            self.get_logger().info(f"Sent MAVLink GS heartbeat with bitmask: {gs_bitmask}")
+
+
+            gs_switches = self._control_panel_reader.read_switches()
             if gs_switches is None:
                 return
         
