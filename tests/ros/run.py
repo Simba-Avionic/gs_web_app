@@ -38,47 +38,42 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
     Populate the fields of the given message based on the field configuration in config.json.
     """
     for field in field_config:
-        field_type = field['type']
         val_name = field['val_name']
-        msg_def_name = field.get('msg_def')
+        try:
+            field_type = field['type']
+        except KeyError:
+            # if we have KeyError it means it has to have "msg_def" as key
+            msg_def_name = field.get('msg_def')
+            if msg_def_name:
+                nested_msg_type = import_message_type(msg_def_name)
+                nested_msg = nested_msg_type()
+                populate_message_fields(
+                    nested_msg, MSG_DEFS[msg_def_name], stamp, msg_def_name
+                )
+                setattr(msg, val_name, nested_msg)
+                continue     
 
-        if msg_def_name:
-            parts = val_name.split('/') # 0 - v7_4, 1 - bus_voltage_v
-
-            nested_msg_type = import_message_type(msg_def_name)
-            nested_msg = nested_msg_type()
-            populate_message_fields(
-                nested_msg, MSG_DEFS[msg_def_name], stamp, msg_def_name
-            )
-            setattr(msg, parts[0], nested_msg)
-            continue
-
-        if '/' in val_name:
-            val_name = val_name.split('/')[-1]
+        f_range = None  
+        if 'range' in field.keys():
+            f_range = field['range']
 
         if field_type == 'std_msgs/Header':
             msg.header.stamp = stamp
             msg.header.frame_id = msg_type_name
-        elif field_type in ('float32', 'float64', 'float'):
+        elif 'float' in field_type:
             if val_name == 'lat':
                 setattr(msg, val_name, random.uniform(54.20, 54.45))
             elif val_name == 'lon':
                 setattr(msg, val_name, random.uniform(18.50, 18.75))
-            elif val_name == 'combined_fuel_kg':
-                setattr(msg, val_name, random.uniform(0, 20))
-            elif 'kg' in val_name:
-                setattr(msg, val_name, random.uniform(0, 30))
             else:
-                setattr(msg, val_name, random.uniform(-100.0, 100.0))
-        elif field_type in ('int8', 'uint8', 'uint32', 'int32', 'uint32', 'uint64', 'int', 'int16', 'uint16','int64'):
+                setattr(msg, val_name, random.uniform(float(f_range[0]), float(f_range[1])) if f_range else random.uniform(-100.0, 100.0))
+        elif 'int' in field_type:
             if 'status' in val_name:
                 setattr(msg, val_name, random.randint(0, 7))
             elif val_name == 'state':
                 setattr(msg, val_name, random.randint(0, 5))
-            elif 'kg' in val_name:
-                setattr(msg, val_name, random.randint(0, 100))
             else:
-                setattr(msg, val_name, random.randint(0, 100))
+                setattr(msg, val_name, random.randint(f_range[0], f_range[1]) if f_range else random.randint(0, 100))
         elif field_type == 'bool':
             setattr(msg, val_name, random.choice([True, False]))
         else:

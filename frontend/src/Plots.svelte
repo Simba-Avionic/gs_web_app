@@ -1,10 +1,14 @@
 <script>
   import { onMount, onDestroy } from "svelte";
-  import { slide } from "svelte/transition";
   import { fetchConfig } from "./lib/Utils.svelte";
   import Plot from "./Plot.svelte";
-  import { fade } from "svelte/transition";
   import { fetchMessageDefs } from "./lib/Utils.svelte";
+  import { theme } from "./js/theme.js";
+  import { lightThemeColors, darkThemeColors } from "./js/colors.js";
+  import { slide } from "svelte/transition";
+  import { fade, scale } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  import { cubicOut } from "svelte/easing";
 
   export let host;
 
@@ -17,6 +21,27 @@
   let selectedField = null;
   let error = null;
   let loading = true;
+
+  let currentTheme;
+  theme.subscribe((v) => (currentTheme = v));
+
+  function getRandomColor() {
+    if (currentTheme === "dark") {
+      return darkThemeColors[
+        Math.floor(Math.random() * darkThemeColors.length)
+      ];
+    } else {
+      return lightThemeColors[
+        Math.floor(Math.random() * lightThemeColors.length)
+      ];
+    }
+  }
+
+  function generateId() {
+    return (
+      Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+    );
+  }
 
   function getNestedFields(msgDef) {
     const def = msg_defs?.find((d) => d.msg_type === msgDef);
@@ -35,7 +60,12 @@
     try {
       const savedPlots = localStorage.getItem("plots");
       if (savedPlots) {
-        plots = JSON.parse(savedPlots);
+        // Rehydrate saved plots ensuring they have id and color
+        plots = JSON.parse(savedPlots).map((p) => ({
+          ...p,
+          id: p.id ?? generateId(),
+          color: p.color ?? getRandomColor(),
+        }));
       }
 
       topics = (await fetchConfig(host)).map((t) => ({
@@ -84,16 +114,20 @@
   function selectField(field) {
     selectedField = field;
 
-    if (
-      !plots.find(
-        (p) =>
-          p.val_name === field.val_name &&
-          p.msg_type === field.msg_type &&
-          p.topic === field.topic,
-      )
-    ) {
+    const same = (p, f) =>
+      p.val_name === f.val_name &&
+      p.msg_type === f.msg_type &&
+      p.topic === f.topic &&
+      ( (p.parent ?? null) === (f.parent ?? null) );
+
+    if (!plots.find((p) => same(p, field))) {
       if (plots.length < 6) {
-        plots = [...plots, field];
+        const newPlot = {
+          ...field,
+          id: generateId(),
+          color: getRandomColor(),
+        };
+        plots = [...plots, newPlot];
         savePlots();
       } else {
         alert(`Maximum of 6 plots reached`);
@@ -101,10 +135,8 @@
     }
   }
 
-  function removePlot(field) {
-    plots = plots.filter((p) => p !== field);
-    console.log("Removed plot:", field);
-    console.log(plots);
+  function removePlot(id) {
+    plots = plots.filter((p) => p.id !== id);
     savePlots();
   }
 
@@ -226,13 +258,13 @@
       {#if plots.length === 0}
         <p>Select fields from the list to plot.</p>
       {:else}
-        {#each plots as field, i}
-          <div out:fade={{ duration: 200 }}>
+        {#each plots as field (field.id)}
+          <div animate:flip={{ duration: 320, easing: cubicOut }} in:scale={{ duration: 220, start: 0.95 }} out:fade={{ duration: 180 }}>
             <Plot
               {host}
               {field}
               time_range={1}
-              onRemove={() => removePlot(field)}
+              onRemove={() => removePlot(field.id)}
             />
           </div>
         {/each}

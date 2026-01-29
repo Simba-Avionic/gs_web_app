@@ -38,8 +38,7 @@
                         0,
                         30
                     ],
-                    "unit": "kg",
-                    "controls": "oxidizer_liquid"
+                    "unit": "kg"
                 },
                 {
                     "type": "float32",
@@ -51,7 +50,7 @@
                         10
                     ],
                     "unit": "kg",
-                    "controls": "pressurizer_liquid"
+                    "controls": "oxidizer_liquid"
                 }
             ]
         },
@@ -125,8 +124,7 @@
                     "range": [
                         0,
                         100
-                    ],
-                    "controls": "valve_feed_pressurizer"
+                    ]
                 },
                 {
                     "type": "bool",
@@ -149,11 +147,6 @@
                     "mapping": [
                         "closed",
                         "open"
-                    ],
-                    "controls": "valve_vent_pressurizer",
-                    "offset": [
-                        -25,
-                        50
                     ]
                 },
                 {
@@ -173,8 +166,7 @@
                     "mapping": [
                         "closed",
                         "open"
-                    ],
-                    "controls": "decoupler_pressurizer"
+                    ]
                 }
             ]
         },
@@ -347,6 +339,39 @@
             ]
         },
         {
+            "id": 22,
+            "topic_name": "tanking/sensors",
+            "msg_type": "TankingSensors",
+            "interval": 1000,
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "pressure_bar",
+                    "unit": "bar",
+                    "range": [0, 100],
+                    "display": "value"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "temperature_hydra",
+                    "unit": "\u00b0C",
+                    "range": [-10, 50],
+                    "display": "value"
+                },
+                {
+                    "type": "float32",
+                    "val_name": "temperature_bottle",
+                    "unit": "\u00b0C",
+                    "range": [-10, 50],
+                    "display": "value"
+                }
+            ]
+        },
+        {
             "id": 14,
             "topic_name": "tanking/abort",
             "msg_type": "TankingAbort",
@@ -383,22 +408,6 @@
             ]
         },
         {
-            "id": 68,
-            "topic_name": "mavlink/simba_actuator",
-            "msg_type": "SimbaActuator",
-            "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "values"
-                }
-            ]
-        },
-        {
             "id": 69,
             "topic_name": "mavlink/simba_tank_temperature",
             "msg_type": "SimbaTankTemperature",
@@ -411,19 +420,19 @@
                 {
                     "type": "uint16",
                     "val_name": "temp1",
-                    "alt_name": "Temperature 1",
+                    "alt_name": "Upper Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
                     "val_name": "temp2",
-                    "alt_name": "Temperature 2",
+                    "alt_name": "Middle Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
                     "val_name": "temp3",
-                    "alt_name": "Temperature 3",
+                    "alt_name": "Lower Tank",
                     "unit": "\u00b0C"
                 }
             ]
@@ -441,29 +450,66 @@
                 {
                     "type": "float32",
                     "val_name": "pressure",
-                    "unit": "bar"
-                },
-                {
-                    "type": "float32",
-                    "val_name": "d_pressure",
-                    "alt_name": "Delta Pressure",
-                    "unit": "bar"
+                    "unit": "bar",
+                    "range": [0, 100]
                 }
             ]
         },
         {
             "id": 71,
-            "topic_name": "mavlink/simba_altitude_orientation",
-            "msg_type": "SimbaAltitudeOrientation",
+            "topic_name": "mavlink/simba_imu",
+            "msg_type": "SimbaImu",
             "interval": 1000,
+            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
                     "val_name": "header"
                 },
                 {
-                    "type": "uint8",
-                    "val_name": "alt_orient"
+                    "type": "uint64",
+                    "val_name": "timestamp"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "acc_x"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "acc_y"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "acc_z"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "gyro_x"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "gyro_y"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "gyro_z"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "roll"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "pitch"
+                },
+                {
+                    "type": "int16",
+                    "val_name": "yaw"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "altitude",
+                    "unit": "m"
                 }
             ]
         },
@@ -500,9 +546,10 @@
         },
         {
             "id": 73,
-            "topic_name": "mavlink/simba_heartbeat",
-            "msg_type": "SimbaHeartbeat",
+            "topic_name": "mavlink/simba_rocket_heartbeat",
+            "msg_type": "SimbaRocketHeartbeat",
             "interval": 1000,
+            "place": "rocket",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -514,11 +561,40 @@
                 },
                 {
                     "type": "uint8",
+                    "val_name": "rocket_state"
+                },
+                {
+                    "type": "uint8",
                     "val_name": "flight_computer_status"
                 },
                 {
                     "type": "uint8",
                     "val_name": "engine_computer_status"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "values"
+                }
+            ]
+        },
+        {
+            "id": 74,
+            "topic_name": "mavlink/simba_gs_heartbeat",
+            "msg_type": "SimbaGsHeartbeat",
+            "interval": 1000,
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint64",
+                    "val_name": "timestamp"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "values"
                 }
             ]
         },
@@ -534,27 +610,8 @@
                 },
                 {
                     "type": "int32",
-                    "val_name": "alt"
-                }
-            ]
-        },
-        {
-            "id": 148,
-            "topic_name": "mavlink/simba_ack",
-            "msg_type": "SimbaAck",
-            "interval": 1000,
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "state"
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "status"
+                    "val_name": "altitude",
+                    "unit": "m"
                 }
             ]
         }

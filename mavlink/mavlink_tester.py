@@ -9,8 +9,8 @@ from tkinter import ttk, scrolledtext, messagebox
 import serial
 import serial.tools.list_ports
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import shared.utils as utils
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# import shared.utils as utils
 
 os.environ["MAVLINK_DIALECT"] = "simba"
 from simba import *

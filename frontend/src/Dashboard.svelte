@@ -87,7 +87,8 @@
         },
       }),
     );
-
+    
+    /* 
     lines.push(
       createLine("pressurizer_tank", "#valve_feed_pressurizer", {
         ...defaultOptions,
@@ -134,69 +135,39 @@
           gap: 3,
         },
       }),
-    );
+    ); 
+    */
   }
 
+  // TODO: This function should be more reactive 
   function handleTelemetryChange(data, msg_type) {
     const telemetryData = data;
     if (!telemetryData) return;
 
     const config = svgItems.find((item) => item.msg_type === msg_type);
-    if (!config) return; // ignore unknown messages
+    if (!config) return;
 
     const svg = document.getElementById("simba");
-    if (!svg) return; // exit if SVG not yet in DOM
+    if (!svg) return;
 
-    // const tanking_group = document.getElementById("tanking_group");
+    const fieldName = config.controls[0].val_name; // e.g. "valve_feed_oxidizer"
+    const svgId = config.controls[0].controls; // e.g. "valve1"
+    const value = telemetryData[fieldName];
+    const svgElem = svg.getElementById(svgId);
 
-    config.controls.forEach((field, idx) => {
-      const fieldName = field.val_name; // e.g. "valve_feed_oxidizer"
-      const svgId = field.controls; // e.g. "valve1"
-      const value = telemetryData[fieldName];
+    if (svgId == 'oxidizer_liquid') 
+    {
+        const OXTank = svg.getElementById("tank_oxidizer");
+        const visualMaxHeight = parseFloat(OXTank.getAttribute("height"));
+        const dataMax = config.controls[0].range[1];
+        let newHeight = (value / dataMax) * visualMaxHeight;
+        svgElem.setAttribute(
+            "height",
+            Math.min(Math.max(newHeight, 0), visualMaxHeight)
+        );
+        svgElem.style.fill = "url(#gradient_blue)";
+    }
 
-      console.log(svgId);
-
-
-      const svgElem = svg.getElementById(svgId);
-      if (!svgElem) return;
-
-
-      // if (svgId.includes("liquid")) {
-      //   console.log(value);
-      // }
-
-      // if (field.type !== "bool") {
-      //   if (value > 50) {
-      //     svgElem.style.stroke = "url(#gradient_green)";
-      //   } else {
-      //     svgElem.style.stroke = "url(#gradient_red)";
-      //   }
-      // } else {
-      //   if (value) {
-      //     svgElem.style.stroke = "url(#gradient_green)";
-      //   } else {
-      //     svgElem.style.stroke = "url(#gradient_red)";
-      //   }
-      // }
-
-      // let maxHeight = 102;
-      // let newHeight = (value / 10) * maxHeight;
-      // // let rect = svg.getElementById("oxidizer_liquid");
-      // svgElem.setAttribute(
-      //   "height",
-      //   Math.min(Math.max(newHeight, 0), maxHeight),
-      // );
-      // svgElem.style.fill = "url(#gradient_blue)";
-
-      // // let maxHeight = 102;
-      // // let newHeight = (value / 20) * maxHeight;
-      // // let rect2 = svg.getElementById("pressurizer_liquid");
-      // svgElem.setAttribute(
-      //   "height",
-      //   Math.min(Math.max(newHeight, 0), maxHeight),
-      // );
-      // svgElem.style.fill = "url(#gradient_blue)";
-    });
   }
 
   onMount(async () => {
@@ -223,7 +194,13 @@
       .map((t) => ({
         topic_name: t.topic_name,
         msg_type: t.msg_type,
-        controls: t.msg_fields.filter((f) => "controls" in f),
+        // normalize each "controls" to an array and keep the field config
+        controls: t.msg_fields
+          .filter((f) => "controls" in f)
+          .map((f) => ({
+            ...f,
+            controls: Array.isArray(f.controls) ? f.controls : [f.controls],
+          })),
       }));
 
     svgItems.forEach((topic) => {

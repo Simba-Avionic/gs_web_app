@@ -1,24 +1,25 @@
 import time
 import asyncio
-import threading
 from datetime import datetime, timezone
 import gs_interfaces.msg
+from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from loguru import logger
 from rosidl_runtime_py import message_to_ordereddict
 from fastapi import WebSocket, APIRouter, Query, HTTPException
 from database.influx_client import (
-    InfluxClient,
     InfluxNotAvailableException,
     BucketNotFoundException,
     BadQueryException,
 )
 
+# The time after we mark topic as dead / inactive
+TIMEOUT_THRESHOLD = 5
 
 class NodeHandler(Node):
 
-    def __init__(self, msg_config):
+    def __init__(self, msg_config, app_loop=None, write_queue=None, influx_client=None):
         self.load_config(msg_config)
         super().__init__(self.msg_type)
 
@@ -28,24 +29,14 @@ class NodeHandler(Node):
         self.router.add_api_route(
             f"/{self.topic_name}/query", self.query, methods=["GET"])
 
-        self.loop = asyncio.new_event_loop()
-        threading.Thread(target=self.run_event_loop, daemon=True).start()
+        # FastAPI asyncio loop where websocket broadcasts will run
+        self.app_loop = app_loop
 
-        self.start_subscription_thread()
+        # Shared queue to hand off messages for Influx writes
+        self.write_queue = write_queue
 
-        self.ic = InfluxClient(self.msg_type, self.topic_name, self.msg_fields)
+        self.ic = influx_client
 
-        self.connected_clients = set()
-        self.curr_msg = None
-
-    def start_subscription_thread(self):
-        self.subscription_thread = threading.Thread(
-            target=self.create_subscription_and_spin)
-        # Ensure thread exits when the main program does
-        self.subscription_thread.daemon = True
-        self.subscription_thread.start()
-
-    def create_subscription_and_spin(self):
         qos = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             history=QoSHistoryPolicy.KEEP_LAST,
@@ -54,16 +45,32 @@ class NodeHandler(Node):
         self.subscription = self.create_subscription(
             getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, qos)
 
-    async def msg_callback(self, msg):
-        # msg.header.stamp = self.get_clock().now().to_msg()
-        self.curr_msg = message_to_ordereddict(msg)
-        await self.broadcast_message(self.curr_msg)
-        if self.ic.db_alive():
-            self.ic.insert_data(self.curr_msg)
+        self.connected_clients = set()
+        self.curr_msg = None
 
-    def run_event_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
+    def msg_callback(self, msg):
+        now = datetime.now(timezone.utc)
+        ros_time = Time()
+        ros_time.sec = int(now.timestamp())                     # sekundy od epoki
+        ros_time.nanosec = now.microsecond * 1000               # mikrosekundy -> nanosekundy
+        msg.header.stamp = ros_time
+
+        self.curr_msg = message_to_ordereddict(msg)
+
+        # Schedule websocket broadcast on FastAPI loop (non-blocking)
+        if self.app_loop is not None:
+            try:
+                asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.app_loop)
+            except Exception as e:
+                logger.warning(f"Failed to schedule broadcast on app loop: {e}")
+
+        # Enqueue for Influx writing (writer thread will call insert_data)
+        if self.write_queue is not None:
+            try:
+                # Put tuple (InfluxClient instance, message dict)
+                self.write_queue.put_nowait((self.msg_type, self.curr_msg))
+            except Exception as e:
+                logger.warning(f"Write queue put failed: {e}")
 
     async def websocket_endpoint(self, ws: WebSocket):
         await ws.accept()
@@ -71,7 +78,7 @@ class NodeHandler(Node):
         try:
             while True:
                 await asyncio.sleep(self.interval / 1000)
-                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > 5:
+                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > TIMEOUT_THRESHOLD:
                     await self.broadcast_message("None")
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
@@ -97,12 +104,6 @@ class NodeHandler(Node):
         self.interval = msg_config["interval"]
 
     def stop(self):
-        if self.loop.is_running():
-            self.loop.call_soon_threadsafe(self.loop.stop)
-
-        if self.subscription_thread is not None:
-            self.subscription_thread.join(timeout=3)
-
         self.connected_clients.clear()
 
     async def query(
@@ -110,6 +111,7 @@ class NodeHandler(Node):
         field_name: str = Query(..., description="Field key to query"),
         time_range: int = Query(1, ge=1, le=10),
     ):
+        # Keep existing query behavior (uses Flux or refactor to InfluxQL in generator)
         flux_query = f'''
         from(bucket: "{self.ic.bucket}")
           |> range(start: -{time_range}m)

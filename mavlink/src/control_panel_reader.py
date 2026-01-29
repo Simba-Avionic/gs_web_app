@@ -1,6 +1,7 @@
 import serial
 import glob
 import time
+import xml.etree.ElementTree as ET
 
 class ControlPanelReader:
 
@@ -15,24 +16,48 @@ class ControlPanelReader:
         ("tank_vent", "rocket"): 0,             # bit 7
         ("ignition", "rocket"): 0,              # bit 8
         ("abort", "abort"): 0,                  # bit 9
-        ("tare_rocket", "gs"): 0,               # bit 10
-        ("tare_oxidizer", "gs"): 0,             # bit 11
-        ("tare_pressurizer", "gs"): 0,          # bit 12
+        ("dump", "rocket"): 0,                  # bit 10
+        ("enable_cameras", "rocket"): 0,        # bit 11
+        ("tare_rocket", "gs"): 0,               # bit 12
+        ("tare_oxidizer", "gs"): 0,             # bit 13
+        ("tare_pressurizer", "gs"): 0,          # bit 14
     }
 
-    def __init__(self, port=None, baudrate=57600,timeout=0.1, num_retries=3):
+    def __init__(self, port=None, baudrate=57600, timeout=0.1, num_retries=3, mavlink_xml_path="simba_mavlink/simba.xml"):
         self.baudrate = baudrate
         self.num_retries = num_retries
         self.ser = None
         self.thread = None
 
+        self.mavlink_xml_path = mavlink_xml_path
+        self.mavlink_gs_flags = self._parse_mavlink_flags("SIMBA_GS_FLAGS") 
         self.latest_switches = {}
+        self.switch_to_mavlink = {
+            ("arm_disarm", "rocket"): "SIMBA_GS_ARM",
+            ("ignition", "rocket"): "SIMBA_GS_LAUNCH",
+            ("abort", "abort"): "SIMBA_GS_ABORT",
+            ("tank_vent", "rocket"): "SIMBA_GS_VENT_VALVE",
+            ("dump", "rocket"): "SIMBA_GS_DUMP_VALVE",
+            ("enable_cameras", "rocket"): "SIMBA_GS_CAMERAS",
+            # Add more if needed; GS-specific switches can map here too
+        }
 
         if port:
             self.ser = serial.Serial(port, baudrate)
             print(f"Using specified Control Panel port: {port} | baud: {baudrate}")
         else:
             self.scan_and_connect()
+
+    def _parse_mavlink_flags(self, enum_name):
+        """Parse MAVLink XML to extract flag values."""
+        tree = ET.parse(self.mavlink_xml_path)
+        root = tree.getroot()
+        flags = {}
+        for enum in root.findall("enums/enum"):
+            if enum.get("name") == enum_name:
+                for entry in enum.findall("entry"):
+                    flags[entry.get("name")] = int(entry.get("value"))
+        return flags
 
     def scan_and_connect(self):
         available_ports = sorted(glob.glob('/dev/ttyACM*'))
@@ -113,16 +138,21 @@ class ControlPanelReader:
 
     def get_gs_actions(self):
         """
-        Get only ground support-related actions.
+        Get GS/abort actions as MAVLink bitmask for SIMBA_GS_HEARTBEAT.
 
         Returns:
-            Dictionary of ground segment-related actions
+            Integer bitmask (for MAVLink).
         """
         actions = self.read_switches()
         if actions is None:
-            return None
-        return {key: value for key, value in actions.items()
-                if key[1] == "gs"}
+            return 0
+        bitmask = 0
+        for key, state in actions.items():
+            if key in self.switch_to_mavlink and state == 1:
+                flag_name = self.switch_to_mavlink[key]
+                if flag_name in self.mavlink_gs_flags:
+                    bitmask |= self.mavlink_gs_flags[flag_name]
+        return bitmask
 
     def close(self):
         self.running = False
