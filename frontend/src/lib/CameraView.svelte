@@ -2,10 +2,12 @@
   import Hls from "hls.js";
   import { onMount, onDestroy } from "svelte";
 
-  export let host;
+  
   export let camera; // e.g. "camera1" or "camera2"
   export let hasPTZ = false;
 
+
+  let host;
   let containerEl; // new: wrapper element to observe
   let videoEl;
   let hls;
@@ -117,6 +119,7 @@
 
   onMount(() => {
     // Setup IntersectionObserver to only probe/attach when visible in DOM
+    host = window.location.host;
     try {
       io = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {

@@ -14,7 +14,6 @@ class ServerTelemetry:
         
         self.topic_name = "/server/telemetry"
         self.msg_name = "ServerTelemetry" 
-        self.interval = 1000
         self.msg_fields = """
         [
             {
@@ -71,7 +70,7 @@ class ServerTelemetry:
         TODO: insert data to DB
         """
         while not self.stop_event.is_set():
-            await asyncio.sleep(self.interval / 1000)
+            await asyncio.sleep(1)
             data = self.get_system_data()
             if data:
                 await self.broadcast_message(data)
@@ -85,7 +84,7 @@ class ServerTelemetry:
         # logger.info(f"New WebSocket client {ws} connected: {len(self.connected_clients)} clients connected.")
         try:
             while True:
-                await asyncio.sleep(self.interval / 1000)                
+                await asyncio.sleep(1)                
         except Exception as e:
             logger.error(f"WebSocket connection closed: {e}")
         finally:

@@ -5,7 +5,6 @@
     // @ts-ignore
     import L from "leaflet";
 
-    export let host;
     let topics = [];
 
     let map;
@@ -18,6 +17,53 @@
     let maxAltitudeSocket;
     let gpsData;
     let maxAltitudeData;
+
+    let currentLayer;
+    let selectedMap = localStorage.getItem("selectedMap") || "Tricity";
+
+    const mapConfigs = {
+        "Tricity": {
+            url: `http://${window.location.host}/tiles/tricity/{z}/{x}/{y}.png`,
+            center: [54.4034, 18.5166],
+            minZoom: 10,
+            maxZoom: 15,
+        },
+        "Drawsko Pomorskie": {
+            url: `http://${window.location.host}/tiles/drawsko/{z}/{x}/{y}.png`,
+            center: [53.4781, 15.727],
+            minZoom: 10,
+            maxZoom: 15,
+        },
+        "Mojave Desert": {
+            url: `http://${window.location.host}/tiles/mojave/{z}/{x}/{y}.png`,
+            center: [35.0846, -115.5242],
+            minZoom: 10,
+            maxZoom: 15,
+        },
+    };
+
+    const switchMap = (mapName) => {
+        const config = mapConfigs[mapName];
+        if (!config || !map) return;
+
+        if (currentLayer) {
+            map.removeLayer(currentLayer);
+        }
+
+        currentLayer = L.tileLayer(config.url, {
+            minZoom: config.minZoom,
+            maxZoom: config.maxZoom,
+            tileSize: 256,
+            tms: false,
+        });
+
+        currentLayer.addTo(map);
+
+        map.setView(config.center, config.minZoom);
+
+        selectedMap = mapName;
+        localStorage.setItem("selectedMap", mapName);
+    };
 
     const customIcon = L.icon({
         iconUrl: "icons/simba_logo.png",
@@ -37,29 +83,25 @@
 
     onMount(() => {
         fetchConfig();
+        
         map = L.map("map", {
             zoomControl: false,
             attributionControl: false,
-        }).setView([54.4034, 18.5166], 13);
-        const layer = L.tileLayer(
-            `http://${host}/tiles/tiles_tricity/{z}/{x}/{y}.png`,
-            {
-                minZoom: 10,
-                maxZoom: 15,
-                tileSize: 256,
-                tms: false,
-            },
-        );
+        });
+
+        switchMap(selectedMap);
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
 
-        map.addLayer(layer);
-        marker = L.marker([54.4034, 18.5166], { icon: customIcon }).addTo(map);
+        const initialCoords = mapConfigs[selectedMap].center;
+        marker = L.marker(initialCoords, { icon: customIcon }).addTo(map);
 
         path = loadPathFromLocalStorage();
         pathLine = L.polyline(path, { color: "orange" }).addTo(map);
 
-        gpsSocket = new WebSocket(`ws://${host}/mavlink/simba_gps`);
+        gpsSocket = new WebSocket(
+            `ws://${window.location.host}/mavlink/simba_gps`,
+        );
         gpsSocket.onmessage = (event) => {
             try {
                 gpsData = JSON.parse(event.data);
@@ -81,7 +123,9 @@
             }
         };
 
-        maxAltitudeSocket = new WebSocket(`ws://${host}/mavlink/simba_max_altitude`);
+        maxAltitudeSocket = new WebSocket(
+            `ws://${window.location.host}/mavlink/simba_max_altitude`,
+        );
         maxAltitudeSocket.onmessage = (event) => {
             try {
                 maxAltitudeData = JSON.parse(event.data);
@@ -119,28 +163,29 @@
 
     async function fetchConfig() {
         try {
-            const response = await fetch(`http://${host}/config`);
+            const response = await fetch(
+                `http://${window.location.host}/config`,
+            );
             const data = await response.json();
-            
+
             // Filter topics to only include GPS and max altitude topics
+            // TODO: Do it in config.json
             const allowedTopics = [
                 "mavlink/simba_max_altitude",
-                "mavlink/simba_altitude_orientation",
-                "mavlink/simba_gps"
+                "mavlink/simba_gps",
             ];
-            
-            topics = data.topics.filter(topic => 
-                allowedTopics.includes(topic.topic_name || topic.name));
-                
-            topics = topics.map(topic => {
+
+            topics = data.topics.filter((topic) =>
+                allowedTopics.includes(topic.topic_name || topic.name),
+            );
+
+            topics = topics.map((topic) => {
                 return {
                     id: topic.id || Math.random().toString(),
                     topic_name: topic.topic_name || topic.name,
-                    msg_fields: topic.msg_fields || []
+                    msg_fields: topic.msg_fields || [],
                 };
             });
-            
-            console.log("Filtered topics:", topics);
         } catch (error) {
             console.error("Error fetching config:", error);
         }
@@ -149,15 +194,31 @@
 
 <div id="map">
     <div class="info-widget">
+        <div class="map-menu">
+            <label for="map-select">Active Map:</label>
+            <select
+                id="map-select"
+                bind:value={selectedMap}
+                on:change={() => switchMap(selectedMap)}
+            >
+                {#each Object.keys(mapConfigs) as name}
+                    <option value={name}>{name}</option>
+                {/each}
+            </select>
+        </div>
+
+        <hr class="divider" />
+
         <div class="buttons">
             <button class="button" on:click={togglePath}>
                 {showPath ? "Hide Path" : "Show Path"}
             </button>
             <button class="button" on:click={clearPath}>Clear Path</button>
         </div>
+
         <div class="fields-container">
             {#each topics as topic (topic.id)}
-                <TelemetryField {topic} {host} />
+                <TelemetryField {topic} />
             {/each}
         </div>
     </div>
@@ -168,6 +229,28 @@
         height: 100vh;
         width: 100%;
         position: relative;
+    }
+    .map-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 15px;
+    }
+
+    .map-menu select {
+        padding: 8px;
+        background: var(--snd-bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .divider {
+        border: 0;
+        border-top: 1px solid var(--border-color);
+        margin: 10px 0 20px 0;
+        opacity: 0.55;
     }
 
     .buttons {
@@ -231,5 +314,4 @@
         left: auto;
         right: 20px;
     }
-
 </style>

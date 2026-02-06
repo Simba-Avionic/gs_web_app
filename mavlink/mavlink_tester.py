@@ -13,7 +13,7 @@ import serial.tools.list_ports
 # import shared.utils as utils
 
 os.environ["MAVLINK_DIALECT"] = "simba"
-from simba import *
+from mavlink.src.simba import *
 from src import mavutil
 
 

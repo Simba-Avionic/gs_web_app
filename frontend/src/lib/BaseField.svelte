@@ -7,7 +7,6 @@
     export let dataWarning = false;
     export let className;
     export let title;
-    export let host;
     export let topicNames = [];
     export let isExpanded = false;
     export let processData = (topicName, data) => {};
@@ -28,10 +27,10 @@
         topicNames.map((topicName) => {
             topicStatusMap[topicName] = false;
 
-            const socket = new WebSocket(`ws://${host}/${topicName}`);
+            const socket = new WebSocket(`ws://${window.location.host}/${topicName}`);
 
             socket.onopen = () => {
-                console.log(`Connected to ${topicName}`);
+                // console.log(`Connected to ${topicName}`);
                 topicStatusMap[topicName] = false;
             };
 

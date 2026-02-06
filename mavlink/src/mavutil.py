@@ -116,7 +116,7 @@ def set_dialect(dialect, with_type_annotations=None):
         # from .generator.mavgen import mavgen_python_dialect
         # mavgen_python_dialect(dialect, wire_protocol, with_type_annotations=with_type_annotations)
         # mod = __import__(modname)
-        pass
+        print("Exception occured during dialect setup!")
 
     components = modname.split('.')
     for comp in components[1:]:
@@ -125,7 +125,7 @@ def set_dialect(dialect, with_type_annotations=None):
     mavlink = mod
 
 # Set the default dialect. This is done here as it needs to be after the function declaration
-set_dialect(os.environ['MAVLINK_DIALECT'])
+# set_dialect(os.environ['MAVLINK_DIALECT'])
 
 class mavfile_state(object):
     '''state for a particular system id'''

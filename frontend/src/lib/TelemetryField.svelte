@@ -3,7 +3,6 @@
   import { renderField, stripSimbaPrefix } from "./Utils.svelte";
 
   export let topic;
-  export let host;
 
   let isExpanded = false;
 
@@ -13,7 +12,6 @@
 
 <BaseField
   title={stripSimbaPrefix(topic.topic_name)}
-  {host}
   {topicNames}
   bind:isExpanded
   on:telemetryChange

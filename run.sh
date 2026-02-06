@@ -25,7 +25,7 @@ function source_ros() {
 function run_oled_display() {
     echo "Starting OLED display script (python3 oled_display.py)..."
     source_venv
-    python3 $APP_PATH/gs_web_app/oled_display.py
+    python3 $APP_PATH/gs_web_app/drivers/oled_display.py
     if [ $? -ne 0 ]; then
         echo "Failed to start OLED display script."
         exit 1
@@ -64,14 +64,14 @@ function build_mavlink_msgs() {
     echo "MAVLink definitions generated successfully."
 }
 
-function publish_test_ros_msgs() {
+function publish_ros_msgs() {
     echo "Running custom test messages (python3 tests/ros/run.py)..."
     python3 tests/ros/run.py
 }
 
-function run_mavlink_client() {
+function run_mavlink_bridge() {
     echo "Starting MAVLink client..."
-    python3 mavlink/mavlink_client.py
+    python3 backend/mavlink_bridge.py
 }
 
 function run_database() {
@@ -83,7 +83,7 @@ function run_database() {
     fi
 }
 
-function run_docker_stack() {
+function run_db() {
 
     if [ "$1" = "--clean" ]; then
         echo "Cleaning up Docker containers first..."
@@ -152,30 +152,30 @@ function build_msgs() {
 function run() {
     source_venv
     source_ros
-    run_docker_stack &
-    run_mavlink_client &
+    run_db &
+    # run_mavlink_bridge &
     run_server &
     wait
 }
 
 function run_with_test_msgs() {
     run
-    publish_test_ros_msgs &
+    publish_ros_msgs &
     wait
 }
 
 function show_help() {
     echo "Usage: $0 [option]"
     echo "Options:"
-    echo "  build_ros_msgs                 Build ROS 2 messages and gs_interfaces package"
-    echo "  build_app                      Build the app (npm run build)"
+    echo "  run [--cleanup]                Start the server and app (optionally build the app)"
+    echo "  run_with_test_msgs             Start the server, app, and custom messages (for testing)"
     echo "  run_server                     Start the server (python3 main.py)"
-    echo "  publish_test_ros_msgs          Run custom messages (python3 tests/ros/run.py)"
+    echo "  run_db [--cleanup]             Start InfluxDB container (with optional cleanup)"
+    echo "  build_app                      Build the app (npm run build)"
+    echo "  build_msgs                     Build MAVLink and ROS2 messages"
+    echo "  build_ros_msgs                 Build ROS2 messages (gs_interfaces package)"
     echo "  generate_mavlink               Generate MAVLink definitions using setup.sh"
-    echo "  build_msgs                     Build MAVLink and ROS 2 messages"
-    echo "  run_docker_stack [--cleanup]   Start InfluxDB + Grafana stack (with optional cleanup)"
-    echo "  run                            Start the server and app"
-    echo "  run_with_test_msgs             Start the server, app, and custom messages"
+    echo "  publish_ros_msgs               Run custom messages (python3 tests/ros/run.py)"
     echo "  help                           Show this help message"
 }
 
@@ -185,11 +185,11 @@ if [ "$#" -lt 1 ]; then
 fi
 
 case $1 in
-    run_docker_stack)
+    run_db)
         if [ "$2" = "--clean" ]; then
-            run_docker_stack --clean
+            run_db --clean
         else
-            run_docker_stack
+            run_db
         fi
         ;;
     build_ros_msgs)
@@ -198,8 +198,8 @@ case $1 in
     build_mavlink_msgs)
         build_mavlink_msgs
         ;;
-    publish_test_ros_msgs)
-        publish_test_ros_msgs
+    publish_ros_msgs)
+        publish_ros_msgs
         ;;
     build_app)
         build_app
@@ -211,19 +211,19 @@ case $1 in
         build_msgs
         ;;
     run)
-        run
+        if [ "$2" = "--build" ]; then
+            build_app
+            run
+        else
+            run
+        fi
+        
         ;;
     run_with_test_msgs)
         run_with_test_msgs
         ;;
-    run_mavlink_receiver)
-        run_mavlink_receiver
-        ;;
-    run_database)
-        run_database
-        ;;
-    run_grafana)
-        run_grafana
+    run_mavlink_bridge)
+        run_mavlink_bridge
         ;;
     run_oled_display)
         run_oled_display

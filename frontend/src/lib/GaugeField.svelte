@@ -3,7 +3,6 @@
   import { subscribeToTopic } from "../js/ws_manager.js";
   import Gauge from "svelte-gauge";
 
-  export let host;
   export let item;
 
   let unsubscribe;
@@ -21,7 +20,7 @@
   }
 
   onMount(() => {
-    unsubscribe = subscribeToTopic(host, item.topic, (data) => {
+    unsubscribe = subscribeToTopic(window.location.host, item.topic, (data) => {
       value = data[item.field];
     });
   });

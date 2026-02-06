@@ -2,7 +2,6 @@
   import BaseField from "./BaseField.svelte";
   import { getStatusString } from "./Utils.svelte";
 
-  export let host;
   export let title;
 
   let isExpanded = true;
@@ -167,7 +166,6 @@
 
 <BaseField
   {title}
-  {host}
   topicNames={relevantTopics}
   bind:isExpanded
   {processData}

@@ -86,11 +86,10 @@ class DynamicNode(Node):
         
         self.msg_fields = config['msg_fields']
         self.topic_name = config['topic_name']
-        self.interval = config['interval'] / 1000.0  # Convert ms to seconds
         self.msg_type_name = config['msg_type']
         self.msg_type = import_message_type(self.msg_type_name)
         self.publisher = self.create_publisher(self.msg_type, self.topic_name, 10)
-        self.timer = self.create_timer(self.interval, self.timer_callback)
+        self.timer = self.create_timer(random.uniform(0.3, 2.5), self.timer_callback)
 
     def build_message(self):
         msg = self.msg_type()

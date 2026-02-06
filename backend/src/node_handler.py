@@ -109,7 +109,6 @@ class NodeHandler(Node):
         self.msg_fields = msg_config["msg_fields"]
         self.msg_type = msg_config["msg_type"]
         self.topic_name = msg_config["topic_name"]
-        self.interval = msg_config["interval"]
 
     def stop(self):
         self.connected_clients.clear()
