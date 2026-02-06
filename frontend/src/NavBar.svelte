@@ -46,7 +46,7 @@
 
   onMount(() => {
     initializeWebSocket();
-    initializeAckWebSocket();
+    // initializeAckWebSocket();
 
     interval = setInterval(() => {
       currentTime = new Intl.DateTimeFormat("en-GB", {

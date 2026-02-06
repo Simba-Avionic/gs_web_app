@@ -128,7 +128,7 @@ function run_docker_stack() {
     fi
 }
 
-function run_app() {
+function build_app() {
     echo "Starting app (npm run build)..."
     cd frontend || exit
     npm run build
@@ -152,7 +152,6 @@ function build_msgs() {
 function run() {
     source_venv
     source_ros
-    run_app &
     run_docker_stack &
     run_mavlink_client &
     run_server &
@@ -169,7 +168,7 @@ function show_help() {
     echo "Usage: $0 [option]"
     echo "Options:"
     echo "  build_ros_msgs                 Build ROS 2 messages and gs_interfaces package"
-    echo "  run_app                        Start the app (npm run build)"
+    echo "  build_app                      Build the app (npm run build)"
     echo "  run_server                     Start the server (python3 main.py)"
     echo "  publish_test_ros_msgs          Run custom messages (python3 tests/ros/run.py)"
     echo "  generate_mavlink               Generate MAVLink definitions using setup.sh"
@@ -202,8 +201,8 @@ case $1 in
     publish_test_ros_msgs)
         publish_test_ros_msgs
         ;;
-    run_app)
-        run_app
+    build_app)
+        build_app
         ;;
     run_server)
         run_server

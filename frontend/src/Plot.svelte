@@ -2,7 +2,7 @@
     // @ts-nocheck
 
     import { onMount, onDestroy } from "svelte";
-    import Plotly from "plotly.js-dist-min";
+    import Plotly from "plotly.js-basic-dist-min";
     import { fetchConfig, rosTimeToFormattedTime } from "./lib/Utils.svelte";
     import { theme } from "./js/theme.js";
     import { cssVar, lightThemeColors, darkThemeColors } from "./js/colors.js";
@@ -257,7 +257,7 @@
             } catch (err) {
                 console.warn("Plotly update error:", err);
             }
-        }, 1000);
+        }, 250);
     }
 
     function closeWebSocket() {

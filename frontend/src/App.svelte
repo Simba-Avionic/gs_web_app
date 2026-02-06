@@ -10,10 +10,11 @@
 
   let currentView = 'dashboard';
   const ip = process.env.IP_ADDRESS;
-  const port = process.env.SERVER_PORT || 8000;
+  const port = process.env.SERVER_PORT || 2137;
   const timezone = process.env.TIMEZONE || 'UTC';
 
-  const host = `${ip}:${port}`;
+  // const host = `${ip}:${port}`;
+  const host = window.location.host;
 
   function handleNavigation(event) {
     currentView = event.detail;

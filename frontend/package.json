@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@rollup/plugin-legacy": "^3.0.2",
     "@sveltejs/vite-plugin-svelte": "^3.0.2",
     "leaflet": "^1.9.4",
+    "rollup-plugin-visualizer": "^6.0.5",
     "svelte": "^4.2.10",
     "vite": "^5.1.0"
   },
@@ -20,7 +20,7 @@
     "dotenv": "^16.4.5",
     "hls.js": "^1.6.10",
     "leader-line": "^1.0.8",
-    "plotly.js-dist-min": "^3.1.0",
+    "plotly.js-basic-dist-min": "^3.3.1",
     "svelte-dnd-action": "^0.9.52",
     "svelte-gauge": "^2.0.1"
   }

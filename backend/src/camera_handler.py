@@ -93,14 +93,26 @@ def ptz_move(cam_id: str, cmd: PTZCommand):
       <speed>{cmd.speed}</speed>
     </PTZData>
     """
-    response = requests.put(
-        url,
-        headers=headers,
-        data=xml_body,
-        auth=HTTPDigestAuth("admin", "simba123"),
-    )
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail=f"Failed PTZ: {response.text}")
+    
+    try:
+        response = requests.put(
+            url,
+            headers=headers,
+            data=xml_body,
+            auth=HTTPDigestAuth("admin", "simba123"),
+            timeout=3 
+        )
+        
+        response.raise_for_status()
+        
+    except requests.exceptions.ConnectTimeout:
+        logger.error(f"PTZ Timeout: Camera {cam_id} at {cam['ip']} is unreachable.")
+        raise HTTPException(status_code=504, detail="Camera connection timed out. Check if camera is online.")
+    
+    except requests.exceptions.RequestException as e:
+        logger.error(f"PTZ Error for {cam_id}: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Camera communication error: {str(e)}")
+
     return {"message": "PTZ command sent"}
 
 @router.get("/camera/{cam_id}/stream.m3u8")

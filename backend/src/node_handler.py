@@ -73,17 +73,25 @@ class NodeHandler(Node):
                 logger.warning(f"Write queue put failed: {e}")
 
     async def websocket_endpoint(self, ws: WebSocket):
-        await ws.accept()
-        self.connected_clients.add(ws)
-        try:
-            while True:
-                await asyncio.sleep(self.interval / 1000)
-                if self.curr_msg and (time.time() - int(self.curr_msg['header']['stamp']['sec'])) > TIMEOUT_THRESHOLD:
-                    await self.broadcast_message("None")
-        except Exception as e:
-            logger.error(f"WebSocket connection closed: {e}")
-        finally:
-            self.connected_clients.remove(ws)
+            await ws.accept()
+            self.connected_clients.add(ws)
+            logger.info(f"Client connected to {self.topic_name}. Total: {len(self.connected_clients)}")
+            try:
+                while True:
+                    await asyncio.sleep(1) 
+                    
+                    if self.curr_msg:
+                        try:
+                            stamp_sec = int(self.curr_msg.get('header', {}).get('stamp', {}).get('sec', 0))
+                            if (time.time() - stamp_sec) > TIMEOUT_THRESHOLD:
+                                await ws.send_json({"status": "timeout", "msg": "Topic inactive"})
+                        except Exception:
+                            pass
+            except Exception as e:
+                logger.debug(f"WebSocket on {self.topic_name} closed: {e}")
+            finally:
+                if ws in self.connected_clients:
+                    self.connected_clients.remove(ws)
 
     async def broadcast_message(self, message):
         for client in list(self.connected_clients):
