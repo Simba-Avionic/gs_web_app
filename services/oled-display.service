@@ -1,11 +1,14 @@
 [Unit]
 Description=OLED display status script
+After=network-online.target docker.service
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=simba
+Group=simba
 WorkingDirectory=/home/simba/gs_web_app
-ExecStart=/home/simba/gs_web_app/run.sh run_oled_display
+ExecStart=/bin/bash /home/simba/gs_web_app/run.sh run_oled_display
 Restart=on-failure
 
 [Install]

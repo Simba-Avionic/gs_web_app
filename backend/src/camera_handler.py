@@ -65,7 +65,9 @@ def start_all_camera_streams():
                     "ffmpeg",
                     "-rtsp_transport", "tcp",
                     "-i", cam["rtsp"],
-                    "-c", "copy",
+                    "-c:v", "copy",
+                    "-c:a", "aac",           # Re-encode audio to AAC
+                    "-b:a", "128k",          # Set audio bitrate
                     "-f", "hls",
                     "-hls_time", "1",
                     "-hls_list_size", "5",
@@ -130,7 +132,9 @@ def get_camera_stream(cam_id: str):
                     "ffmpeg",
                     "-rtsp_transport", "tcp",
                     "-i", cam["rtsp"],
-                    "-c", "copy",
+                    "-c:v", "copy",          # Keep video as is (low CPU)
+                    "-c:a", "aac",           # Re-encode audio to AAC
+                    "-b:a", "128k",          # Set audio bitrate
                     "-f", "hls",
                     "-hls_time", "1",
                     "-hls_list_size", "5",
@@ -167,7 +171,9 @@ def start_recording(cam_id: str):
         "ffmpeg",
         "-rtsp_transport", "tcp",
         "-i", cam["rtsp"],
-        "-c", "copy",
+        "-c:v", "copy",           # Video stream is copied
+        "-c:a", "aac",            # Audio is converted for MP4 compatibility
+        "-strict", "experimental", # Required for some older FFmpeg versions
         filename
     ])
     return {"status": "recording started", "file": filename}
@@ -177,6 +183,7 @@ def stop_recording(cam_id: str):
     _, proc = get_camera(cam_id)
     if proc["recording"]:
         proc["recording"].terminate()
+        proc["recording"].wait()
         proc["recording"] = None
         return {"status": "recording stopped", "file": proc["current_file"]}
     return {"status": "not recording"}
@@ -184,10 +191,9 @@ def stop_recording(cam_id: str):
 @router.get("/camera/{cam_id}/download_recording")
 def download_recording(cam_id: str):
     _, proc = get_camera(cam_id)
-    if not proc["current_file"] or not os.path.exists(proc["current_file"]):
-        raise HTTPException(status_code=404, detail="No recording available")
-    return FileResponse(
-        proc["current_file"],
-        media_type="video/mp4",
-        filename=os.path.basename(proc["current_file"])
-    )
+    file_path = proc.get("current_file")
+
+    if not file_path or not os.path.exists(file_path):
+        return JSONResponse(status_code=204, content={"detail": "Not ready"})
+        
+    return FileResponse(file_path, media_type="video/mp4")

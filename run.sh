@@ -153,7 +153,7 @@ function run() {
     source_venv
     source_ros
     run_db &
-    # run_mavlink_bridge &
+    run_mavlink_bridge &
     run_server &
     wait
 }

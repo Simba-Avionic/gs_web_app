@@ -2,10 +2,8 @@
   import Hls from "hls.js";
   import { onMount, onDestroy } from "svelte";
 
-  
   export let camera; // e.g. "camera1" or "camera2"
   export let hasPTZ = false;
-
 
   let host;
   let containerEl; // new: wrapper element to observe
@@ -26,7 +24,11 @@
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const res = await fetch(url, { method: "GET", cache: "no-cache", signal: controller.signal });
+      const res = await fetch(url, {
+        method: "GET",
+        cache: "no-cache",
+        signal: controller.signal,
+      });
       clearTimeout(timeout);
       probeAbort = null;
       return res && res.ok;
@@ -58,7 +60,9 @@
       if (Hls.isSupported()) {
         // If an earlier hls exists, destroy it before creating a new one
         if (hls) {
-          try { hls.destroy(); } catch (e) {}
+          try {
+            hls.destroy();
+          } catch (e) {}
           hls = null;
         }
 
@@ -67,7 +71,9 @@
         hls.on(Hls.Events.ERROR, function (event, data) {
           if (data && data.fatal) {
             console.warn("HLS fatal error:", data);
-            try { hls.destroy(); } catch (e) {}
+            try {
+              hls.destroy();
+            } catch (e) {}
             hls = null;
             streamUnavailable = true;
           }
@@ -76,7 +82,11 @@
         hls.loadSource(streamUrl);
         hls.attachMedia(videoEl);
         videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
-      } else if (videoEl && videoEl.canPlayType && videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+      } else if (
+        videoEl &&
+        videoEl.canPlayType &&
+        videoEl.canPlayType("application/vnd.apple.mpegurl")
+      ) {
         try {
           videoEl.src = streamUrl;
           videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
@@ -99,12 +109,16 @@
   function teardownVideo() {
     // Abort probe if running
     if (probeAbort) {
-      try { probeAbort.abort(); } catch (err) {}
+      try {
+        probeAbort.abort();
+      } catch (err) {}
       probeAbort = null;
     }
     // Destroy hls if attached
     if (hls) {
-      try { hls.destroy(); } catch (err) {}
+      try {
+        hls.destroy();
+      } catch (err) {}
       hls = null;
     }
     // If a video src was set (native), clear it
@@ -121,22 +135,30 @@
     // Setup IntersectionObserver to only probe/attach when visible in DOM
     host = window.location.host;
     try {
-      io = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0) {
-            // element became visible -> attempt to setup
-            doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
-          } else {
-            // element not visible -> teardown to avoid background activity/errors
-            teardownVideo();
-          }
-        });
-      }, { root: null, threshold: 0.01 });
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0) {
+              // element became visible -> attempt to setup
+              doSetupVideo().catch((e) =>
+                console.warn("doSetupVideo error:", e),
+              );
+            } else {
+              // element not visible -> teardown to avoid background activity/errors
+              teardownVideo();
+            }
+          });
+        },
+        { root: null, threshold: 0.01 },
+      );
 
       if (containerEl) io.observe(containerEl);
     } catch (err) {
       // IntersectionObserver not available or failed — fall back to immediate setup
-      console.debug("IntersectionObserver unavailable; falling back to immediate camera setup", err);
+      console.debug(
+        "IntersectionObserver unavailable; falling back to immediate camera setup",
+        err,
+      );
       doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
     }
   });
@@ -184,9 +206,12 @@
   // ---------------- Recording ----------------
   async function startRecording() {
     try {
-      const res = await fetch(`http://${host}/camera/${camera}/start_recording`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `http://${host}/camera/${camera}/start_recording`,
+        {
+          method: "POST",
+        },
+      );
       const data = await res.json();
       if (data.status === "recording started") isRecording = true;
     } catch (err) {
@@ -196,16 +221,33 @@
 
   async function stopRecording() {
     try {
-      const res = await fetch(`http://${host}/camera/${camera}/stop_recording`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `http://${host}/camera/${camera}/stop_recording`,
+        {
+          method: "POST",
+        },
+      );
       const data = await res.json();
+
       if (data.status === "recording stopped") {
         isRecording = false;
-        window.location.href = `http://${host}/camera/${camera}/download_recording`;
+
+        const downloadUrl = `http://${host}/camera/${camera}/download_recording`;
+        const checkRes = await fetch(downloadUrl, { method: "HEAD" });
+
+        if (checkRes.ok) {
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = `${camera}_recording.mp4`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          console.warn("Plik jeszcze nie jest gotowy na dysku.");
+        }
       }
     } catch (err) {
-      console.warn("stopRecording failed:", err);
+      console.error("Błąd zatrzymywania:", err);
     }
   }
 </script>

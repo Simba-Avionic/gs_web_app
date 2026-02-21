@@ -385,7 +385,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background-color: white;
+    background-color: var(--text-color);
     transition: left 0.3s ease;
   }
 

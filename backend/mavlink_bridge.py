@@ -3,6 +3,7 @@ import sys
 import time
 import rclpy
 import serial
+import serial.tools.list_ports
 import threading
 import xml.etree.ElementTree as ET
 from rclpy.node import Node
@@ -11,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 sys.path.append(PROJECT_ROOT)
+sys.path.append(os.path.join(PROJECT_ROOT, "mavlink"))
 
 try:
     from mavlink.src import mavutil
