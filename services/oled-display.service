@@ -10,6 +10,7 @@ Group=simba
 WorkingDirectory=/home/simba/gs_web_app
 ExecStart=/bin/bash /home/simba/gs_web_app/run.sh run_oled_display
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

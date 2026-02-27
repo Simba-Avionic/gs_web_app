@@ -40,66 +40,55 @@
   }
 
   async function doSetupVideo() {
-    // ensure only one setup runs at a time
     if (setupInProgress) return;
     setupInProgress = true;
 
     const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
 
     try {
-      const ok = await probeStream(streamUrl);
-      if (!ok) {
-        console.warn("Stream not available:", streamUrl);
+      // 1. Poll the backend until we get a 200 OK (not a 202)
+      let ready = false;
+      let attempts = 0;
+
+      while (!ready && attempts < 10) {
+        const res = await fetch(streamUrl, {
+          method: "GET",
+          cache: "no-cache",
+        });
+        if (res.status === 200) {
+          ready = true;
+        } else {
+          console.log("Stream preparing... waiting 1s");
+          await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
+          attempts++;
+        }
+      }
+
+      if (!ready) {
         streamUnavailable = true;
-        setupInProgress = false;
         return;
       }
 
       streamUnavailable = false;
-
       if (Hls.isSupported()) {
-        // If an earlier hls exists, destroy it before creating a new one
-        if (hls) {
-          try {
-            hls.destroy();
-          } catch (e) {}
-          hls = null;
-        }
+        if (hls) hls.destroy();
 
         hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
 
-        hls.on(Hls.Events.ERROR, function (event, data) {
-          if (data && data.fatal) {
-            console.warn("HLS fatal error:", data);
-            try {
-              hls.destroy();
-            } catch (e) {}
-            hls = null;
-            streamUnavailable = true;
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.warn("Fatal HLS error, retrying setup...");
+            teardownVideo();
+            setTimeout(doSetupVideo, 2000);
           }
         });
 
         hls.loadSource(streamUrl);
         hls.attachMedia(videoEl);
-        videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
-      } else if (
-        videoEl &&
-        videoEl.canPlayType &&
-        videoEl.canPlayType("application/vnd.apple.mpegurl")
-      ) {
-        try {
-          videoEl.src = streamUrl;
-          videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
-        } catch (err) {
-          console.warn("Error attaching native HLS source:", err);
-          streamUnavailable = true;
-        }
-      } else {
-        console.warn("No HLS support in browser for", streamUrl);
-        streamUnavailable = true;
+        videoEl.play().catch(() => {});
       }
     } catch (err) {
-      console.warn("Error setting up video stream:", err);
+      console.error("Setup error:", err);
       streamUnavailable = true;
     } finally {
       setupInProgress = false;
@@ -276,36 +265,36 @@
         <div class="ptz-controls">
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(0, 10)}
+              on:mousedown={() => startPTZ(0, 20)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, 10)}
+              on:touchstart={() => startPTZ(0, 20)}
               on:touchend={stopPTZ}>▲</button
             >
           </div>
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(-10, 0)}
+              on:mousedown={() => startPTZ(-20, 0)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(-10, 0)}
+              on:touchstart={() => startPTZ(-20, 0)}
               on:touchend={stopPTZ}>◀</button
             >
             <button on:click={stopPTZ}>■</button>
             <button
-              on:mousedown={() => startPTZ(10, 0)}
+              on:mousedown={() => startPTZ(20, 0)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(10, 0)}
+              on:touchstart={() => startPTZ(20, 0)}
               on:touchend={stopPTZ}>▶</button
             >
           </div>
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(0, -10)}
+              on:mousedown={() => startPTZ(0, -20)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, -10)}
+              on:touchstart={() => startPTZ(0, -20)}
               on:touchend={stopPTZ}>▼</button
             >
           </div>
@@ -313,15 +302,15 @@
       {:else}
         <div class="ptz-controls">
           <div class="row">
-            <button on:click={() => sendPTZ(0, 10)}>▲</button>
+            <button on:click={() => sendPTZ(0, 20)}>▲</button>
           </div>
           <div class="row">
-            <button on:click={() => sendPTZ(-10, 0)}>◀</button>
+            <button on:click={() => sendPTZ(-20, 0)}>◀</button>
             <button on:click={() => sendPTZ(0, 0)}>■</button>
-            <button on:click={() => sendPTZ(10, 0)}>▶</button>
+            <button on:click={() => sendPTZ(20, 0)}>▶</button>
           </div>
           <div class="row">
-            <button on:click={() => sendPTZ(0, -10)}>▼</button>
+            <button on:click={() => sendPTZ(0, -20)}>▼</button>
           </div>
         </div>
       {/if}

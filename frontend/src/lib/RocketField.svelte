@@ -28,12 +28,18 @@
     ],
     Avionics: [
       {
-        topic: "mavlink/simba_heartbeat",
+        topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
             name: "flight_computer_status",
             extract: (data) => getStatusString(data.flight_computer_status),
             display: "Status",
+          },
+          {
+            name: "mb_temp",
+            extract: (data) => data.mb_temp / 100,
+            display: "Computer temp",
+            unit: "°C"
           },
         ],
       },
@@ -44,14 +50,8 @@
         fields: [
           {
             name: "pressure",
-            extract: (data) => data.pressure,
+            extract: (data) => data.pressure / 100,
             display: "Pressure",
-            unit: "bar",
-          },
-          {
-            name: "delta_pressure",
-            extract: (data) => data.d_pressure,
-            display: "Delta pressure",
             unit: "bar",
           },
         ],
@@ -62,21 +62,21 @@
         topic: "mavlink/simba_tank_temperature",
         fields: [
           {
-            name: "temperature1",
-            extract: (data) => data.temp1,
-            display: "Temperature1",
+            name: "upper_tank",
+            extract: (data) => data.upper_tank / 100,
+            display: "Upper Tank Temp",
             unit: "°C",
           },
           {
-            name: "temperature2",
-            extract: (data) => data.temp2,
-            display: "Temperature2",
+            name: "middle_tank",
+            extract: (data) => data.middle_tank / 100,
+            display: "Middle Tank Temp",
             unit: "°C",
           },
           {
-            name: "temperature3",
-            extract: (data) => data.temp3,
-            display: "Temperature3",
+            name: "lower_tank",
+            extract: (data) => data.lower_tank / 100,
+            display: "Lower Tank Temp",
             unit: "°C",
           },
         ],
@@ -101,12 +101,18 @@
     ],
     Engine: [
       {
-        topic: "mavlink/simba_heartbeat",
+        topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
             name: "engine_computer_status",
             extract: (data) => getStatusString(data.engine_computer_status),
             display: "Engine Computer Status",
+          },
+          {
+            name: "eb_temp",
+            extract: (data) => data.eb_temp / 100,
+            display: "Computer temp",
+            unit: "°C"
           },
         ],
       },

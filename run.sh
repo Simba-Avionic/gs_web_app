@@ -174,7 +174,7 @@ function show_help() {
     echo "  build_app                      Build the app (npm run build)"
     echo "  build_msgs                     Build MAVLink and ROS2 messages"
     echo "  build_ros_msgs                 Build ROS2 messages (gs_interfaces package)"
-    echo "  generate_mavlink               Generate MAVLink definitions using setup.sh"
+    echo "  build_mavlink_msgs             Generate MAVLink definitions using setup.sh"
     echo "  publish_ros_msgs               Run custom messages (python3 tests/ros/run.py)"
     echo "  help                           Show this help message"
 }

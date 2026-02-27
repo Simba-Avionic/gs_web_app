@@ -393,19 +393,19 @@
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp1",
+                    "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp2",
+                    "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp3",
+                    "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
                     "unit": "\u00b0C"
                 }
@@ -546,7 +546,16 @@
                 },
                 {
                     "type": "uint8",
-                    "val_name": "values"
+                    "val_name": "values",
+                    "alt_name": "SIMBA_ACTUATOR_FLAGS"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "eb_temp"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "mb_temp"
                 }
             ]
         },

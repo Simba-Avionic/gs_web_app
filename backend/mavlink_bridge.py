@@ -27,6 +27,7 @@ except ImportError as e:
 
 
 class MavlinkClient(Node):
+
     def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=57600, num_retries=3):
         super().__init__('mavlink_client')
 
@@ -44,6 +45,7 @@ class MavlinkClient(Node):
         else:
             self.master = self.find_mavlink_connection()
 
+        self.master.mav = simba_dialect.MAVLink(self.master)
         self.get_logger().info("Heartbeat received. Waiting for custom messages...")
 
         self.gs_switches_publisher = self.create_publisher(
@@ -106,9 +108,9 @@ class MavlinkClient(Node):
             msg_name = utils.convert_message_name(message.get("name"))
             self.get_logger().info(f"Processing message: {msg_name}")
 
-            if "Cmd" in msg_name:
-                self.get_logger().info(f"Skipping command message: {msg_name}")
-                continue
+            # if "Cmd" in msg_name:
+            #     self.get_logger().info(f"Skipping command message: {msg_name}")
+            #     continue
 
             topic_name = f"mavlink/{message.get('name').lower()}"
             ros_msg_type = getattr(gs_msgs, msg_name, None)
@@ -179,13 +181,46 @@ class MavlinkClient(Node):
                 if not switch_states:
                     time.sleep(0.1)
                     continue
-
+                
+                self._handle_rocket_switches()
                 self._handle_gs_switches()
                 time.sleep(0.1)
 
             except Exception as e:
                 self.get_logger().error(f"Error in control panel thread: {e}")
                 time.sleep(0.5)  # Longer delay after error
+
+    def _handle_rocket_switches(self):
+        try:
+            rocket_switches = self._control_panel_reader.get_rocket_actions();
+
+            if rocket_switches is None:
+                return
+
+            # ARM / DISARM is a unique case in here
+            is_armed = bool(rocket_switches.get(("arm_disarm", "rocket"), 0))
+            flags = simba_dialect.SIMBA_GS_ARM if is_armed else simba_dialect.SIMBA_GS_DISARM
+
+            TOGGLE_MAP = {
+                ("tank_vent", "rocket"): simba_dialect.SIMBA_GS_VENT_VALVE,
+                ("dump", "rocket"): simba_dialect.SIMBA_GS_DUMP_VALVE,
+                ("enable_cameras", "rocket"): simba_dialect.SIMBA_GS_CAMERAS,
+                ("ignition", "rocket"): simba_dialect.SIMBA_GS_LAUNCH,
+                ("abort", "abort"): simba_dialect.SIMBA_GS_ABORT,
+            }
+
+            for key, bit_val in TOGGLE_MAP.items():
+                if bool(rocket_switches.get(key, 0)):
+                    flags |= bit_val
+
+            self.master.mav.simba_gs_heartbeat_send(
+                int(time.time() * 1000),
+                flags
+            )
+            # print(f"MAVLink Flags: {flags:08b}")
+
+        except Exception as e:
+            self.get_logger().error(f"Error handling ROCKET switches: {e}")
 
 
     def _handle_gs_switches(self):
