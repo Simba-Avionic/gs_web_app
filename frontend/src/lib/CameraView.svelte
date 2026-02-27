@@ -2,10 +2,10 @@
   import Hls from "hls.js";
   import { onMount, onDestroy } from "svelte";
 
-  export let host;
   export let camera; // e.g. "camera1" or "camera2"
   export let hasPTZ = false;
 
+  let host;
   let containerEl; // new: wrapper element to observe
   let videoEl;
   let hls;
@@ -24,7 +24,11 @@
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const res = await fetch(url, { method: "GET", cache: "no-cache", signal: controller.signal });
+      const res = await fetch(url, {
+        method: "GET",
+        cache: "no-cache",
+        signal: controller.signal,
+      });
       clearTimeout(timeout);
       probeAbort = null;
       return res && res.ok;
@@ -36,58 +40,55 @@
   }
 
   async function doSetupVideo() {
-    // ensure only one setup runs at a time
     if (setupInProgress) return;
     setupInProgress = true;
 
     const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
 
     try {
-      const ok = await probeStream(streamUrl);
-      if (!ok) {
-        console.warn("Stream not available:", streamUrl);
+      // 1. Poll the backend until we get a 200 OK (not a 202)
+      let ready = false;
+      let attempts = 0;
+
+      while (!ready && attempts < 10) {
+        const res = await fetch(streamUrl, {
+          method: "GET",
+          cache: "no-cache",
+        });
+        if (res.status === 200) {
+          ready = true;
+        } else {
+          console.log("Stream preparing... waiting 1s");
+          await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
+          attempts++;
+        }
+      }
+
+      if (!ready) {
         streamUnavailable = true;
-        setupInProgress = false;
         return;
       }
 
       streamUnavailable = false;
-
       if (Hls.isSupported()) {
-        // If an earlier hls exists, destroy it before creating a new one
-        if (hls) {
-          try { hls.destroy(); } catch (e) {}
-          hls = null;
-        }
+        if (hls) hls.destroy();
 
         hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
 
-        hls.on(Hls.Events.ERROR, function (event, data) {
-          if (data && data.fatal) {
-            console.warn("HLS fatal error:", data);
-            try { hls.destroy(); } catch (e) {}
-            hls = null;
-            streamUnavailable = true;
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.warn("Fatal HLS error, retrying setup...");
+            teardownVideo();
+            setTimeout(doSetupVideo, 2000);
           }
         });
 
         hls.loadSource(streamUrl);
         hls.attachMedia(videoEl);
-        videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
-      } else if (videoEl && videoEl.canPlayType && videoEl.canPlayType("application/vnd.apple.mpegurl")) {
-        try {
-          videoEl.src = streamUrl;
-          videoEl.play().catch((err) => console.debug("Autoplay failed:", err));
-        } catch (err) {
-          console.warn("Error attaching native HLS source:", err);
-          streamUnavailable = true;
-        }
-      } else {
-        console.warn("No HLS support in browser for", streamUrl);
-        streamUnavailable = true;
+        videoEl.play().catch(() => {});
       }
     } catch (err) {
-      console.warn("Error setting up video stream:", err);
+      console.error("Setup error:", err);
       streamUnavailable = true;
     } finally {
       setupInProgress = false;
@@ -97,12 +98,16 @@
   function teardownVideo() {
     // Abort probe if running
     if (probeAbort) {
-      try { probeAbort.abort(); } catch (err) {}
+      try {
+        probeAbort.abort();
+      } catch (err) {}
       probeAbort = null;
     }
     // Destroy hls if attached
     if (hls) {
-      try { hls.destroy(); } catch (err) {}
+      try {
+        hls.destroy();
+      } catch (err) {}
       hls = null;
     }
     // If a video src was set (native), clear it
@@ -117,23 +122,32 @@
 
   onMount(() => {
     // Setup IntersectionObserver to only probe/attach when visible in DOM
+    host = window.location.host;
     try {
-      io = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0) {
-            // element became visible -> attempt to setup
-            doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
-          } else {
-            // element not visible -> teardown to avoid background activity/errors
-            teardownVideo();
-          }
-        });
-      }, { root: null, threshold: 0.01 });
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0) {
+              // element became visible -> attempt to setup
+              doSetupVideo().catch((e) =>
+                console.warn("doSetupVideo error:", e),
+              );
+            } else {
+              // element not visible -> teardown to avoid background activity/errors
+              teardownVideo();
+            }
+          });
+        },
+        { root: null, threshold: 0.01 },
+      );
 
       if (containerEl) io.observe(containerEl);
     } catch (err) {
       // IntersectionObserver not available or failed — fall back to immediate setup
-      console.debug("IntersectionObserver unavailable; falling back to immediate camera setup", err);
+      console.debug(
+        "IntersectionObserver unavailable; falling back to immediate camera setup",
+        err,
+      );
       doSetupVideo().catch((e) => console.warn("doSetupVideo error:", e));
     }
   });
@@ -181,9 +195,12 @@
   // ---------------- Recording ----------------
   async function startRecording() {
     try {
-      const res = await fetch(`http://${host}/camera/${camera}/start_recording`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `http://${host}/camera/${camera}/start_recording`,
+        {
+          method: "POST",
+        },
+      );
       const data = await res.json();
       if (data.status === "recording started") isRecording = true;
     } catch (err) {
@@ -193,16 +210,33 @@
 
   async function stopRecording() {
     try {
-      const res = await fetch(`http://${host}/camera/${camera}/stop_recording`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `http://${host}/camera/${camera}/stop_recording`,
+        {
+          method: "POST",
+        },
+      );
       const data = await res.json();
+
       if (data.status === "recording stopped") {
         isRecording = false;
-        window.location.href = `http://${host}/camera/${camera}/download_recording`;
+
+        const downloadUrl = `http://${host}/camera/${camera}/download_recording`;
+        const checkRes = await fetch(downloadUrl, { method: "HEAD" });
+
+        if (checkRes.ok) {
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = `${camera}_recording.mp4`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          console.warn("Plik jeszcze nie jest gotowy na dysku.");
+        }
       }
     } catch (err) {
-      console.warn("stopRecording failed:", err);
+      console.error("Błąd zatrzymywania:", err);
     }
   }
 </script>
@@ -231,36 +265,36 @@
         <div class="ptz-controls">
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(0, 10)}
+              on:mousedown={() => startPTZ(0, 20)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, 10)}
+              on:touchstart={() => startPTZ(0, 20)}
               on:touchend={stopPTZ}>▲</button
             >
           </div>
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(-10, 0)}
+              on:mousedown={() => startPTZ(-20, 0)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(-10, 0)}
+              on:touchstart={() => startPTZ(-20, 0)}
               on:touchend={stopPTZ}>◀</button
             >
             <button on:click={stopPTZ}>■</button>
             <button
-              on:mousedown={() => startPTZ(10, 0)}
+              on:mousedown={() => startPTZ(20, 0)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(10, 0)}
+              on:touchstart={() => startPTZ(20, 0)}
               on:touchend={stopPTZ}>▶</button
             >
           </div>
           <div class="row">
             <button
-              on:mousedown={() => startPTZ(0, -10)}
+              on:mousedown={() => startPTZ(0, -20)}
               on:mouseup={stopPTZ}
               on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, -10)}
+              on:touchstart={() => startPTZ(0, -20)}
               on:touchend={stopPTZ}>▼</button
             >
           </div>
@@ -268,15 +302,15 @@
       {:else}
         <div class="ptz-controls">
           <div class="row">
-            <button on:click={() => sendPTZ(0, 10)}>▲</button>
+            <button on:click={() => sendPTZ(0, 20)}>▲</button>
           </div>
           <div class="row">
-            <button on:click={() => sendPTZ(-10, 0)}>◀</button>
+            <button on:click={() => sendPTZ(-20, 0)}>◀</button>
             <button on:click={() => sendPTZ(0, 0)}>■</button>
-            <button on:click={() => sendPTZ(10, 0)}>▶</button>
+            <button on:click={() => sendPTZ(20, 0)}>▶</button>
           </div>
           <div class="row">
-            <button on:click={() => sendPTZ(0, -10)}>▼</button>
+            <button on:click={() => sendPTZ(0, -20)}>▼</button>
           </div>
         </div>
       {/if}

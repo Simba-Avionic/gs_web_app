@@ -1,14 +1,13 @@
 <script>
   import { onMount, onDestroy } from "svelte";
 
-  export let host;
   export let item;
 
   let ws;
   let value = null;
 
   onMount(() => {
-    ws = new WebSocket(`ws://${host}/${item.topic}`);
+    ws = new WebSocket(`ws://${window.location.host}/${item.topic}`);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);

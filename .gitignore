@@ -8,6 +8,6 @@ __pycache__
 log
 install
 temp
-tiles_tricity
+tiles
 docker/**
 backend/static

@@ -12,7 +12,6 @@
 
   const dispatch = createEventDispatcher();
 
-  export let host;
   export let timezone;
   export let currentView;
   let temp;
@@ -76,7 +75,7 @@
   }
 
   function initializeAckWebSocket() {
-    ackSocket = new WebSocket(`ws://${host}/mavlink/simba_ack`);
+    ackSocket = new WebSocket(`ws://${window.location.host}/mavlink/simba_ack`);
 
     ackSocket.onmessage = (event) => {
       try {
@@ -106,7 +105,7 @@
     };
 
     ackSocket.onopen = () => {
-      console.log("Connected to mavlink/ack");
+      // console.log("Connected to mavlink/ack");
     };
 
     ackSocket.onclose = (event) => {
@@ -138,7 +137,7 @@
   }
 
   function initializeWebSocket() {
-    socket = new WebSocket(`ws://${host}/server/telemetry`);
+    socket = new WebSocket(`ws://${window.location.host}/server/telemetry`);
 
     socket.onmessage = (event) => {
       temp = JSON.parse(event.data);
@@ -149,7 +148,7 @@
     };
 
     socket.onopen = () => {
-      console.log("Connected to server/telemetry");
+      // console.log("Connected to server/telemetry");
     };
 
     socket.onclose = (event) => {
@@ -386,7 +385,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background-color: white;
+    background-color: var(--text-color);
     transition: left 0.3s ease;
   }
 

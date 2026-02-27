@@ -8,7 +8,6 @@
     import { cssVar, lightThemeColors, darkThemeColors } from "./js/colors.js";
     import { getPlotLayout } from "./js/plot_config.js";
 
-    export let host;
     export let field;
     export let time_range = 1;
     export let onRemove;
@@ -91,7 +90,7 @@
     async function fetchData() {
         try {
             const res = await fetch(
-                `http://${host}/${field.topic}/query?field_name=${field.parent ? `${field.parent}/${field.val_name}` : field.val_name}&time_range=${time_range}`,
+                `http://${window.location.host}/${field.topic}/query?field_name=${field.parent ? `${field.parent}/${field.val_name}` : field.val_name}&time_range=${time_range}`,
             );
             const data = await res.json();
 
@@ -170,7 +169,7 @@
     }
 
     function openWebSocket() {
-        ws = new WebSocket(`ws://${host}/${field.topic}`);
+        ws = new WebSocket(`ws://${window.location.host}/${field.topic}`);
 
         ws.onmessage = (event) => {
             try {

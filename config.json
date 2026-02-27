@@ -4,7 +4,6 @@
             "id": 1,
             "topic_name": "tanking/load_cells",
             "msg_type": "LoadCells",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -58,7 +57,6 @@
             "id": 2,
             "topic_name": "tanking/load_cells/params",
             "msg_type": "LoadCellsParams",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -98,7 +96,6 @@
             "id": 3,
             "topic_name": "tanking/valves/servos",
             "msg_type": "TankingActuators",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -114,59 +111,34 @@
                         0,
                         100
                     ],
-                    "controls": "valve_feed_oxidizer"
+                    "controls": "valve_feed_oxidizer_txt"
                 },
                 {
                     "type": "int8",
                     "val_name": "valve_feed_pressurizer",
-                    "unit": "%",
-                    "display": "value",
-                    "range": [
-                        0,
-                        100
-                    ]
+                    "unit": "%"
                 },
                 {
                     "type": "bool",
                     "val_name": "valve_vent_oxidizer",
                     "display": "status",
-                    "mapping": [
-                        "closed",
-                        "open"
-                    ],
-                    "controls": "valve_vent_oxidizer",
-                    "offset": [
-                        0,
-                        30
-                    ]
+                    "controls": "valve_vent_oxidizer_txt"
                 },
                 {
                     "type": "bool",
                     "val_name": "valve_vent_pressurizer",
-                    "display": "status",
-                    "mapping": [
-                        "closed",
-                        "open"
-                    ]
+                    "display": "status"
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_oxidizer",
                     "display": "status",
-                    "mapping": [
-                        "closed",
-                        "open"
-                    ],
                     "controls": "decoupler_oxidizer"
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_pressurizer",
-                    "display": "status",
-                    "mapping": [
-                        "closed",
-                        "open"
-                    ]
+                    "display": "status"
                 }
             ]
         },
@@ -174,7 +146,6 @@
             "id": 4,
             "topic_name": "tanking/load_cells/tare",
             "msg_type": "LoadCellsTare",
-            "interval": 500,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -198,7 +169,6 @@
             "id": 11,
             "topic_name": "tanking/uart_stats",
             "msg_type": "UartStatistics",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -262,7 +232,6 @@
             "id": 12,
             "topic_name": "tanking/power",
             "msg_type": "PowerTanking",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -282,7 +251,6 @@
             "id": 13,
             "topic_name": "tanking/commands",
             "msg_type": "TankingCommands",
-            "interval": 500,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -342,7 +310,6 @@
             "id": 22,
             "topic_name": "tanking/sensors",
             "msg_type": "TankingSensors",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -351,22 +318,32 @@
                 {
                     "type": "float32",
                     "val_name": "pressure_bar",
+                    "alt_name": "Hydraulic Pressure",
                     "unit": "bar",
-                    "range": [0, 100],
+                    "range": [
+                        0,
+                        100
+                    ],
                     "display": "value"
                 },
                 {
                     "type": "float32",
                     "val_name": "temperature_hydra",
                     "unit": "\u00b0C",
-                    "range": [-10, 50],
+                    "range": [
+                        -10,
+                        50
+                    ],
                     "display": "value"
                 },
                 {
                     "type": "float32",
                     "val_name": "temperature_bottle",
                     "unit": "\u00b0C",
-                    "range": [-10, 50],
+                    "range": [
+                        -10,
+                        50
+                    ],
                     "display": "value"
                 }
             ]
@@ -375,7 +352,6 @@
             "id": 14,
             "topic_name": "tanking/abort",
             "msg_type": "TankingAbort",
-            "interval": 100,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -391,7 +367,6 @@
             "id": 15,
             "topic_name": "radiolink/telemetry",
             "msg_type": "RadiolinkTelemetry",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -411,7 +386,6 @@
             "id": 69,
             "topic_name": "mavlink/simba_tank_temperature",
             "msg_type": "SimbaTankTemperature",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -419,19 +393,19 @@
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp1",
+                    "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp2",
+                    "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
                     "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
-                    "val_name": "temp3",
+                    "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
                     "unit": "\u00b0C"
                 }
@@ -441,7 +415,6 @@
             "id": 70,
             "topic_name": "mavlink/simba_tank_pressure",
             "msg_type": "SimbaTankPressure",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -451,7 +424,10 @@
                     "type": "float32",
                     "val_name": "pressure",
                     "unit": "bar",
-                    "range": [0, 100]
+                    "range": [
+                        0,
+                        100
+                    ]
                 }
             ]
         },
@@ -459,7 +435,6 @@
             "id": 71,
             "topic_name": "mavlink/simba_imu",
             "msg_type": "SimbaImu",
-            "interval": 1000,
             "place": "rocket",
             "msg_fields": [
                 {
@@ -517,7 +492,6 @@
             "id": 72,
             "topic_name": "mavlink/simba_gps",
             "msg_type": "SimbaGps",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -548,7 +522,6 @@
             "id": 73,
             "topic_name": "mavlink/simba_rocket_heartbeat",
             "msg_type": "SimbaRocketHeartbeat",
-            "interval": 1000,
             "place": "rocket",
             "msg_fields": [
                 {
@@ -573,28 +546,16 @@
                 },
                 {
                     "type": "uint8",
-                    "val_name": "values"
-                }
-            ]
-        },
-        {
-            "id": 74,
-            "topic_name": "mavlink/simba_gs_heartbeat",
-            "msg_type": "SimbaGsHeartbeat",
-            "interval": 1000,
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
+                    "val_name": "values",
+                    "alt_name": "SIMBA_ACTUATOR_FLAGS"
                 },
                 {
-                    "type": "uint64",
-                    "val_name": "timestamp"
+                    "type": "uint16",
+                    "val_name": "eb_temp"
                 },
                 {
-                    "type": "uint8",
-                    "val_name": "values"
+                    "type": "uint16",
+                    "val_name": "mb_temp"
                 }
             ]
         },
@@ -602,7 +563,6 @@
             "id": 74,
             "topic_name": "mavlink/simba_max_altitude",
             "msg_type": "SimbaMaxAltitude",
-            "interval": 1000,
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",

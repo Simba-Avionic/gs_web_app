@@ -24,7 +24,6 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
             "id": int(message.get("id")),
             "topic_name": topic_name,
             "msg_type": utils.convert_message_name(message.get("name")),
-            "interval": 1000,
             "place": "rocket",
             "msg_fields": [
                 {

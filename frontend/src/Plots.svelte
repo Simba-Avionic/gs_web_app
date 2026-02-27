@@ -10,8 +10,6 @@
   import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
 
-  export let host;
-
   let sockets = [];
   let topics = [];
   let msg_defs = [];
@@ -68,18 +66,18 @@
         }));
       }
 
-      topics = (await fetchConfig(host)).map((t) => ({
+      topics = (await fetchConfig(window.location.host)).map((t) => ({
         ...t,
         status: "red",
         lastSeen: 0,
       }));
 
-      msg_defs = await fetchMessageDefs(host);
+      msg_defs = await fetchMessageDefs(window.location.host);
 
       console.log(msg_defs);
 
       topics.forEach((topic) => {
-        const ws = new WebSocket(`ws://${host}/${topic.topic_name}`);
+        const ws = new WebSocket(`ws://${window.location.host}/${topic.topic_name}`);
         sockets.push(ws);
 
         ws.onmessage = (event) => {
@@ -261,7 +259,6 @@
         {#each plots as field (field.id)}
           <div animate:flip={{ duration: 320, easing: cubicOut }} in:scale={{ duration: 220, start: 0.95 }} out:fade={{ duration: 180 }}>
             <Plot
-              {host}
               {field}
               time_range={1}
               onRemove={() => removePlot(field.id)}

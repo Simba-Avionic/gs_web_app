@@ -1,12 +1,11 @@
 <script>
   import CameraView from "./lib/CameraView.svelte";
-  export let host;
 </script>
 
 <div class="main-container">
   <div class="videos">
-    <CameraView host={host} camera="camera1" hasPTZ={true} />
-    <CameraView host={host} camera="camera2" hasPTZ={false} />
+    <CameraView camera="camera1" hasPTZ={true} />
+    <CameraView camera="camera2" hasPTZ={false} />
   </div>
 </div>
 

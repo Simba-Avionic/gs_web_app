@@ -34,20 +34,20 @@
             <rect id="payload" class="cls-6" x="180.55" y="252.54" width="37" height="50.1" />
             <rect id="recovery" class="cls-7" x="180.35" y="121.84" width="37.1" height="106.9" />
         </g>
-        <g id="_433_signal" data-name=" 433 signal" transform="scale(-1,1) translate(-395 110) ">
+        <!-- <g id="_433_signal" data-name=" 433 signal" transform="scale(-1,1) translate(-395 110) ">
             <path id="_1" data-name=" 1" class="cls-8" d="M229.42,53.09a9.5,9.5,0,0,1,0,13.14" />
             <path id="_2" data-name=" 2" class="cls-8" d="M235.6,46.76a19,19,0,0,1,0,26.34v0" />
             <path id="_3" data-name=" 3" class="cls-8" d="M242,40.24a28.44,28.44,0,0,1,0,39.49" />
             <path id="_4" data-name=" 4" class="cls-8" d="M248.4,33.63a38,38,0,0,1,0,52.71h0" />
             <path id="_5" data-name=" 5" class="cls-8" d="M255,26.89a47.4,47.4,0,0,1,0,65.84" />
-        </g>
+        </g> -->
         <g id="tanking_group">
             <!-- Testing texts -->
             <text id="valve_feed_oxidizer_txt" x="92" y="500" text-anchor="middle" dominant-baseline="middle" style="font-size: 1.4rem; fill: var(--text-color);">
                 OPEN
             </text>
 
-            <text id="valve_vent_oxidizer_txt" x="133" y="625" text-anchor="middle" dominant-baseline="middle" style="font-size: 1.4rem; fill: var(--text-color);">
+            <text id="valve_vent_oxidizer_txt" x="120" y="625" text-anchor="middle" dominant-baseline="middle" style="font-size: 1.4rem; fill: var(--text-color);">
                 OPEN
             </text>
 
@@ -62,9 +62,8 @@
                     <path class="cls-1"
                         d="M164.8,523.35a6.3,6.3,0,1,1-6.28,6.32v0A6.31,6.31,0,0,1,164.8,523.35Zm0,11.18a4.89,4.89,0,1,0-4.87-4.91v0h0a4.84,4.84,0,0,0,4.8,4.88Z" />
                 </g>
-                <path id="valve_feed_oxidizer" class="cls-8"
-                    d="M67.23,515.07v27.59l52.1-27.59v27.59Z" />
-                <path id="valve_vent_oxidizer" class="cls-8" d="M103,605.15H83.56L103,641.87H83.56Z" />
+                <path id="valve_feed_oxidizer" class="cls-8" d="M67.23,515.07v27.59l52.1-27.59v27.59Z" />
+                <path id="valve_vent_oxidizer" class="cls-8" d="M103,605.15H83.56L103,641.87H83.56Z" transform="translate(-20 0)" />
                 <g id="oxidizer_tank" data-name="oxidizer tank" transform="translate(-80 0)">
                     <path class="cls-1"
                         d="M47.4,643.83c0-7.8-7-14.35-15.7-14.6-5.3-.16-10.5-.16-15.8,0C7.1,629.48,0,636.07,0,643.75V747.34c0,4.23,1,5.23,5.7,5.31,12,.08,24,.08,35.9,0,4.7,0,5.8-1.08,5.8-5.14Z" />

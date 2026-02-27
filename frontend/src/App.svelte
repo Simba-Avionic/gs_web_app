@@ -13,8 +13,7 @@
   const port = process.env.SERVER_PORT || 2137;
   const timezone = process.env.TIMEZONE || 'UTC';
 
-  // const host = `${ip}:${port}`;
-  const host = window.location.host;
+  // const host = window.location.host;
 
   function handleNavigation(event) {
     currentView = event.detail;
@@ -42,15 +41,15 @@
 </svelte:head>
 
 <main>
-  <NavBar on:navigate={handleNavigation} {currentView} {host} {timezone} />
+  <NavBar on:navigate={handleNavigation} {currentView} {timezone} />
   {#if currentView === 'dashboard'}
-    <Dashboard {host}/>
+    <Dashboard/>
   {:else if currentView === 'plots'}
-    <Plots {host}/>
+    <Plots/>
   {:else if currentView === 'map'}
-    <Map {host} />
+    <Map />
   {:else if currentView === 'cameras'}
-    <Cameras {host} />
+    <Cameras />
   {/if}
   <Gradients />
 </main>

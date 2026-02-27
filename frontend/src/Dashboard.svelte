@@ -13,8 +13,6 @@
     observeLines,
   } from "./lib/Utils.svelte";
 
-  export let host;
-
   let svgContent = "";
   let cleanup;
 
@@ -87,7 +85,7 @@
         },
       }),
     );
-    
+
     /* 
     lines.push(
       createLine("pressurizer_tank", "#valve_feed_pressurizer", {
@@ -139,7 +137,7 @@
     */
   }
 
-  // TODO: This function should be more reactive 
+  // TODO: Try to remove hardcoded if statements and so on...
   function handleTelemetryChange(data, msg_type) {
     const telemetryData = data;
     if (!telemetryData) return;
@@ -150,29 +148,60 @@
     const svg = document.getElementById("simba");
     if (!svg) return;
 
-    const fieldName = config.controls[0].val_name; // e.g. "valve_feed_oxidizer"
-    const svgId = config.controls[0].controls; // e.g. "valve1"
-    const value = telemetryData[fieldName];
-    const svgElem = svg.getElementById(svgId);
+    config.controls.forEach((element) => {
+      
 
-    if (svgId == 'oxidizer_liquid') 
-    {
+      const fieldName = element.val_name; // e.g. "valve_feed_oxidizer"
+      const svgId = element.controls; // e.g. "valve1"
+      const value = telemetryData[fieldName];
+      const svgElem = svg.getElementById(svgId);
+
+      if (svgId == "oxidizer_liquid") {
         const OXTank = svg.getElementById("tank_oxidizer");
         const visualMaxHeight = parseFloat(OXTank.getAttribute("height"));
         const dataMax = config.controls[0].range[1];
         let newHeight = (value / dataMax) * visualMaxHeight;
         svgElem.setAttribute(
-            "height",
-            Math.min(Math.max(newHeight, 0), visualMaxHeight)
+          "height",
+          Math.min(Math.max(newHeight, 0), visualMaxHeight),
         );
         svgElem.style.fill = "url(#gradient_blue)";
-    }
-
+      } 
+      else if (svgId == "valve_feed_oxidizer_txt") {
+        let label = "";
+        const n = Number(value);
+        if (!Number.isNaN(n)) {
+          if (n <= 5) label = `CLOSED ${Math.round(n)}%`;
+          else if (n >= 5) label = `OPENED ${Math.round(n)}%`;
+          else label = `${Math.round(n)}%`;
+        } else {
+          label = String(value);
+        }
+        const txtEl = svg.getElementById("valve_feed_oxidizer_txt");
+        if (txtEl) {
+          txtEl.textContent = label;
+        }
+      } 
+      else if (svgId == "valve_vent_oxidizer_txt") {
+        let label = "";
+        const n = Number(value);
+        if (!Number.isNaN(n)) {
+          if (n == 0) label = `CLOSED`;
+          else if (n == 1) label = `OPENED`;
+        } else {
+          label = String(value);
+        }
+        const txtEl = svg.getElementById("valve_vent_oxidizer_txt");
+        if (txtEl) {
+          txtEl.textContent = label;
+        }
+      }
+    });
   }
 
   onMount(async () => {
     svgContent = await fetchSVG("/images/gs.svg");
-    topics = await fetchConfig(host);
+    topics = await fetchConfig(window.location.host);
 
     statusItems = topics.flatMap((topic) =>
       topic.msg_fields
@@ -204,7 +233,7 @@
       }));
 
     svgItems.forEach((topic) => {
-      const unsubscribe = subscribeToTopic(host, topic.topic_name, (data) => {
+      const unsubscribe = subscribeToTopic(window.location.host, topic.topic_name, (data) => {
         handleTelemetryChange(data, topic.msg_type);
       });
     });
@@ -228,7 +257,7 @@
   <div id="status-container">
     {#each statusItems as item (item.id)}
       {#if item.type === "value"}
-        <GaugeField {host} {item} />
+        <GaugeField {item} />
       {/if}
     {/each}
     <!-- {#each statusItems as item (item.id)}
@@ -244,23 +273,23 @@
 
   <div id="rocket-info">
     <div class="rocket-item" id="recovery">
-      <RocketField {host} title="Recovery" />
+      <RocketField title="Recovery" />
     </div>
     <!-- <div class="rocket-item" id="payload">Payload</div> -->
     <div class="rocket-item" id="avionics">
-      <RocketField {host} title="Avionics" />
+      <RocketField title="Avionics" />
     </div>
     <div class="rocket-item" id="tank_pressure">
-      <RocketField {host} title="Tank Pressure" />
+      <RocketField title="Tank Pressure" />
     </div>
     <div class="rocket-item" id="tank_temperature">
-      <RocketField {host} title="Tank Temperature" />
+      <RocketField title="Tank Temperature" />
     </div>
     <div class="rocket-item" id="tank_actuators">
-      <RocketField {host} title="Tank Actuators" />
+      <RocketField title="Tank Actuators" />
     </div>
     <div class="rocket-item" id="engine">
-      <RocketField {host} title="Engine" />
+      <RocketField title="Engine" />
     </div>
   </div>
 </div>
