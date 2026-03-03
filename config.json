@@ -395,19 +395,22 @@
                     "type": "uint16",
                     "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
-                    "unit": "\u00b0C"
+                    "unit": "\u00b0C",
+                    "transform": {"scale": 0.01, "offset": 0}
                 },
                 {
                     "type": "uint16",
                     "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
-                    "unit": "\u00b0C"
+                    "unit": "\u00b0C",
+                    "transform": {"scale": 0.01, "offset": 0}
                 },
                 {
                     "type": "uint16",
                     "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
-                    "unit": "\u00b0C"
+                    "unit": "\u00b0C",
+                    "transform": {"scale": 0.01, "offset": 0}
                 }
             ]
         },
@@ -427,7 +430,8 @@
                     "range": [
                         0,
                         100
-                    ]
+                    ],
+                    "transform": {"scale": 0.01, "offset": 0}
                 }
             ]
         },
@@ -447,39 +451,48 @@
                 },
                 {
                     "type": "int16",
-                    "val_name": "acc_x"
+                    "val_name": "acc_x",
+                    "transform": {"scale": 2000, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "acc_y"
+                    "val_name": "acc_y",
+                    "transform": {"scale": 2000, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "acc_z"
+                    "val_name": "acc_z",
+                    "transform": {"scale": 2000, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "gyro_x"
+                    "val_name": "gyro_x",
+                    "transform": {"scale": 10, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "gyro_y"
+                    "val_name": "gyro_y",
+                    "transform": {"scale": 10, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "gyro_z"
+                    "val_name": "gyro_z",
+                    "transform": {"scale": 10, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "roll"
+                    "val_name": "roll",
+                    "transform": {"scale": 100, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "pitch"
+                    "val_name": "pitch",
+                    "transform": {"scale": 100, "offset": 0}
                 },
                 {
                     "type": "int16",
-                    "val_name": "yaw"
+                    "val_name": "yaw",
+                    "transform": {"scale": 100, "offset": 0}
                 },
                 {
                     "type": "int32",
@@ -498,12 +511,14 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "float32",
-                    "val_name": "lat"
+                    "type": "int32",
+                    "val_name": "lat",
+                    "transform": {"scale": 1e-7, "offset": 0}
                 },
                 {
-                    "type": "float32",
-                    "val_name": "lon"
+                    "type": "int32",
+                    "val_name": "lon",
+                    "transform": {"scale": 1e-7, "offset": 0}
                 },
                 {
                     "type": "int32",
@@ -514,7 +529,8 @@
                     "range": [
                         0,
                         4000
-                    ]
+                    ],
+                    "transform": {"scale": 0.01, "offset": 0}
                 }
             ]
         },

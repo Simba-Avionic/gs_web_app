@@ -55,7 +55,11 @@ class NodeHandler(Node):
         ros_time.nanosec = now.microsecond * 1000               # mikrosekundy -> nanosekundy
         msg.header.stamp = ros_time
 
-        self.curr_msg = message_to_ordereddict(msg)
+        # Convert message to dict
+        raw_dict = message_to_ordereddict(msg)
+
+        # Apply transformations
+        self.curr_msg = self.apply_transform(self.msg_type, raw_dict)
 
         # Schedule websocket broadcast on FastAPI loop (non-blocking)
         if self.app_loop is not None:
@@ -71,6 +75,31 @@ class NodeHandler(Node):
                 self.write_queue.put_nowait((self.msg_type, self.curr_msg))
             except Exception as e:
                 logger.warning(f"Write queue put failed: {e}")
+
+    def apply_transform(self, msg_type, msg_dict):
+        """
+        Checks if the message type has defined transforms and applies them in-place.
+        """
+        fields_config = self.msg_configs.get(msg_type, [])
+
+        for field in fields_config:
+            val_name = field.get("val_name")
+            transform = field.get("transform")
+
+            if transform and val_name in msg_dict:
+                scale = transform.get("scale", 1.0)
+                offset = transform.get("offset", 0.0)
+                
+                try:
+                    original_value = msg_dict[val_name]
+                    
+                    if isinstance(original_value, (int, float)):
+                        msg_dict[val_name] = (original_value * scale) + offset
+                        
+                except (TypeError, ValueError) as e:
+                    logger.warning(f"Transformation failed for {val_name} in {msg_type}: {e}")
+        
+        return msg_dict
 
     async def websocket_endpoint(self, ws: WebSocket):
             await ws.accept()
