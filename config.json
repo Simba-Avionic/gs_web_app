@@ -564,6 +564,18 @@
                     "type": "uint8",
                     "val_name": "values",
                     "alt_name": "SIMBA_ACTUATOR_FLAGS"
+                }
+            ]
+        },
+        {
+            "id": 74,
+            "topic_name": "mavlink/simba_computer_temperature",
+            "msg_type": "SimbaComputerTemperature",
+            "place": "rocket",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
                 },
                 {
                     "type": "uint16",
@@ -576,7 +588,7 @@
             ]
         },
         {
-            "id": 74,
+            "id": 75,
             "topic_name": "mavlink/simba_max_altitude",
             "msg_type": "SimbaMaxAltitude",
             "msg_fields": [
