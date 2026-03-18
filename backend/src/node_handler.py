@@ -80,9 +80,9 @@ class NodeHandler(Node):
         """
         Checks if the message type has defined transforms and applies them in-place.
         """
-        fields_config = self.msg_configs.get(msg_type, [])
+        # fields_config = self.msg_configs.get(msg_type, [])
 
-        for field in fields_config:
+        for field in self.msg_fields:
             val_name = field.get("val_name")
             transform = field.get("transform")
 

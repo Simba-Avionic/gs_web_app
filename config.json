@@ -396,21 +396,21 @@
                     "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.01, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0}
                 },
                 {
                     "type": "uint16",
                     "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.01, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0}
                 },
                 {
                     "type": "uint16",
                     "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.01, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0}
                 }
             ]
         },
@@ -550,10 +550,6 @@
                 },
                 {
                     "type": "uint8",
-                    "val_name": "rocket_state"
-                },
-                {
-                    "type": "uint8",
                     "val_name": "flight_computer_status"
                 },
                 {
@@ -568,7 +564,7 @@
             ]
         },
         {
-            "id": 74,
+            "id": 76,
             "topic_name": "mavlink/simba_computer_temperature",
             "msg_type": "SimbaComputerTemperature",
             "place": "rocket",
@@ -600,6 +596,41 @@
                     "type": "int32",
                     "val_name": "altitude",
                     "unit": "m"
+                }
+            ]
+        },
+        {
+            "id": 77,
+            "topic_name": "mavlink/simba_computer_usage",
+            "msg_type": "SimbaComputerUsage",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "mb_cpu_usage",
+                    "unit": "%",
+                    "range": [0, 100]
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "mb_memory_usage",
+                    "unit": "%",
+                    "range": [0, 100]
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "eb_cpu_usage",
+                    "unit": "%",
+                    "range": [0, 100]
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "eb_memory_usage",
+                    "unit": "%",
+                    "range": [0, 100]
                 }
             ]
         }

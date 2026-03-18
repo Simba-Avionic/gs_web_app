@@ -60,6 +60,9 @@ class MavlinkClient(Node):
             gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
         self.get_logger().info("Created publisher for tare commands")
 
+        # self.heartbeat_timer = self.create_timer(1.0, self.send_heartbeat)
+        # self.get_logger().info("Standard Heartbeat timer initialized.")
+
         self._running = True
         self._receiver_thread = None
         self._start_receiver_thread()
@@ -80,6 +83,20 @@ class MavlinkClient(Node):
         self._receiver_thread.daemon = True
         self._receiver_thread.start()
         self.get_logger().info("Started MAVLink receiver thread")
+
+    def send_heartbeat(self):
+            """Sends a standard MAVLink HEARTBEAT message."""
+            try:
+                self.master.mav.heartbeat_send(
+                            6, # type: MAV_TYPE_GCS
+                            0, # autopilot: MAV_AUTOPILOT_GENERIC
+                            0, # base_mode
+                            0, # custom_mode
+                            4, # system_status: MAV_STATE_ACTIVE
+                            3  # mavlink_version
+                        )
+            except Exception as e:
+                self.get_logger().error(f"Failed to send heartbeat: {e}")
 
     def find_mavlink_connection(self, baudrate=57600, dialect="simba", retry_delay=1):
         while True:
@@ -139,12 +156,33 @@ class MavlinkClient(Node):
                 if msg.get_type() == 'BAD_DATA':
                     continue
 
+                # Handle RADIO_STATUS
+                if msg.get_type() == 'RADIO_STATUS':
+                    # self._handle_radio_status(msg)
+                    data = msg.to_dict()
+                    self.get_logger().info(f"{data}")
+                    continue
+
                 self.get_logger().info(f"Received MAVLink message: {msg}")
                 self.publish_ros_msg(msg)
             except Exception as e:
                 self.get_logger().error(f"Error in receiver thread: {e}")
-                # Prevent tight loop in case of repeated errors
                 time.sleep(0.25)
+
+    def _handle_radio_status(self, msg):
+        """Logs radio signal metrics (RSSI and Noise)."""
+        # RSSI values are usually expressed as (value / 1.9) - 127 in dBm for SiK radios
+        rssi = msg.rssi
+        remrssi = msg.remrssi
+        noise = msg.noise
+        remnoise = msg.remnoise
+        
+        self.get_logger().info(
+            f"\n[RADIO_STATUS]\n"
+            f"  Local RSSI: {rssi} | Noise: {noise}\n"
+            f"  Remote RSSI: {remrssi} | Noise: {remnoise}\n"
+            f"  Tx Errors: {msg.txbuf}% buffer used"
+        )
 
     def publish_ros_msg(self, mavlink_msg):
         """Publish MAVLink message as a ROS2 message."""
@@ -184,7 +222,7 @@ class MavlinkClient(Node):
                 
                 self._handle_rocket_switches()
                 self._handle_gs_switches()
-                time.sleep(0.1)
+                time.sleep(0.25)
 
             except Exception as e:
                 self.get_logger().error(f"Error in control panel thread: {e}")

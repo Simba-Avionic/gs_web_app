@@ -40,7 +40,8 @@
                     if (
                         data !== "None" &&
                         data !== null &&
-                        data !== undefined
+                        data !== undefined &&
+                        data.status !== 'timeout'
                     ) {
                         telemetryData[topicName] = data;
 

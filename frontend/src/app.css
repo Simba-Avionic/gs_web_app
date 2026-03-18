@@ -116,20 +116,26 @@ button {
 
 .green-status {
   background: linear-gradient(90deg, #99d88d, #5aa54b, #77be69);
-  background-size: 100% 100%;
+  background-size: 200% 200%; /* Increased for smoother animation */
   animation: gradientAnimation 3s ease infinite;
+  box-shadow: 0 0 8px rgba(90, 165, 75, 0.8), 
+              0 0 16px rgba(119, 190, 105, 0.4);
 }
 
 .orange-status {
   background: linear-gradient(45deg, #feb356, #fa6400);
-  background-size: 100% 100%;
+  background-size: 200% 200%;
   animation: gradientAnimation 3s ease infinite;
+  box-shadow: 0 0 8px rgba(250, 100, 0, 0.8), 
+              0 0 16px rgba(254, 179, 86, 0.4);
 }
 
 .red-status {
   background: linear-gradient(45deg, #de304d, #c41934);
-  background-size: 100% 100%;
+  background-size: 200% 200%;
   animation: gradientAnimation 3s ease infinite;
+  box-shadow: 0 0 8px rgba(196, 25, 52, 0.8), 
+              0 0 16px rgba(222, 48, 77, 0.4);
 }
 
 @keyframes gradientAnimation {

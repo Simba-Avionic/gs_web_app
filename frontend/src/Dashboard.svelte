@@ -22,8 +22,7 @@
   let svgItems = [];
 
   function createLines() {
-    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_pressure"));
-    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_temperature"));
+    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_sensors"));
     lines.push(createLine("tank_oxidizer", "#rocket-info #tank_actuators"));
     lines.push(createLine("engine", "#rocket-info #engine"));
     lines.push(createLine("avionics", "#rocket-info #avionics"));
@@ -279,12 +278,12 @@
     <div class="rocket-item" id="avionics">
       <RocketField title="Avionics" />
     </div>
-    <div class="rocket-item" id="tank_pressure">
-      <RocketField title="Tank Pressure" />
+    <div class="rocket-item" id="tank_sensors">
+      <RocketField title="Tank Sensors" />
     </div>
-    <div class="rocket-item" id="tank_temperature">
+    <!-- <div class="rocket-item" id="tank_temperature">
       <RocketField title="Tank Temperature" />
-    </div>
+    </div> -->
     <div class="rocket-item" id="tank_actuators">
       <RocketField title="Tank Actuators" />
     </div>

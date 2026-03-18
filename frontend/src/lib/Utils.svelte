@@ -371,22 +371,28 @@
 
   export function getStatusString(statusCode) {
     switch (statusCode) {
-      case 0:
-        return "OK";
       case 1:
-        return "NOT DEFINED";
+        return "STATE_INIT";
       case 2:
-        return "ERROR";
+        return "STATE_DISARM";
       case 3:
-        return "CONNECTION ERROR";
+        return "STATE_ARM";
       case 4:
-        return "INITIALIZE ERROR";
+        return "STATE_LAUNCH";
       case 5:
-        return "BAD VARIABLE SIZE";
+        return "FLIGHT";
+      case 64:
+        return "STATE_ABORT";
       case 6:
-        return "INVALID STATE";
+        return "APOGEE";
+      case 7:
+        return "FIRT_PARACHUTE_FALL";
+      case 8:
+        return "SECOND_PARACHUTE_ACTIVATION";
+      case 9:
+        return "SECOND_PARACHUTE_FALL";
       default:
-        return "UNKNOWN STATUS";
+        return "UNKNOWN_STATUS";
     }
   }
 

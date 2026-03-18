@@ -11,91 +11,106 @@
   const topicDataMap = {
     Recovery: [
       {
-        topic: "mavlink/simba_actuator",
+        topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
-            name: "line_cutter",
+            name: "recovery_servo",
             extract: (data) => (data.values & 0x08 ? "OPEN" : "CLOSED"),
-            display: "Line Cutter",
+            display: "Recovery Servo",
           },
           {
-            name: "rec_valve",
-            extract: (data) => (data.values & 0x10 ? "OPEN" : "CLOSED"),
-            display: "REC Valve",
+            name: "line_cutter_act",
+            extract: (data) => (data.values & 0x10 ? "ON" : "OFF"), // 0x10 is 16
+            display: "Linecutter",
           },
-        ],
-      },
+        ]
+      }
     ],
     Avionics: [
       {
         topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
-            name: "flight_computer_status",
-            extract: (data) => getStatusString(data.flight_computer_status),
-            display: "Status",
+            name: "flight_computer_state",
+            extract: (data) => getStatusString(data.flight_computer_state),
+            display: "Flight Computer State",
           },
           {
+            name: "cameras_act",
+            extract: (data) => (data.values & 0x20 ? "ON" : "OFF"), // 0x20 is 32
+            display: "Cameras",
+          }
+        ],
+      },
+      {
+        topic: "mavlink/simba_computer_temperature",
+        fields: [
+          {
             name: "mb_temp",
-            extract: (data) => data.mb_temp / 100,
+            extract: (data) => data.mb_temp,
             display: "Computer temp",
             unit: "°C"
+          }
+        ],
+      },
+      {
+      }
+    ],
+    "Tank Sensors": [
+      {
+        topic: "mavlink/simba_tank_temperature",
+        fields: [
+          {
+            name: "upper_tank",
+            extract: (data) => data.upper_tank,
+            display: "Upper Tank Temp",
+            unit: "°C",
+          },
+          {
+            name: "middle_tank",
+            extract: (data) => data.middle_tank,
+            display: "Middle Tank Temp",
+            unit: "°C",
+          },
+          {
+            name: "lower_tank",
+            extract: (data) => data.lower_tank,
+            display: "Lower Tank Temp",
+            unit: "°C",
           },
         ],
       },
-    ],
-    "Tank Pressure": [
       {
         topic: "mavlink/simba_tank_pressure",
         fields: [
           {
             name: "pressure",
-            extract: (data) => data.pressure / 100,
+            extract: (data) => data.pressure,
             display: "Pressure",
             unit: "bar",
           },
         ],
       },
     ],
-    "Tank Temperature": [
-      {
-        topic: "mavlink/simba_tank_temperature",
-        fields: [
-          {
-            name: "upper_tank",
-            extract: (data) => data.upper_tank / 100,
-            display: "Upper Tank Temp",
-            unit: "°C",
-          },
-          {
-            name: "middle_tank",
-            extract: (data) => data.middle_tank / 100,
-            display: "Middle Tank Temp",
-            unit: "°C",
-          },
-          {
-            name: "lower_tank",
-            extract: (data) => data.lower_tank / 100,
-            display: "Lower Tank Temp",
-            unit: "°C",
-          },
-        ],
-      },
-    ],
     "Tank Actuators": [
       {
-        topic: "mavlink/simba_actuator",
+        topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
             name: "main_valve",
-            extract: (data) => (data.values & 0x02 ? "OPEN" : "CLOSED"),
+            extract: (data) => (data.values & 0x01 ? "OPEN" : "CLOSED"),
             display: "Main Valve",
           },
           {
             name: "tank_vent",
-            extract: (data) => (data.values & 0x04 ? "OPEN" : "CLOSED"),
+            extract: (data) => (data.values & 0x02 ? "OPEN" : "CLOSED"),
             display: "Tank Vent",
           },
+          {
+            name: "dump_valve",
+            extract: (data) => (data.values & 0x04 ? "OPEN" : "CLOSED"),
+            display: "Dump Valve",
+          }
         ],
       },
     ],
@@ -104,28 +119,23 @@
         topic: "mavlink/simba_rocket_heartbeat",
         fields: [
           {
-            name: "engine_computer_status",
-            extract: (data) => getStatusString(data.engine_computer_status),
-            display: "Engine Computer Status",
-          },
-          {
-            name: "eb_temp",
-            extract: (data) => data.eb_temp / 100,
-            display: "Computer temp",
-            unit: "°C"
-          },
+            name: "engine_computer_state",
+            extract: (data) => getStatusString(data.engine_computer_state),
+            display: "Engine Computer State",
+          }
         ],
       },
       {
-        topic: "mavlink/simba_actuator",
+        topic: "mavlink/simba_computer_temperature",
         fields: [
           {
-            name: "primer",
-            extract: (data) => (data.values & 0x01 ? "ON" : "OFF"),
-            display: "Igniter",
-          },
+            name: "eb_temp",
+            extract: (data) => data.eb_temp,
+            display: "Computer temp",
+            unit: "°C"
+          }
         ],
-      },
+      }
     ],
   };
 
@@ -136,8 +146,6 @@
     : [];
 
   function processData(topicName, data) {
-    let foundNonOkStatus = false;
-
     const topicConfigs =
       topicDataMap[title]?.filter((config) => config.topic === topicName) || [];
 
@@ -145,14 +153,6 @@
       for (const field of config.fields) {
         try {
           const extractedValue = field.extract(data);
-          if (
-            field.name.includes("status") &&
-            extractedValue !== "OK" &&
-            typeof extractedValue === "string"
-          ) {
-            foundNonOkStatus = true;
-          }
-
           extractedData[field.name] = {
             value: extractedValue,
             display: field.display || field.name,
@@ -162,10 +162,6 @@
           console.error(`Error extracting ${field.name} from ${topicName}:`, e);
         }
       }
-    }
-
-    if (hasNonOkStatus !== foundNonOkStatus) {
-      hasNonOkStatus = foundNonOkStatus;
     }
   }
 </script>
