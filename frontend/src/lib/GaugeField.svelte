@@ -32,9 +32,7 @@
 
 <div class="gauge-container" class:no-data={value === null || value === "None"}>
   <div class="gauge-title">
-    <span
-      bind:this={titleEl}
-    >
+    <span bind:this={titleEl}>
       {item.title}
     </span>
   </div>
@@ -50,7 +48,14 @@
     stopAngle={300}
   >
     <div class="gauge-content">
-      <span>{Math.round(value)} {item.unit}</span>
+      <span>
+        {typeof value === "number"
+          ? Number.isInteger(value)
+            ? value
+            : value.toFixed(1)
+          : (value ?? "---")}
+        {item.unit}
+      </span>
     </div>
   </Gauge>
 </div>
@@ -74,6 +79,10 @@
   .gauge-container :global(svg) {
     max-width: 100%;
     max-height: 100%;
+  }
+
+  .gauge-container :global(.gauge-slot-container) {
+    margin: 0 !important; /* Replace 0 with whatever margin you actually want */
   }
 
   .gauge-content {

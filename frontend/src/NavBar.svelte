@@ -17,23 +17,9 @@
   let temp;
   let telem_data;
   let socket;
-  let ackSocket;
-
-  let countdownValue = null;
-  let countdownInterval;
 
   let currentTime;
   let interval;
-
-  let rocketState = 1; // Default to DISARMED (1)
-  let rocketStatus = 0; // Default to SIMBA_STATUS_OK (0)
-
-  const ROCKET_STATES = {
-    1: { text: "DISARMED", class: "state-disarmed" },
-    2: { text: "ARMED", class: "state-armed" },
-    3: { text: "IGNITION", class: "state-ignition" },
-    4: { text: "ABORTED", class: "state-aborted" },
-  };
 
   currentTime = new Intl.DateTimeFormat("en-GB", {
     hour12: false,
@@ -45,7 +31,6 @@
 
   onMount(() => {
     initializeWebSocket();
-    // initializeAckWebSocket();
 
     interval = setInterval(() => {
       currentTime = new Intl.DateTimeFormat("en-GB", {
@@ -66,74 +51,6 @@
         `WebSocket for server/telemetry closed on component destroy.`,
       );
     }
-
-    if (ackSocket) {
-      ackSocket.close();
-      ackSocket = null;
-      console.log(`WebSocket for mavlink/ack closed.`);
-    }
-  }
-
-  function initializeAckWebSocket() {
-    ackSocket = new WebSocket(`ws://${window.location.host}/mavlink/simba_ack`);
-
-    ackSocket.onmessage = (event) => {
-      try {
-        const ackData = JSON.parse(event.data);
-        if (ackData !== "None" && ackData !== null && ackData !== undefined) {
-          if (ackData.status !== undefined) {
-            rocketStatus = ackData.status;
-            if (rocketStatus === 0 && ackData.state !== undefined) {
-              rocketState = ackData.state;
-
-              if (rocketState == 3) {
-                startCountdown();
-              } else if (rocketState !== 3 && countdownValue !== null) {
-                stopCountdown();
-              }
-            }
-          }
-
-          dispatch("rocketStateChange", {
-            state: rocketState,
-            status: rocketStatus,
-          });
-        }
-      } catch (error) {
-        console.error("Error parsing ACK message:", error);
-      }
-    };
-
-    ackSocket.onopen = () => {
-      // console.log("Connected to mavlink/ack");
-    };
-
-    ackSocket.onclose = (event) => {
-      if (!event.wasClean) {
-        setTimeout(() => {
-          console.log(`Reconnecting to WebSocket for mavlink/ack...`);
-          initializeAckWebSocket();
-        }, 5000);
-      }
-    };
-  }
-
-  function startCountdown() {
-    stopCountdown();
-    countdownValue = 10;
-    countdownInterval = setInterval(() => {
-      countdownValue -= 1;
-
-      if (countdownValue <= 0) {
-        stopCountdown();
-        countdownValue = 0; // Ensure we show zero at the end
-      }
-    }, 1000); // Update every second
-  }
-
-  function stopCountdown() {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
   }
 
   function initializeWebSocket() {
@@ -173,7 +90,6 @@
   onDestroy(() => {
     clearInterval(interval);
     closeSockets();
-    stopCountdown();
   });
 </script>
 
@@ -203,17 +119,6 @@
       >Cameras</a
     >
   </div>
-  <!-- <div class="rocket-state">
-    <a href="#">ROCKET: </a>
-    <h3 class={ROCKET_STATES[rocketState]?.class || "state-unknown"}>
-      {ROCKET_STATES[rocketState]?.text || "UNKNOWN"}
-    </h3>
-    {#if countdownValue !== null}
-      <div class="countdown">
-        <span class="countdown-value">{countdownValue}</span>
-      </div>
-    {/if}
-  </div> -->
   <div class="navbar-right">
     <div class="navbar-telemetry">
       <span

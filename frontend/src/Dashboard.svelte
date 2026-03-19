@@ -20,6 +20,7 @@
   let topics = [];
   let statusItems = [];
   let svgItems = [];
+  let rocketGroups = {};
 
   function createLines() {
     lines.push(createLine("tank_oxidizer", "#rocket-info #tank_sensors"));
@@ -148,8 +149,6 @@
     if (!svg) return;
 
     config.controls.forEach((element) => {
-      
-
       const fieldName = element.val_name; // e.g. "valve_feed_oxidizer"
       const svgId = element.controls; // e.g. "valve1"
       const value = telemetryData[fieldName];
@@ -165,8 +164,7 @@
           Math.min(Math.max(newHeight, 0), visualMaxHeight),
         );
         svgElem.style.fill = "url(#gradient_blue)";
-      } 
-      else if (svgId == "valve_feed_oxidizer_txt") {
+      } else if (svgId == "valve_feed_oxidizer_txt") {
         let label = "";
         const n = Number(value);
         if (!Number.isNaN(n)) {
@@ -180,8 +178,7 @@
         if (txtEl) {
           txtEl.textContent = label;
         }
-      } 
-      else if (svgId == "valve_vent_oxidizer_txt") {
+      } else if (svgId == "valve_vent_oxidizer_txt") {
         let label = "";
         const n = Number(value);
         if (!Number.isNaN(n)) {
@@ -201,6 +198,48 @@
   onMount(async () => {
     svgContent = await fetchSVG("/images/gs.svg");
     topics = await fetchConfig(window.location.host);
+
+    // Build a temporary object first
+    let tempGroups = {};
+
+    topics.forEach((topic) => {
+      topic.msg_fields.forEach((field) => {
+        // Parse standard fields
+        if (field.rocket_display) {
+          const group = field.rocket_display.group;
+          if (!tempGroups[group]) tempGroups[group] = [];
+
+          tempGroups[group].push({
+            topic: topic.topic_name,
+            fieldName: field.val_name,
+            label: field.rocket_display.label,
+            format: field.rocket_display.format,
+            unit: field.rocket_display.unit || field.unit || "",
+          });
+        }
+
+        // Parse bitwise fields
+        if (field.rocket_display_bits) {
+          field.rocket_display_bits.forEach((bitDef) => {
+            const group = bitDef.group;
+            if (!tempGroups[group]) tempGroups[group] = [];
+
+            tempGroups[group].push({
+              topic: topic.topic_name,
+              fieldName: field.val_name,
+              label: bitDef.label,
+              mask: bitDef.mask,
+              onLabel: bitDef.on,
+              offLabel: bitDef.off,
+              unit: "",
+            });
+          });
+        }
+      });
+    });
+
+    // TRIGGER SVELTE REACTIVITY HERE
+    rocketGroups = tempGroups;
 
     statusItems = topics.flatMap((topic) =>
       topic.msg_fields
@@ -232,9 +271,13 @@
       }));
 
     svgItems.forEach((topic) => {
-      const unsubscribe = subscribeToTopic(window.location.host, topic.topic_name, (data) => {
-        handleTelemetryChange(data, topic.msg_type);
-      });
+      const unsubscribe = subscribeToTopic(
+        window.location.host,
+        topic.topic_name,
+        (data) => {
+          handleTelemetryChange(data, topic.msg_type);
+        },
+      );
     });
 
     await tick();
@@ -270,26 +313,24 @@
     {@html svgContent}
   </div>
 
-  <div id="rocket-info">
-    <div class="rocket-item" id="recovery">
-      <RocketField title="Recovery" />
-    </div>
-    <!-- <div class="rocket-item" id="payload">Payload</div> -->
-    <div class="rocket-item" id="avionics">
-      <RocketField title="Avionics" />
-    </div>
-    <div class="rocket-item" id="tank_sensors">
-      <RocketField title="Tank Sensors" />
-    </div>
-    <!-- <div class="rocket-item" id="tank_temperature">
-      <RocketField title="Tank Temperature" />
-    </div> -->
-    <div class="rocket-item" id="tank_actuators">
-      <RocketField title="Tank Actuators" />
-    </div>
-    <div class="rocket-item" id="engine">
-      <RocketField title="Engine" />
-    </div>
+<div id="rocket-info">
+    {#if Object.keys(rocketGroups).length > 0}
+      <div class="rocket-item" id="recovery">
+        <RocketField title="Recovery" fieldConfigs={rocketGroups['Recovery'] || []} />
+      </div>
+      <div class="rocket-item" id="avionics">
+        <RocketField title="Avionics" fieldConfigs={rocketGroups['Avionics'] || []} />
+      </div>
+      <div class="rocket-item" id="tank_sensors">
+        <RocketField title="Tank Sensors" fieldConfigs={rocketGroups['Tank Sensors'] || []} />
+      </div>
+      <div class="rocket-item" id="tank_actuators">
+        <RocketField title="Tank Actuators" fieldConfigs={rocketGroups['Tank Actuators'] || []} />
+      </div>
+      <div class="rocket-item" id="engine">
+        <RocketField title="Engine" fieldConfigs={rocketGroups['Engine'] || []} />
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -307,7 +348,7 @@
 
   #status-container {
     display: grid;
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
     grid-template-rows: repeat(3, 1fr);
     gap: 0.5rem;
   }

@@ -26,10 +26,10 @@ except ImportError as e:
     sys.exit(1)
 
 
-class MavlinkClient(Node):
+class MavlinkBridge(Node):
 
     def __init__(self, control_panel_port=None, mavlink_port=None, baudrate=57600, num_retries=3):
-        super().__init__('mavlink_client')
+        super().__init__('mavlink_bridge')
 
         self._executor = ThreadPoolExecutor(max_workers=5)
 
@@ -323,8 +323,8 @@ class MavlinkClient(Node):
 
 if __name__ == '__main__':
     rclpy.init()
-    # mavlink_receiver = MavlinkClient(control_panel_port="/dev/ttyACM0", mavlink_port="/dev/ttyUSB0")
-    mavlink_receiver = MavlinkClient()
+    # mavlink_receiver = MavlinkBridge(control_panel_port="/dev/ttyACM0", mavlink_port="/dev/ttyUSB0")
+    mavlink_receiver = MavlinkBridge()
 
     try:
         rclpy.spin(mavlink_receiver)
