@@ -12,25 +12,28 @@
 <style>
   .main-container {
     display: flex;
-    gap: 20px;
+    gap: 30px; /* Increased from 20px */
     margin: 0 auto;
     margin-top: var(--navbar-height);
     height: calc(100vh - var(--navbar-height));
-    padding: 1rem;
+    padding: 2rem; /* Increased from 1rem */
+    max-width: 1800px; /* Keeps it framed nicely on huge screens */
     box-sizing: border-box;
     overflow: hidden;
   }
 
   .videos {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 40px; /* Increased from 20px for clear separation between cameras */
     flex: 1;
+    width: 100%;
     height: 100%;
   }
 
-  .videos > * {
-  flex: 1;          /* take equal available space */
-  min-height: 0;    /* prevent flexbox from overflowing */
-}
+  /* .videos > * {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  } */
 </style>

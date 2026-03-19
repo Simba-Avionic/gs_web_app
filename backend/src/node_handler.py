@@ -1,6 +1,7 @@
 import time
 import asyncio
 from datetime import datetime, timezone
+from collections import deque
 import gs_interfaces.msg
 from builtin_interfaces.msg import Time
 from rclpy.node import Node
@@ -51,14 +52,13 @@ class NodeHandler(Node):
     def msg_callback(self, msg):
         now = datetime.now(timezone.utc)
         ros_time = Time()
-        ros_time.sec = int(now.timestamp())                     # sekundy od epoki
-        ros_time.nanosec = now.microsecond * 1000               # mikrosekundy -> nanosekundy
+        ros_time.sec = int(now.timestamp())
+        ros_time.nanosec = now.microsecond * 1000
         msg.header.stamp = ros_time
 
-        # Convert message to dict
         raw_dict = message_to_ordereddict(msg)
 
-        # Apply transformations
+        # Apply transformations & running averages
         self.curr_msg = self.apply_transform(self.msg_type, raw_dict)
 
         # Schedule websocket broadcast on FastAPI loop (non-blocking)
@@ -71,7 +71,6 @@ class NodeHandler(Node):
         # Enqueue for Influx writing (writer thread will call insert_data)
         if self.write_queue is not None:
             try:
-                # Put tuple (InfluxClient instance, message dict)
                 self.write_queue.put_nowait((self.msg_type, self.curr_msg))
             except Exception as e:
                 logger.warning(f"Write queue put failed: {e}")
@@ -79,25 +78,36 @@ class NodeHandler(Node):
     def apply_transform(self, msg_type, msg_dict):
         """
         Checks if the message type has defined transforms and applies them in-place.
+        Also applies running averages if defined in the config.
         """
-        # fields_config = self.msg_configs.get(msg_type, [])
-
         for field in self.msg_fields:
             val_name = field.get("val_name")
-            transform = field.get("transform")
+            
+            if val_name not in msg_dict:
+                continue
 
-            if transform and val_name in msg_dict:
+            # 1. Apply scaling/offsets first
+            transform = field.get("transform")
+            if transform:
                 scale = transform.get("scale", 1.0)
                 offset = transform.get("offset", 0.0)
                 
                 try:
                     original_value = msg_dict[val_name]
-                    
                     if isinstance(original_value, (int, float)):
                         msg_dict[val_name] = (original_value * scale) + offset
                         
                 except (TypeError, ValueError) as e:
                     logger.warning(f"Transformation failed for {val_name} in {msg_type}: {e}")
+
+            # 2. Apply running average if configured
+            if val_name in self.running_avg_buffers:
+                current_val = msg_dict[val_name]
+                
+                if isinstance(current_val, (int, float)):
+                    buffer = self.running_avg_buffers[val_name]
+                    buffer.append(current_val)                    
+                    msg_dict[val_name] = sum(buffer) / len(buffer)
         
         return msg_dict
 
@@ -138,6 +148,12 @@ class NodeHandler(Node):
         self.msg_fields = msg_config["msg_fields"]
         self.msg_type = msg_config["msg_type"]
         self.topic_name = msg_config["topic_name"]
+
+        # Initialize running average buffers for fields that request it
+        self.running_avg_buffers = {}
+        for field in self.msg_fields:
+            if "running_avg" in field and isinstance(field["running_avg"], int):
+                self.running_avg_buffers[field.get("val_name")] = deque(maxlen=field["running_avg"])
 
     def stop(self):
         self.connected_clients.clear()

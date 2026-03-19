@@ -31,7 +31,7 @@
                 {
                     "type": "float32",
                     "val_name": "combined_vehicle_mass_kg",
-                    "alt_name": "Combined Vehicle Mass",
+                    "alt_name": "Vehicle Mass",
                     "display": "value",
                     "range": [
                         0,
@@ -42,7 +42,7 @@
                 {
                     "type": "float32",
                     "val_name": "combined_fuel_mass_kg",
-                    "alt_name": "Combined Fuel Mass",
+                    "alt_name": "Oxidizer Mass",
                     "display": "value",
                     "range": [
                         0,
@@ -318,7 +318,7 @@
                 {
                     "type": "float32",
                     "val_name": "pressure_bar",
-                    "alt_name": "Hydraulic Pressure",
+                    "alt_name": "Hydra Pressure",
                     "unit": "bar",
                     "range": [
                         0,
@@ -329,6 +329,7 @@
                 {
                     "type": "float32",
                     "val_name": "temperature_hydra",
+                    "alt_name": "Hydra Temperature",
                     "unit": "\u00b0C",
                     "range": [
                         -10,
@@ -339,6 +340,7 @@
                 {
                     "type": "float32",
                     "val_name": "temperature_bottle",
+                    "alt_name": "Bottle Temperature",
                     "unit": "\u00b0C",
                     "range": [
                         -10,
@@ -396,21 +398,24 @@
                     "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0},
+                    "rocket_display": { "group": "Tank Sensors", "label": "Upper Tank Temp" }
                 },
                 {
                     "type": "uint16",
                     "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0},
+                    "rocket_display": { "group": "Tank Sensors", "label": "Middle Tank Temp" }
                 },
                 {
                     "type": "uint16",
                     "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0}
+                    "transform": {"scale": 0.1, "offset": 0},
+                    "rocket_display": { "group": "Tank Sensors", "label": "Lower Tank Temp" }
                 }
             ]
         },
@@ -424,14 +429,16 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "float32",
+                    "type": "uint16",
                     "val_name": "pressure",
                     "unit": "bar",
                     "range": [
                         0,
                         100
                     ],
-                    "transform": {"scale": 0.01, "offset": 0}
+                    "transform": {"scale": 0.01, "offset": 0},
+                    "running_avg": 3,
+                    "rocket_display": { "group": "Tank Sensors", "label": "Pressure" }
                 }
             ]
         },
@@ -550,16 +557,26 @@
                 },
                 {
                     "type": "uint8",
-                    "val_name": "flight_computer_status"
+                    "val_name": "flight_computer_state",
+                    "rocket_display": { "group": "Avionics", "label": "State", "format": "status" }
                 },
                 {
                     "type": "uint8",
-                    "val_name": "engine_computer_status"
+                    "val_name": "engine_computer_state",
+                    "rocket_display": { "group": "Engine", "label": "State", "format": "status" }
                 },
                 {
                     "type": "uint8",
                     "val_name": "values",
-                    "alt_name": "SIMBA_ACTUATOR_FLAGS"
+                    "alt_name": "SIMBA_ACTUATOR_FLAGS",
+                    "rocket_display_bits": [
+                        { "mask": 1, "group": "Tank Actuators", "label": "Main Valve", "on": "OPEN", "off": "CLOSED" },
+                        { "mask": 2, "group": "Tank Actuators", "label": "Tank Vent", "on": "OPEN", "off": "CLOSED" },
+                        { "mask": 4, "group": "Tank Actuators", "label": "Dump Valve", "on": "OPEN", "off": "CLOSED" },
+                        { "mask": 8, "group": "Recovery", "label": "Recovery Servo", "on": "ON", "off": "OFF" },
+                        { "mask": 16, "group": "Recovery", "label": "Linecutter", "on": "ON", "off": "OFF" },
+                        { "mask": 32, "group": "Avionics", "label": "Cameras", "on": "ON", "off": "OFF" }
+                    ]
                 }
             ]
         },
@@ -575,11 +592,15 @@
                 },
                 {
                     "type": "uint16",
-                    "val_name": "eb_temp"
+                    "val_name": "eb_temp",
+                    "unit": "\u00b0C",
+                    "rocket_display": { "group": "Engine", "label": "Computer Temperature", "unit": "°C" }
                 },
                 {
                     "type": "uint16",
-                    "val_name": "mb_temp"
+                    "val_name": "mb_temp",
+                    "unit": "\u00b0C",
+                    "rocket_display": { "group": "Avionics", "label": "Computer Temperature", "unit": "°C" }
                 }
             ]
         },

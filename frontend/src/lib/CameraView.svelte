@@ -18,6 +18,8 @@
   let ptzInterval = null;
   let isRecording = false;
 
+  let showControls = false;
+
   async function probeStream(url, timeoutMs = 2500) {
     const controller = new AbortController();
     probeAbort = controller;
@@ -50,7 +52,7 @@
       let ready = false;
       let attempts = 0;
 
-      while (!ready && attempts < 10) {
+      while (!ready && attempts <= 5) {
         const res = await fetch(streamUrl, {
           method: "GET",
           cache: "no-cache",
@@ -58,7 +60,7 @@
         if (res.status === 200) {
           ready = true;
         } else {
-          console.log("Stream preparing... waiting 1s");
+          console.log(`Stream preparing for ${camera}, attempt: ${attempts}`);
           await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
           attempts++;
         }
@@ -242,174 +244,240 @@
 </script>
 
 <div class="video-container" bind:this={containerEl}>
-  {#if streamUnavailable}
-    <div class="stream-placeholder">
-      <div>Camera {camera} is not available</div>
-      <div class="hint">Stream file not found or server not responding</div>
-    </div>
-  {:else}
-    <video
-      bind:this={videoEl}
-      autoplay
-      muted
-      playsinline
-      controls
-      class:is-recording={isRecording}
-    ></video>
-  {/if}
+  <div class="video-wrapper" class:is-recording={isRecording}>
+    {#if streamUnavailable}
+      <div class="stream-placeholder">
+        <div>Camera <em>{camera}</em> is not available</div>
+        <div class="hint">Stream file not found or server not responding</div>
+      </div>
+    {:else}
+      <video bind:this={videoEl} autoplay muted playsinline controls></video>
+    {/if}
+  </div>
 
-  <div class="controls">
-    <div class="ptz-record-wrapper">
-      <!-- PTZ controls -->
-      {#if hasPTZ}
-        <div class="ptz-controls">
-          <div class="row">
-            <button
-              on:mousedown={() => startPTZ(0, 20)}
-              on:mouseup={stopPTZ}
-              on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, 20)}
-              on:touchend={stopPTZ}>▲</button
-            >
-          </div>
-          <div class="row">
-            <button
-              on:mousedown={() => startPTZ(-20, 0)}
-              on:mouseup={stopPTZ}
-              on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(-20, 0)}
-              on:touchend={stopPTZ}>◀</button
-            >
-            <button on:click={stopPTZ}>■</button>
-            <button
-              on:mousedown={() => startPTZ(20, 0)}
-              on:mouseup={stopPTZ}
-              on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(20, 0)}
-              on:touchend={stopPTZ}>▶</button
-            >
-          </div>
-          <div class="row">
-            <button
-              on:mousedown={() => startPTZ(0, -20)}
-              on:mouseup={stopPTZ}
-              on:mouseleave={stopPTZ}
-              on:touchstart={() => startPTZ(0, -20)}
-              on:touchend={stopPTZ}>▼</button
-            >
-          </div>
-        </div>
-      {:else}
-        <div class="ptz-controls">
-          <div class="row">
-            <button on:click={() => sendPTZ(0, 20)}>▲</button>
-          </div>
-          <div class="row">
-            <button on:click={() => sendPTZ(-20, 0)}>◀</button>
-            <button on:click={() => sendPTZ(0, 0)}>■</button>
-            <button on:click={() => sendPTZ(20, 0)}>▶</button>
-          </div>
-          <div class="row">
-            <button on:click={() => sendPTZ(0, -20)}>▼</button>
-          </div>
-        </div>
-      {/if}
+  <div class="controls-toggle">
+    <button class="toggle-btn" on:click={() => (showControls = !showControls)}>
+      {showControls ? "▲ Hide Controls" : "▼ Show Controls"}
+    </button>
+  </div>
 
-      <!-- Recording buttons (vertical) -->
-      <div class="record-controls">
-        <button
-          class="record-btn"
-          title="Start Recording"
-          on:click={startRecording}>Record</button
-        >
-        <button class="stop-btn" title="Stop Recording" on:click={stopRecording}
-          >Stop</button
-        >
+  {#if showControls}
+    <div class="controls dropdown">
+      <div class="ptz-record-wrapper">
+        {#if hasPTZ}
+          <div class="ptz-controls">
+            <div class="row">
+              <button
+                on:mousedown={() => startPTZ(0, 20)}
+                on:mouseup={stopPTZ}
+                on:mouseleave={stopPTZ}
+                on:touchstart={() => startPTZ(0, 20)}
+                on:touchend={stopPTZ}>▲</button
+              >
+            </div>
+            <div class="row">
+              <button
+                on:mousedown={() => startPTZ(-20, 0)}
+                on:mouseup={stopPTZ}
+                on:mouseleave={stopPTZ}
+                on:touchstart={() => startPTZ(-20, 0)}
+                on:touchend={stopPTZ}>◀</button
+              >
+              <button on:click={stopPTZ}>■</button>
+              <button
+                on:mousedown={() => startPTZ(20, 0)}
+                on:mouseup={stopPTZ}
+                on:mouseleave={stopPTZ}
+                on:touchstart={() => startPTZ(20, 0)}
+                on:touchend={stopPTZ}>▶</button
+              >
+            </div>
+            <div class="row">
+              <button
+                on:mousedown={() => startPTZ(0, -20)}
+                on:mouseup={stopPTZ}
+                on:mouseleave={stopPTZ}
+                on:touchstart={() => startPTZ(0, -20)}
+                on:touchend={stopPTZ}>▼</button
+              >
+            </div>
+          </div>
+        {:else}
+          <div class="ptz-controls">
+            <div class="row">
+              <button on:click={() => sendPTZ(0, 20)}>▲</button>
+            </div>
+            <div class="row">
+              <button on:click={() => sendPTZ(-20, 0)}>◀</button>
+              <button on:click={() => sendPTZ(0, 0)}>■</button>
+              <button on:click={() => sendPTZ(20, 0)}>▶</button>
+            </div>
+            <div class="row">
+              <button on:click={() => sendPTZ(0, -20)}>▼</button>
+            </div>
+          </div>
+        {/if}
+
+        <div class="record-controls">
+          <button
+            class="record-btn"
+            title="Start Recording"
+            on:click={startRecording}>Record</button
+          >
+          <button
+            class="stop-btn"
+            title="Stop Recording"
+            on:click={stopRecording}>Stop</button
+          >
+        </div>
       </div>
     </div>
-  </div>
+  {/if}
 </div>
 
 <style>
   .video-container {
     display: flex;
-    gap: 10px;
-    justify-content: space-evenly;
-    align-items: stretch;
+    flex-direction: column; /* Stack video and controls vertically */
+    align-items: center;
+    width: 100%;
     flex: 1;
+  }
+
+  /* Force 16:9 ratio and handle bounds */
+  .video-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--snd-bg-color);
+    border-radius: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border: 3px solid transparent;
+    box-sizing: border-box;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .video-wrapper.is-recording {
+    border-color: #c41934;
+    animation: recordPulse 2s ease-in-out infinite;
   }
 
   video {
-    flex: 1;
     width: 100%;
     height: 100%;
-    max-width: 640px;
-    background: black;
-    border-radius: 5px;
     object-fit: contain;
-    border: 3px solid transparent;
-    transition: border-color 0.2s ease;
-  }
-
-  video.is-recording {
-    border-color: #c41934;
+    /* No border needed here anymore */
   }
 
   .stream-placeholder {
-    flex: 1;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: #111;
-    color: #eee;
-    border-radius: 5px;
-    padding: 1rem;
+    color: var(--text-color);
     text-align: center;
+    padding: 1rem;
+    box-sizing: border-box;
   }
 
   .stream-placeholder .hint {
     margin-top: 0.5rem;
     font-size: 0.85rem;
-    color: #bbb;
+    color: var(--selection-color);
   }
 
-  .controls {
+  /* Dropdown UI styling */
+  .controls-toggle {
+    width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    margin-top: 20px;
+  }
+
+  .toggle-btn {
+    font-size: 0.9rem;
+    padding: 0.4em 1em;
+    border-radius: 4px;
+    background-color: var(--snd-bg-color, #333);
+    color: var(--text-color, #fff);
+  }
+
+  .controls.dropdown {
+    margin-top: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--snd-bg-color, #222);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    animation: slideDown 0.2s ease-out forwards;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes recordPulse {
+    0% {
+      box-shadow: 0 0 8px rgba(196, 25, 52, 0.6), 
+                  0 0 16px rgba(222, 48, 77, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 16px rgba(196, 25, 52, 1), 
+                  0 0 32px rgba(222, 48, 77, 0.6);
+    }
+    100% {
+      box-shadow: 0 0 8px rgba(196, 25, 52, 0.6), 
+                  0 0 16px rgba(222, 48, 77, 0.3);
+    }
   }
 
   .ptz-record-wrapper {
     display: flex;
-    gap: 50px;
+    gap: 48px;
     align-items: center;
   }
 
   .ptz-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
   }
 
   button {
-    padding: 0.5em 1em;
-    font-size: 1.4em;
+    padding: 0.4em 0.8em;
+    font-size: 1.2em;
     cursor: pointer;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-color);
+    border: 1px solid var(--border-color, #555);
+    background-color: var(--bg-color, #111);
+    color: var(--text-color, #fff);
     transition: background-color 0.2s ease;
   }
 
   button:hover {
-    background-color: var(--nav-hover);
+    background-color: var(--nav-hover, #444);
   }
 
   .record-controls {
@@ -419,24 +487,16 @@
     justify-content: center;
   }
 
-  @media (max-width: 2560px) {
-    video {
-      max-width: 960px;
-    }
+  .record-btn {
+    font-size: 1rem;
+    background-color: #c41934;
+    border-color: #a0142a;
   }
-  @media (max-width: 1920px) {
-    video {
-      max-width: 640px;
-    }
+  .record-btn:hover {
+    background-color: #a0142a;
   }
-  @media (max-width: 1280px) {
-    video {
-      max-width: 480px;
-    }
-  }
-  @media (max-width: 1024px) {
-    video {
-      max-width: 512px;
-    }
+
+  .stop-btn {
+    font-size: 1rem;
   }
 </style>

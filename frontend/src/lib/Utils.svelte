@@ -372,17 +372,15 @@
   export function getStatusString(statusCode) {
     switch (statusCode) {
       case 1:
-        return "STATE_INIT";
+        return "INIT";
       case 2:
-        return "STATE_DISARM";
+        return "DISARMED";
       case 3:
-        return "STATE_ARM";
+        return "ARMED";
       case 4:
-        return "STATE_LAUNCH";
+        return "LAUNCH";
       case 5:
         return "FLIGHT";
-      case 64:
-        return "STATE_ABORT";
       case 6:
         return "APOGEE";
       case 7:
@@ -391,6 +389,8 @@
         return "SECOND_PARACHUTE_ACTIVATION";
       case 9:
         return "SECOND_PARACHUTE_FALL";
+      case 64:
+        return "ABORT";
       default:
         return "UNKNOWN_STATUS";
     }
