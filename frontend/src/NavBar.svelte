@@ -1,13 +1,13 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import { theme } from './js/theme.js';
+  import { theme } from "./js/theme.js";
 
   let currentTheme;
-  theme.subscribe(value => currentTheme = value);
+  theme.subscribe((value) => (currentTheme = value));
 
   function toggleTheme() {
-    theme.update(t => t === 'light' ? 'dark' : 'light');
+    theme.update((t) => (t === "light" ? "dark" : "light"));
   }
 
   const dispatch = createEventDispatcher();
@@ -65,7 +65,7 @@
     };
 
     socket.onopen = () => {
-      // console.log("Connected to server/telemetry");
+      console.log("Connected to server/telemetry");
     };
 
     socket.onclose = (event) => {
@@ -115,8 +115,10 @@
     <!-- <a href="#" class="{currentView === 'simulation' ? 'active' : ''}" on:click|preventDefault={() => navigate("simulation")}
       >Simulation</a
     >  -->
-    <a href="#" class="{currentView === 'cameras' ? 'active' : ''}" on:click|preventDefault={() => navigate("cameras")}
-      >Cameras</a
+    <a
+      href="#"
+      class={currentView === "cameras" ? "active" : ""}
+      on:click|preventDefault={() => navigate("cameras")}>Cameras</a
     >
   </div>
   <div class="navbar-right">
@@ -140,11 +142,15 @@
     <div class="navbar-time">
       {currentTime}
     </div>
-    <div on:click={toggleTheme} class="toggle-container {currentTheme}">
+    <button
+      type="button"
+      on:click={toggleTheme}
+      class="toggle-container {currentTheme}"
+    >
       <span class="icon">🌙</span>
       <span class="icon">☀️</span>
       <div class="circle"></div>
-    </div>
+    </button>
     <button class="reload-button" on:click={reloadPage}>
       <img src="icons/refresh-icon.svg" alt="Reload" class="reload-icon" />
     </button>
@@ -177,7 +183,7 @@
   }
 
   .navbar a {
-     color: var(--text-color);
+    color: var(--text-color);
   }
 
   .navbar-right {
@@ -209,11 +215,12 @@
     background-color: var(--nav-hover);
   }
 
-  .navbar-options .active {
+  /* Make this selector stronger and apply it to hover states too */
+  .navbar-options a.active,
+  .navbar-options a.active:hover {
     background-color: #ff965f;
     color: #181b1f;
   }
-
   .navbar-time {
     font-size: 1.3rem;
     font-weight: 600;
@@ -229,8 +236,6 @@
     display: flex;
     align-items: center;
     font-size: 0.7rem;
-    /* border: 0.05rem solid var(--border-color); */
-    /* border-radius: 1em; */
     width: 150px;
   }
 
@@ -265,7 +270,7 @@
   }
 
   .toggle-container {
-    width: 50px;
+    width: 62px;
     height: 30px;
     background-color: var(--bg-color, #333);
     border-radius: 9999px;
@@ -276,6 +281,10 @@
     justify-content: space-between;
     padding: 0 6px;
     transition: background-color 0.5s ease;
+    border: none;
+    outline: none;
+    margin: 0;
+    box-sizing: border-box;
   }
 
   .theme-icon {
@@ -301,11 +310,7 @@
   .dark .circle {
     left: 33px;
   }
-
-  .active {
-    background-color: var(--selection-color);
-  }
-
+  
   .state-disarmed {
     color: var(--text-color);
   }

@@ -48,27 +48,26 @@ class MavlinkBridge(Node):
         self.master.mav = simba_dialect.MAVLink(self.master)
         self.get_logger().info("Heartbeat received. Waiting for custom messages...")
 
-        self.gs_switches_publisher = self.create_publisher(
-            gs_msgs.TankingCommands, 'tanking/commands', 10)
+        self.gs_switches_publisher = self.create_publisher(gs_msgs.TankingCommands, 'tanking/commands', 10)
         self.get_logger().info("Created publisher for tanking commands")
         
-        self.abort_publisher = self.create_publisher(
-            gs_msgs.TankingAbort, 'tanking/abort', 10)
+        self.abort_publisher = self.create_publisher(gs_msgs.TankingAbort, 'tanking/abort', 10)
         self.get_logger().info("Created publisher for tanking abort")
 
-        self.tare_publisher = self.create_publisher(
-            gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
+        self.tare_publisher = self.create_publisher(gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
         self.get_logger().info("Created publisher for tare commands")
-
-        # self.heartbeat_timer = self.create_timer(1.0, self.send_heartbeat)
-        # self.get_logger().info("Standard Heartbeat timer initialized.")
 
         self._running = True
         self._receiver_thread = None
         self._start_receiver_thread()
 
-        self._control_thread = None
-        self._start_main_loop_thread()
+        self._panel_lock = threading.Lock()
+        
+        self.reader_timer = self.create_timer(0.1, self._read_panel_switches)
+        self.rocket_timer = self.create_timer(1, self._handle_rocket_switches)
+        self.gs_timer = self.create_timer(0.25, self._handle_gs_switches)
+        
+        self.get_logger().info("Timers initialized for Control Panel")
 
     def _start_main_loop_thread(self):
         self._control_thread = threading.Thread(
@@ -84,19 +83,13 @@ class MavlinkBridge(Node):
         self._receiver_thread.start()
         self.get_logger().info("Started MAVLink receiver thread")
 
-    def send_heartbeat(self):
-            """Sends a standard MAVLink HEARTBEAT message."""
-            try:
-                self.master.mav.heartbeat_send(
-                            6, # type: MAV_TYPE_GCS
-                            0, # autopilot: MAV_AUTOPILOT_GENERIC
-                            0, # base_mode
-                            0, # custom_mode
-                            4, # system_status: MAV_STATE_ACTIVE
-                            3  # mavlink_version
-                        )
-            except Exception as e:
-                self.get_logger().error(f"Failed to send heartbeat: {e}")
+    def _read_panel_switches(self):
+        """Dedicated timer callback to safely read control panel switches."""
+        try:
+            with self._panel_lock:
+                self._control_panel_reader.read_switches()
+        except Exception as e:
+            self.get_logger().error(f"Error reading control panel: {e}")
 
     def find_mavlink_connection(self, baudrate=57600, dialect="simba", retry_delay=1):
         while True:
@@ -116,6 +109,8 @@ class MavlinkBridge(Node):
             retry_delay *= 2
             time.sleep(retry_delay)
 
+    # TODO: Do not create topics for messages that are not included in config.json 
+    # (eg. GS_HEARTBEAT, ACTUATOR_CMD)
     def create_publishers_from_xml(self, xml_path):
         publishers = {}
         tree = ET.parse(xml_path)
@@ -124,10 +119,6 @@ class MavlinkBridge(Node):
         for message in root.findall(".//message"):
             msg_name = utils.convert_message_name(message.get("name"))
             self.get_logger().info(f"Processing message: {msg_name}")
-
-            # if "Cmd" in msg_name:
-            #     self.get_logger().info(f"Skipping command message: {msg_name}")
-            #     continue
 
             topic_name = f"mavlink/{message.get('name').lower()}"
             ros_msg_type = getattr(gs_msgs, msg_name, None)
@@ -207,32 +198,12 @@ class MavlinkBridge(Node):
             self.get_logger().info(
                 f"Published ROS2 message on topic: {msg_type}")
 
-    def _main_loop(self):
-        """
-        Background thread that reads switches and sends commands.
-        """
-        self.get_logger().info("Control panel handler thread running")
-
-        while self._running and rclpy.ok():
-            try:
-                switch_states = self._control_panel_reader.read_switches()
-                if not switch_states:
-                    time.sleep(0.1)
-                    continue
-                
-                self._handle_rocket_switches()
-                self._handle_gs_switches()
-                time.sleep(0.25)
-
-            except Exception as e:
-                self.get_logger().error(f"Error in control panel thread: {e}")
-                time.sleep(0.5)  # Longer delay after error
-
     def _handle_rocket_switches(self):
         try:
-            rocket_switches = self._control_panel_reader.get_rocket_actions();
+            with self._panel_lock:
+                rocket_switches = self._control_panel_reader.get_rocket_actions()
 
-            if rocket_switches is None:
+            if not rocket_switches:
                 return
 
             # ARM / DISARM is a unique case in here
@@ -255,18 +226,17 @@ class MavlinkBridge(Node):
                 int(time.time() * 1000),
                 flags
             )
-            # print(f"MAVLink Flags: {flags:08b}")
 
         except Exception as e:
             self.get_logger().error(f"Error handling ROCKET switches: {e}")
 
 
     def _handle_gs_switches(self):
-        
         try:
-            gs_switches = self._control_panel_reader.get_gs_actions()
+            with self._panel_lock:
+                gs_switches = self._control_panel_reader.get_gs_actions()
 
-            if gs_switches is None:
+            if not gs_switches:
                 return
         
             tank_msg = gs_msgs.TankingCommands()
@@ -310,9 +280,6 @@ class MavlinkBridge(Node):
 
         if self._receiver_thread and self._receiver_thread.is_alive():
             self._receiver_thread.join(timeout=3.0)
-
-        if self._control_thread and self._control_thread.is_alive():
-            self._control_thread.join(timeout=3.0)
 
         if hasattr(self, 'master') and self.master:
             self.master.close()

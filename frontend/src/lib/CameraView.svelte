@@ -52,7 +52,7 @@
       let ready = false;
       let attempts = 0;
 
-      while (!ready && attempts < 10) {
+      while (!ready && attempts <= 5) {
         const res = await fetch(streamUrl, {
           method: "GET",
           cache: "no-cache",
@@ -60,7 +60,7 @@
         if (res.status === 200) {
           ready = true;
         } else {
-          console.log("Stream preparing... waiting 1s");
+          console.log(`Stream preparing for ${camera}, attempt: ${attempts}`);
           await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
           attempts++;
         }
@@ -247,7 +247,7 @@
   <div class="video-wrapper" class:is-recording={isRecording}>
     {#if streamUnavailable}
       <div class="stream-placeholder">
-        <div>Camera {camera} is not available</div>
+        <div>Camera <em>{camera}</em> is not available</div>
         <div class="hint">Stream file not found or server not responding</div>
       </div>
     {:else}

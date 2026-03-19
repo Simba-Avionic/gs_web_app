@@ -11,19 +11,6 @@
 
   $: relevantTopics = [...new Set(fieldConfigs.map((config) => config.topic))];
 
-  // NEW: Pre-populate the UI with "---" so the fields appear before data arrives
-  // $: if (fieldConfigs.length > 0 && Object.keys(extractedData).length === 0) {
-  //   let initialData = {};
-  //   fieldConfigs.forEach((config) => {
-  //     initialData[config.label] = {
-  //       value: "---",
-  //       display: config.label,
-  //       unit: config.unit || "",
-  //     };
-  //   });
-  //   extractedData = initialData;
-  // }
-
   function processData(topicName, data) {
     const topicConfigs = fieldConfigs.filter((c) => c.topic === topicName);
 
@@ -50,7 +37,7 @@
       }
     }
 
-    // TRIGGER SVELTE REACTIVITY HERE
+    // TRIGGER SVELTE REACTIVITY
     extractedData = { ...extractedData };
   }
 </script>
@@ -66,7 +53,6 @@
     // Handle status changes if needed
   }}
 >
-  <!-- Custom content inside the expanded panel -->
   <div class="fields-column">
     {#each Object.entries(extractedData) as [label, fieldInfo]}
       <div class="field-value">

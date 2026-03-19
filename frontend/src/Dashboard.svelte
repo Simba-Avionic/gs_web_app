@@ -353,14 +353,6 @@
     gap: 0.5rem;
   }
 
-  #status-container > * {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
   #status-container :global(svg) {
     width: 100%;
     height: 100%;

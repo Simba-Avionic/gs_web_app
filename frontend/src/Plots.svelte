@@ -293,7 +293,7 @@
     flex-shrink: 0;
     direction: rtl;
     overflow-y: auto;
-    max-height: 100vh;
+    max-height: calc(100vh - var(--navbar-height));
     width: 250px;
     background: var(--snd-bg-color);
     border-right: 1px solid #333;
