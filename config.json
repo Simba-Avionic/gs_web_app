@@ -21,7 +21,6 @@
                     "type": "float32",
                     "val_name": "combined_raw_mass_kg",
                     "alt_name": "Combined Mass",
-                    "display": "value",
                     "range": [
                         0,
                         20
@@ -106,7 +105,6 @@
                     "val_name": "valve_feed_oxidizer",
                     "alt_name": "OX Feed Position",
                     "unit": "%",
-                    "display": "value",
                     "range": [
                         0,
                         100
@@ -121,24 +119,20 @@
                 {
                     "type": "bool",
                     "val_name": "valve_vent_oxidizer",
-                    "display": "status",
                     "controls": "valve_vent_oxidizer_txt"
                 },
                 {
                     "type": "bool",
-                    "val_name": "valve_vent_pressurizer",
-                    "display": "status"
+                    "val_name": "valve_vent_pressurizer"
                 },
                 {
                     "type": "bool",
                     "val_name": "decoupler_oxidizer",
-                    "display": "status",
                     "controls": "decoupler_oxidizer"
                 },
                 {
                     "type": "bool",
-                    "val_name": "decoupler_pressurizer",
-                    "display": "status"
+                    "val_name": "decoupler_pressurizer"
                 }
             ]
         },
@@ -322,7 +316,7 @@
                     "unit": "bar",
                     "range": [
                         0,
-                        100
+                        50
                     ],
                     "display": "value"
                 },
@@ -431,14 +425,16 @@
                 {
                     "type": "uint16",
                     "val_name": "pressure",
+                    "alt_name": "Tank Pressure",
                     "unit": "bar",
                     "range": [
                         0,
-                        100
+                        50
                     ],
                     "transform": {"scale": 0.01, "offset": 0},
                     "running_avg": 3,
-                    "rocket_display": { "group": "Tank Sensors", "label": "Pressure" }
+                    "rocket_display": { "group": "Tank Sensors", "label": "Pressure" },
+                    "display": "value"
                 }
             ]
         },
@@ -558,11 +554,17 @@
                 {
                     "type": "uint8",
                     "val_name": "flight_computer_state",
+                    "alt_name": "Flight Computer State",
+                    "display": "status",
+                    "range": [1, 9],
                     "rocket_display": { "group": "Avionics", "label": "State", "format": "status" }
                 },
                 {
                     "type": "uint8",
                     "val_name": "engine_computer_state",
+                    "alt_name": "Engine Computer State",
+                    "display": "status",
+                    "range": [1, 9],
                     "rocket_display": { "group": "Engine", "label": "State", "format": "status" }
                 },
                 {

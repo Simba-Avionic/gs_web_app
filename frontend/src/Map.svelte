@@ -106,8 +106,8 @@
             try {
                 gpsData = JSON.parse(event.data);
                 if (
-                    gpsData !== "None" &&
                     gpsData !== null &&
+                    gpsData !== undefined &&
                     gpsData.lat &&
                     gpsData.lon
                 ) {

@@ -15,7 +15,7 @@ export default defineConfig({
   define: {
     'process.env.IP_ADDRESS': JSON.stringify(process.env.IP_ADDRESS),
     'process.env.SERVER_PORT': JSON.stringify(process.env.SERVER_PORT),
-    'process.env.TIMEZONE': JSON.stringify(process.env.TIMEZONE),
+    'process.env.VITE_TIMEZONE': JSON.stringify(process.env.TIMEZONE),
   },
   plugins: [
     svelte(),

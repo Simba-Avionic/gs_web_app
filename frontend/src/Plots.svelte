@@ -20,6 +20,32 @@
   let error = null;
   let loading = true;
 
+  let searchQuery = "";
+
+  $: filteredTopics = topics.filter((topic) => {
+    const query = searchQuery.toLowerCase();
+
+    const typeMatches = topic.msg_type.toLowerCase().includes(query);
+
+    const fieldMatches = topic.msg_fields.some((field) => {
+      const nameMatch = (field.alt_name || field.val_name)
+        .toLowerCase()
+        .includes(query);
+
+      let nestedMatch = false;
+      if (field.msg_def) {
+        const nestedFields = getNestedFields(field.msg_def);
+        nestedMatch = nestedFields.some((nf) =>
+          (nf.alt_name || nf.val_name).toLowerCase().includes(query),
+        );
+      }
+
+      return nameMatch || nestedMatch;
+    });
+
+    return typeMatches || fieldMatches;
+  });
+
   let currentTheme;
   theme.subscribe((v) => (currentTheme = v));
 
@@ -36,9 +62,7 @@
   }
 
   function generateId() {
-    return (
-      Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-    );
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
   function getNestedFields(msgDef) {
@@ -77,12 +101,18 @@
       console.log(msg_defs);
 
       topics.forEach((topic) => {
-        const ws = new WebSocket(`ws://${window.location.host}/${topic.topic_name}`);
+        const ws = new WebSocket(
+          `ws://${window.location.host}/${topic.topic_name}`,
+        );
         sockets.push(ws);
 
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          if (data !== "None" && data !== null && data !== undefined) {
+          if (
+            data !== null &&
+            data !== undefined &&
+            data.status !== "timeout"
+          ) {
             updateTopicStatus(topic.topic_name, "green");
           } else {
             updateTopicStatus(topic.topic_name, "red");
@@ -116,7 +146,7 @@
       p.val_name === f.val_name &&
       p.msg_type === f.msg_type &&
       p.topic === f.topic &&
-      ( (p.parent ?? null) === (f.parent ?? null) );
+      (p.parent ?? null) === (f.parent ?? null);
 
     if (!plots.find((p) => same(p, field))) {
       if (plots.length < 6) {
@@ -150,7 +180,20 @@
 {:else}
   <div class="container">
     <nav class="msg-type-list" aria-label="Message Types">
-      {#each topics as topic (topic.id)}
+      <div class="search-container">
+        <input
+          type="text"
+          placeholder="Search messages..."
+          bind:value={searchQuery}
+          class="search-input"
+        />
+      </div>
+
+      {#if filteredTopics.length === 0 && !loading}
+        <p class="no-results">No matches found</p>
+      {/if}
+
+      {#each filteredTopics as topic (topic.id)}
         <div class="msg-type-item">
           <button
             class="msg-type-button {expandedMsgType === topic.msg_type
@@ -169,7 +212,6 @@
               ></div>
               <span>{topic.msg_type}</span>
             </div>
-
             <span
               class="arrow {expandedMsgType === topic.msg_type
                 ? 'expanded'
@@ -251,18 +293,17 @@
         </div>
       {/each}
     </nav>
-
     <main class="plots-grid" aria-label="Plots Grid">
       {#if plots.length === 0}
         <p>Select fields from the list to plot.</p>
       {:else}
         {#each plots as field (field.id)}
-          <div animate:flip={{ duration: 320, easing: cubicOut }} in:scale={{ duration: 220, start: 0.95 }} out:fade={{ duration: 180 }}>
-            <Plot
-              {field}
-              time_range={1}
-              onRemove={() => removePlot(field.id)}
-            />
+          <div
+            animate:flip={{ duration: 320, easing: cubicOut }}
+            in:scale={{ duration: 220, start: 0.95 }}
+            out:fade={{ duration: 180 }}
+          >
+            <Plot {field} onRemove={() => removePlot(field.id)} />
           </div>
         {/each}
       {/if}
@@ -271,6 +312,46 @@
 {/if}
 
 <style>
+  .search-container {
+    direction: ltr;
+    position: sticky;
+    top: -0.5rem; /* Aligns with the nav padding */
+    background: var(--snd-bg-color); /* Matches sidebar background */
+    padding: 0.5rem;
+    margin-bottom: 0.8rem;
+    z-index: 100;
+    border-bottom: 1px solid #333;
+  }
+
+  .search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.85rem;
+    outline: none;
+
+    transition:
+      border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .search-input:focus {
+    border-color: #ff965f;
+    box-shadow: 0 0 0 2px rgba(255, 150, 95, 0.1);
+  }
+
+  .no-results {
+    direction: ltr;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 1rem;
+  }
   .container {
     display: flex;
     flex-direction: row;
@@ -294,7 +375,7 @@
     direction: rtl;
     overflow-y: auto;
     max-height: calc(100vh - var(--navbar-height));
-    width: 250px;
+    width: 230px;
     background: var(--snd-bg-color);
     border-right: 1px solid #333;
     padding: 0.5rem;

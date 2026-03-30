@@ -156,9 +156,12 @@
 
       if (svgId == "oxidizer_liquid") {
         const OXTank = svg.getElementById("tank_oxidizer");
-        const visualMaxHeight = parseFloat(OXTank.getAttribute("height"));
+
+        const visualMaxHeight = OXTank.getBBox().height;
+
         const dataMax = config.controls[0].range[1];
         let newHeight = (value / dataMax) * visualMaxHeight;
+
         svgElem.setAttribute(
           "height",
           Math.min(Math.max(newHeight, 0), visualMaxHeight),
@@ -172,7 +175,7 @@
           else if (n >= 5) label = `OPENED ${Math.round(n)}%`;
           else label = `${Math.round(n)}%`;
         } else {
-          label = String(value);
+          label = value !== undefined && value !== null ? String(value) : "";
         }
         const txtEl = svg.getElementById("valve_feed_oxidizer_txt");
         if (txtEl) {
@@ -185,7 +188,7 @@
           if (n == 0) label = `CLOSED`;
           else if (n == 1) label = `OPENED`;
         } else {
-          label = String(value);
+          label = value !== undefined && value !== null ? String(value) : "";
         }
         const txtEl = svg.getElementById("valve_vent_oxidizer_txt");
         if (txtEl) {
@@ -196,7 +199,7 @@
   }
 
   onMount(async () => {
-    svgContent = await fetchSVG("/images/gs.svg");
+    svgContent = await fetchSVG("/images/r7.svg");
     topics = await fetchConfig(window.location.host);
 
     // Build a temporary object first
@@ -243,7 +246,7 @@
 
     statusItems = topics.flatMap((topic) =>
       topic.msg_fields
-        .filter((f) => ["gauge", "status", "value"].includes(f.display))
+        .filter((f) => ["status", "value"].includes(f.display))
         .map((f) => ({
           id: `${topic.topic_name}_${f.val_name}`,
           topic: topic.topic_name,
@@ -295,40 +298,47 @@
 </script>
 
 <div id="layout-container">
-  <!-- Status, Gauge, Value -->
   <div id="status-container">
     {#each statusItems as item (item.id)}
-      {#if item.type === "value"}
         <GaugeField {item} />
-      {/if}
     {/each}
-    <!-- {#each statusItems as item (item.id)}
-      {#if item.type === "status"}
-        <StatusField {host} {item} />
-      {/if}
-    {/each} -->
   </div>
 
   <div id="svg-container">
     {@html svgContent}
   </div>
 
-<div id="rocket-info">
+  <div id="rocket-info">
     {#if Object.keys(rocketGroups).length > 0}
       <div class="rocket-item" id="recovery">
-        <RocketField title="Recovery" fieldConfigs={rocketGroups['Recovery'] || []} />
+        <RocketField
+          title="Recovery"
+          fieldConfigs={rocketGroups["Recovery"] || []}
+        />
       </div>
       <div class="rocket-item" id="avionics">
-        <RocketField title="Avionics" fieldConfigs={rocketGroups['Avionics'] || []} />
+        <RocketField
+          title="Avionics"
+          fieldConfigs={rocketGroups["Avionics"] || []}
+        />
       </div>
       <div class="rocket-item" id="tank_sensors">
-        <RocketField title="Tank Sensors" fieldConfigs={rocketGroups['Tank Sensors'] || []} />
+        <RocketField
+          title="Tank Sensors"
+          fieldConfigs={rocketGroups["Tank Sensors"] || []}
+        />
       </div>
       <div class="rocket-item" id="tank_actuators">
-        <RocketField title="Tank Actuators" fieldConfigs={rocketGroups['Tank Actuators'] || []} />
+        <RocketField
+          title="Tank Actuators"
+          fieldConfigs={rocketGroups["Tank Actuators"] || []}
+        />
       </div>
       <div class="rocket-item" id="engine">
-        <RocketField title="Engine" fieldConfigs={rocketGroups['Engine'] || []} />
+        <RocketField
+          title="Engine"
+          fieldConfigs={rocketGroups["Engine"] || []}
+        />
       </div>
     {/if}
   </div>
@@ -336,34 +346,28 @@
 
 <style>
   #layout-container {
-    display: grid;
-    grid-template-columns: 35% 30% 35%;
-    grid-template-areas: "gs svg rocket";
-    /* gap: 1rem; */
+    display: flex;
+    justify-content: space-between;
+    position: relative;
     padding: 1rem;
     margin-top: var(--navbar-height);
     height: calc(100vh - var(--navbar-height));
     box-sizing: border-box;
-  }
-
-  #status-container {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(140px, 1fr));
-    grid-template-rows: repeat(3, 1fr);
-    gap: 0.5rem;
-  }
-
-  #status-container :global(svg) {
-    width: 100%;
-    height: 100%;
+    z-index: 1;
   }
 
   #svg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    user-select: none;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    height: 100%;
     overflow: hidden;
   }
 
@@ -373,15 +377,28 @@
     max-height: 100%;
   }
 
+  #status-container :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  #status-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+    grid-template-rows: repeat(3, 1fr);
+    width: 40%; /* Decide exactly how much screen width the gauges get */
+    z-index: 10;
+  }
+
   #rocket-info {
-    grid-area: rocket;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 0 1rem;
     border-radius: 0.75rem;
     max-height: 100%;
-    margin-left: 1.5rem;
+    width: 30%;
+    z-index: 10;
   }
 
   .rocket-item {
@@ -398,13 +415,19 @@
     }
   }
 
+  @media (min-width: 1280px) {
+    #status-container {
+      gap: 0.5rem;
+    }
+  }
+
   @media (min-width: 1920px) {
     #rocket-info {
       gap: 1rem;
     }
     #status-container {
-      gap: 3rem;
-      padding: 3rem;
+      gap: 1rem;
+      padding: 1rem;
     }
   }
 
@@ -412,10 +435,6 @@
     #rocket-info {
       gap: 0.8rem;
       padding: 0.5rem;
-    }
-
-    #layout-container {
-      grid-template-columns: 40% 30% 30%;
     }
 
     .rocket-item {

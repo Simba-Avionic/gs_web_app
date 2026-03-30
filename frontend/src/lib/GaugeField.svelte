@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { subscribeToTopic } from "../js/ws_manager.js";
+  import { getStateString } from "./Utils.svelte";
   import Gauge from "svelte-gauge";
 
   export let item;
@@ -9,6 +10,19 @@
 
   let value = null;
   let titleEl;
+
+  $: isOutOfRange =
+    item.range &&
+    value !== null &&
+    value !== undefined &&
+    (value < item.range[0] || value > item.range[1]);
+
+  $: gaugeColor =
+    value === null || value === undefined
+      ? "#c41934" // Red: No data
+      : isOutOfRange
+        ? "#fa6400" // Orange: Status is out of range
+        : "#388729"; // Green: Normal / In range
 
   function generateTicks(range) {
     const [min, max] = range;
@@ -30,7 +44,10 @@
   });
 </script>
 
-<div class="gauge-container" class:no-data={value === null || value === "None"}>
+<div
+  class="gauge-container"
+  class:no-data={value === null || value === undefined}
+>
   <div class="gauge-title">
     <span bind:this={titleEl}>
       {item.title}
@@ -42,20 +59,28 @@
     stop={item.range ? item.range[1] : 100}
     stroke={10}
     labels={item.range ? generateTicks(item.range) : []}
-    color={value !== null ? "#388729" : "#c41934"}
+    color={gaugeColor}
     segments={item.range ? [item.range] : [[0, 100]]}
-    startAngle={60}
-    stopAngle={300}
+    startAngle={item.type === "status" ? 90 : 60}
+    stopAngle={item.type === "status" ? 270 : 300}
   >
-    <div class="gauge-content">
-      <span>
-        {typeof value === "number"
-          ? Number.isInteger(value)
-            ? value
-            : value.toFixed(1)
-          : (value ?? "---")}
-        {item.unit}
-      </span>
+    <div class="gauge-content" class:is-status={item.type === "status"}>
+      {#if item.type === "status"}
+        <span class="status-text">
+          {value !== null && value !== undefined
+            ? getStateString(value).replace(/_/g, "\n")
+            : "---"}
+        </span>
+      {:else}
+        <span>
+          {typeof value === "number"
+            ? Number.isInteger(value)
+              ? value
+              : value.toFixed(1)
+            : (value ?? "---")}
+          {item.unit ?? ""}
+        </span>
+      {/if}
     </div>
   </Gauge>
 </div>
@@ -68,17 +93,27 @@
     white-space: nowrap;
     overflow: hidden;
     position: relative;
+    font-weight: bold;
   }
 
   .gauge-container {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    transition: opacity 0.4s ease-in-out;
+  }
+
+  .gauge-container.no-data {
+    opacity: 0.6;
   }
 
   .gauge-container :global(svg) {
     max-width: 100%;
     max-height: 100%;
+  }
+
+  .gauge-container :global(svg path) {
+    transition: stroke 0.4s ease-in-out;
   }
 
   .gauge-container :global(.gauge-slot-container) {
@@ -95,11 +130,11 @@
     font-weight: bold;
   }
 
-  .gauge-container.no-data {
-    opacity: 0.6;
-  }
-
-  .gauge-container {
-    transition: opacity 0.4s ease-in-out;
+  .status-text {
+    white-space: pre-line;
+    display: block;
+    text-align: center;
+    line-height: 1.2;
+    font-size: 0.95em;
   }
 </style>

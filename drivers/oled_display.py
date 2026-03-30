@@ -1,12 +1,10 @@
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 from luma.oled.device import sh1106
-from PIL import ImageFont
-import socket
+from loguru import logger
 import subprocess
 import time
 
-import netifaces
 
 def get_systemd_boot_info():
     try:
@@ -26,7 +24,7 @@ def get_device():
             device = sh1106(serial, rotate=2)
             return device
         except Exception as e:
-            print(f"OLED connection attempt {i+1} failed: {e}")
+            logger.warning(f"OLED connection attempt {i+1} failed: {e}")
             time.sleep(3)
     return None
 
@@ -63,7 +61,7 @@ device = get_device()
 boot_time = None
 
 if device is None:
-    print("Could not initialize OLED after multiple attempts. Exiting.")
+    logger.error("Could not initialize OLED after multiple attempts. Exiting.")
     exit(1)
 
 
