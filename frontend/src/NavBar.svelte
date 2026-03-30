@@ -58,7 +58,7 @@
 
     socket.onmessage = (event) => {
       temp = JSON.parse(event.data);
-      if (temp !== "None" && temp !== null && temp !== undefined) {
+      if (temp !== null && temp !== undefined && temp.status !== "timeout") {
         telem_data = temp;
       }
       dispatch("telemetryChange", telem_data);
@@ -311,44 +311,6 @@
     left: 33px;
   }
   
-  .state-disarmed {
-    color: var(--text-color);
-  }
-
-  .state-armed {
-    font-weight: bold;
-
-    background: linear-gradient(45deg, #fa6400, #ff9830, #ff7809, #feb356);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientAnimation 1s ease infinite;
-  }
-
-  .state-ignition {
-    font-weight: bold;
-
-    background: linear-gradient(45deg, #388729, #5aa54b, #99d88d, #caf2c2);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientAnimation 1s ease infinite;
-  }
-
-  .state-aborted {
-    font-weight: bold;
-
-    background: linear-gradient(45deg, #c41934, #de304d, #f24865);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientAnimation 1s ease infinite;
-  }
-
-  .state-unknown {
-    color: #999999;
-  }
-
   @keyframes gradientAnimation {
     0% {
       background-position: 0% 50%;

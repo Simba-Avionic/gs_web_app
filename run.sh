@@ -131,7 +131,7 @@ function run_db() {
 function build_app() {
     echo "Starting app (npm run build)..."
     cd frontend || exit
-    npm run build
+    npm run dev
     cd ..
 }
 

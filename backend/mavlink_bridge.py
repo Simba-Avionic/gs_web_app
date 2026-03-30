@@ -25,6 +25,8 @@ except ImportError as e:
     print(f"Structure Error: {e}")
     sys.exit(1)
 
+BURST_COUNT = 5
+BURST_INTERVAL = 0.02  # 20ms between messages in a burst
 
 class MavlinkBridge(Node):
 
@@ -57,6 +59,7 @@ class MavlinkBridge(Node):
         self.tare_publisher = self.create_publisher(gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
         self.get_logger().info("Created publisher for tare commands")
 
+        self._last_rocket_flags = None
         self._running = True
         self._receiver_thread = None
         self._start_receiver_thread()
@@ -96,15 +99,15 @@ class MavlinkBridge(Node):
             ports = serial.tools.list_ports.comports()
             for port in ports:
                 try:
-                    print(f"Trying port: {port.device}")
+                    self.get_logger.info(f"Trying port: {port.device}")
                     conn = mavutil.mavlink_connection(
                         port.device, baud=baudrate, dialect=dialect)
                     # conn.wait_heartbeat(timeout=timeout)
-                    print(f"MAVLink heartbeat received on {port.device}")
+                    self.get_logger.info(f"MAVLink heartbeat received on {port.device}")
                     return conn
                 except Exception as e:
-                    print(f"Failed on {port.device}: {e}")
-            print(
+                    self.get_logger.error(f"Failed on {port.device}: {e}")
+            self.get_logger.info(
                 f"No MAVLink device found. Retrying in {retry_delay} seconds...")
             retry_delay *= 2
             time.sleep(retry_delay)
@@ -222,10 +225,26 @@ class MavlinkBridge(Node):
                 if bool(rocket_switches.get(key, 0)):
                     flags |= bit_val
 
-            self.master.mav.simba_gs_heartbeat_send(
-                int(time.time() * 1000),
-                flags
-            )
+            # Initialize on first run to prevent an immediate burst on startup
+            if self._last_rocket_flags is None:
+                self._last_rocket_flags = flags
+
+            if flags != self._last_rocket_flags:
+                self.get_logger().info(f"State change detected! Bursting 5 messages. Flags: {flags}")
+                
+                for _ in range(BURST_COUNT):
+                    self.master.mav.simba_gs_heartbeat_send(
+                        int(time.time() * 1000),
+                        flags
+                    )
+                    time.sleep(BURST_INTERVAL)
+                
+                self._last_rocket_flags = flags
+            else:
+                self.master.mav.simba_gs_heartbeat_send(
+                    int(time.time() * 1000),
+                    flags
+                )
 
         except Exception as e:
             self.get_logger().error(f"Error handling ROCKET switches: {e}")

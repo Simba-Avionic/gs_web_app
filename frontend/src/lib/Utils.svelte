@@ -23,7 +23,7 @@
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      timeZone: "UTC",
+      timeZone: import.meta.env.VITE_TIMEZONE
     };
 
     // @ts-ignore
@@ -369,7 +369,7 @@
     }
   }
 
-  export function getStatusString(statusCode) {
+  export function getStateString(statusCode) {
     switch (statusCode) {
       case 1:
         return "INIT";
@@ -392,7 +392,7 @@
       case 64:
         return "ABORT";
       default:
-        return "UNKNOWN_STATUS";
+        return "UNKNOWN_STATE";
     }
   }
 

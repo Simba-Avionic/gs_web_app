@@ -1,6 +1,7 @@
 import serial
 import glob
 import time
+from loguru import logger
 
 class ControlPanelReader:
 
@@ -33,7 +34,7 @@ class ControlPanelReader:
 
         if port:
             self.ser = serial.Serial(port, baudrate)
-            print(f"Using specified Control Panel port: {port} | baud: {baudrate}")
+            logger.info(f"Using specified Control Panel port: {port} | baud: {baudrate}")
         else:
             self.scan_and_connect()
 
@@ -43,11 +44,11 @@ class ControlPanelReader:
         if not available_ports:
             raise serial.SerialException("No serial ports found")
 
-        print(f"Found {len(available_ports)} potential serial ports")
+        logger.info(f"Found {len(available_ports)} potential serial ports")
 
         for port in available_ports:
             try:
-                print(f"Trying port {port}...")
+                logger.info(f"Trying port {port}...")
                 test_ser = serial.Serial(port, self.baudrate, timeout=0.1)
                 time.sleep(1)  # Allow time for Arduino reset after connection
 
@@ -58,7 +59,7 @@ class ControlPanelReader:
                             # Validate data format (expecting uint16_t in decimal form)
                             val = int(raw)
                             if 0 <= val <= 65535:
-                                print(f"Found active control panel on {port}: {val}")
+                                logger.info(f"Found active control panel on {port}: {val}")
                                 self.ser = test_ser
                                 return
                         except ValueError:
@@ -69,8 +70,9 @@ class ControlPanelReader:
                 test_ser.close()
 
             except (serial.SerialException, OSError) as e:
-                print(f"Error on port {port}: {e}")
-        print("Couldn't find a control panel port!!!")
+                logger.error(f"Error on port {port}: {e}")
+        
+        logger.warning("Couldn't find a control panel port!")
 
     def read_switches(self):
         """
@@ -98,7 +100,7 @@ class ControlPanelReader:
 
             return actions
         except Exception as e:
-            print(f"Error reading switches: {e}")
+            logger.error(f"Error reading switches: {e}")
             return actions
 
     def get_rocket_actions(self):
@@ -140,10 +142,10 @@ if __name__ == "__main__":
     reader = ControlPanelReader("/dev/ttyACM1", baudrate=57600)
     try:
         while True:
-            print(reader.read_switches())
+            logger.debug(reader.read_switches())
             time.sleep(0.1)
     except KeyboardInterrupt:
-        print("Exiting...")
+        logger.info("Exiting...")
     finally:
         reader.close()
         pass

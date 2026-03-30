@@ -22,7 +22,7 @@
   });
 </script>
 
-<div class="status-field" class:no-data={value === null || value === "None"}>
+<div class="status-field" class:no-data={value === null || value === undefined}>
   <div class="title">{item.title}</div>
   <div class="value">{value ?? "—"}</div>
 </div>

@@ -11,7 +11,7 @@
   let currentView = 'dashboard';
   const ip = process.env.IP_ADDRESS;
   const port = process.env.SERVER_PORT || 2137;
-  const timezone = process.env.TIMEZONE || 'UTC';
+  const timezone = import.meta.env.VITE_TIMEZONE;
 
   // const host = window.location.host;
 

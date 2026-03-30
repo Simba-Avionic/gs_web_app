@@ -17,6 +17,7 @@ from database.influx_client import (
 
 # The time after we mark topic as dead / inactive
 TIMEOUT_THRESHOLD = 5
+BROADCAST_INTERVAL = 1  # seconds
 
 class NodeHandler(Node):
 
@@ -48,6 +49,7 @@ class NodeHandler(Node):
 
         self.connected_clients = set()
         self.curr_msg = None
+        self.broadcast_task = None
 
     def msg_callback(self, msg):
         now = datetime.now(timezone.utc)
@@ -60,13 +62,6 @@ class NodeHandler(Node):
 
         # Apply transformations & running averages
         self.curr_msg = self.apply_transform(self.msg_type, raw_dict)
-
-        # Schedule websocket broadcast on FastAPI loop (non-blocking)
-        if self.app_loop is not None:
-            try:
-                asyncio.run_coroutine_threadsafe(self.broadcast_message(self.curr_msg), self.app_loop)
-            except Exception as e:
-                logger.warning(f"Failed to schedule broadcast on app loop: {e}")
 
         # Enqueue for Influx writing (writer thread will call insert_data)
         if self.write_queue is not None:
@@ -111,26 +106,41 @@ class NodeHandler(Node):
         
         return msg_dict
 
+    async def broadcast_loop(self):
+        while True:
+            await asyncio.sleep(BROADCAST_INTERVAL)
+            
+            # If no clients or no data, do nothing and sleep again
+            if not self.connected_clients or not self.curr_msg:
+                continue
+                
+            try:
+                stamp_sec = int(self.curr_msg.get('header', {}).get('stamp', {}).get('sec', 0))
+                
+                if (time.time() - stamp_sec) > TIMEOUT_THRESHOLD:
+                    await self.broadcast_message({"status": "timeout", "msg": "Topic inactive"})
+                else:
+                    await self.broadcast_message(self.curr_msg)
+                    
+            except Exception as e:
+                logger.error(f"Error in broadcast loop for {self.topic_name}: {e}")
+
     async def websocket_endpoint(self, ws: WebSocket):
             await ws.accept()
             self.connected_clients.add(ws)
             logger.info(f"Client connected to {self.topic_name}. Total: {len(self.connected_clients)}")
+            
+            if self.broadcast_task is None or self.broadcast_task.done():
+                self.broadcast_task = asyncio.create_task(self.broadcast_loop())
+                logger.info(f"Started broadcast loop for {self.topic_name}")
+
             try:
                 while True:
-                    await asyncio.sleep(1) 
-                    
-                    if self.curr_msg:
-                        try:
-                            stamp_sec = int(self.curr_msg.get('header', {}).get('stamp', {}).get('sec', 0))
-                            if (time.time() - stamp_sec) > TIMEOUT_THRESHOLD:
-                                await ws.send_json({"status": "timeout", "msg": "Topic inactive"})
-                        except Exception:
-                            pass
+                    await ws.receive_text() 
             except Exception as e:
                 logger.debug(f"WebSocket on {self.topic_name} closed: {e}")
             finally:
-                if ws in self.connected_clients:
-                    self.connected_clients.remove(ws)
+                self.connected_clients.discard(ws)
 
     async def broadcast_message(self, message):
         for client in list(self.connected_clients):
@@ -161,7 +171,7 @@ class NodeHandler(Node):
     async def query(
         self,
         field_name: str = Query(..., description="Field key to query"),
-        time_range: int = Query(1, ge=1, le=10),
+        time_range: int = Query(1, ge=1, le=300),
     ):
         # Keep existing query behavior (uses Flux or refactor to InfluxQL in generator)
         flux_query = f'''

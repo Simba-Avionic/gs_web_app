@@ -13,7 +13,7 @@ export function getPlotLayout(field) {
     const isBool = field.type === "bool";
 
     return {
-        margin: { t: 10, b: 30, l: 0, r: 0 },
+        margin: { t: 10, b: 30, l: 20, r: 20 }, 
         title: "",
         xaxis: {
             title: "Time",
@@ -26,14 +26,10 @@ export function getPlotLayout(field) {
         },
         yaxis: isBool
             ? {
-                title: {
-                    text: field.alt_name || field.val_name,
-                    standoff: 20,
-                    font: { size: 13 },
-                },
                 tickvals: [0, 1],
                 ticktext: ["False", "True"],
                 tickfont: { size: 10 },
+                range: [-0.1, 1.1],
                 autorange: false,
                 showgrid: true,
                 zeroline: false,
@@ -41,19 +37,12 @@ export function getPlotLayout(field) {
                 gridcolor: cssVar("--nav-active"),
             }
             : {
-                title: {
-                    text: `${field.alt_name || field.val_name} ${field.unit ? `(${field.unit})` : ""
-                        }`,
-                    standoff: 20,
-                    font: { size: 13 },
-                },
-                range: field.range || [0, 100],
-                tickvals: generateTicks(field.range || [0, 100]),
                 tickfont: { size: 10 },
                 showgrid: true,
                 zeroline: false,
                 automargin: true,
                 gridcolor: cssVar("--nav-active"),
+                nticks: 5 
             },
         plot_bgcolor: cssVar("--snd-bg-color"),
         paper_bgcolor: "rgba(0,0,0,0)",

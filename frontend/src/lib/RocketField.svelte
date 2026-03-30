@@ -1,6 +1,6 @@
 <script>
   import BaseField from "./BaseField.svelte";
-  import { getStatusString } from "./Utils.svelte";
+  import { getStateString } from "./Utils.svelte";
 
   export let title;
   export let fieldConfigs = [];
@@ -24,7 +24,7 @@
         if (config.mask !== undefined) {
           finalVal = rawVal & config.mask ? config.onLabel : config.offLabel;
         } else if (config.format === "status") {
-          finalVal = getStatusString(rawVal);
+          finalVal = getStateString(rawVal);
         }
 
         extractedData[config.label] = {
@@ -76,10 +76,21 @@
   }
 
   .field-value {
-    margin-top: 0.5rem;
     display: flex;
     justify-content: space-between;
     width: 100%;
+    padding: 0.1rem 0;
+    /* border-bottom: 1px solid rgba(255, 255, 255, 0.1); */
+    border-bottom: 1px solid var(--nav-hover);
+  }
+
+  .field-value:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .field-value:first-child {
+    padding-top: 0.5rem;
   }
 
   .field-label {
@@ -106,13 +117,16 @@
       padding: 0.5rem;
     }
     :global(.rocket-telem-class .telemetry-data) {
-      font-size: 1rem;
+      font-size: 1.2rem;
     }
     :global(.rocket-telem-class .field-top-row) {
-      font-size: 1.25rem;
+      font-size: 1.4rem;
     }
     :global(.rocket-telem-class .status-indicator) {
       margin-right: 1rem;
+    }
+    :global(.rocket-telem-class .timestamp) {
+      font-size: 0.9rem;
     }
   }
 
@@ -125,11 +139,7 @@
     }
 
     :global(.rocket-telem-class .timestamp) {
-      font-size: 0.7rem;
-    }
-
-    .field-value {
-      margin-top: 0.25rem;
+      font-size: 0.75rem;
     }
 
     .field-label {
@@ -138,6 +148,24 @@
 
     .field-data {
       font-size: 0.85rem;
+    }
+  }
+
+  /* For resolutions between 1024px and 1280px */
+  @media (min-width: 1025px) {
+    .field-value {
+      padding: 0.25rem 0;
+    }
+  }
+
+  /* For resolutions strictly higher than 1280px */
+  @media (min-width: 1281px) {
+    .field-value {
+      padding: 0.5rem 0;
+    }
+
+    .field-value:first-child {
+      padding-top: 1rem;
     }
   }
 </style>

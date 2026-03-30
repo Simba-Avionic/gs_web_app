@@ -38,7 +38,6 @@
                 try {
                     const data = JSON.parse(event.data);
                     if (
-                        data !== "None" &&
                         data !== null &&
                         data !== undefined &&
                         data.status !== 'timeout'
@@ -209,7 +208,7 @@
 
     .telemetry-data {
         font-size: 0.95rem;
-        padding-left: 0.5rem;
+        /* padding-left: 0.5rem; */
         width: 100%;
         box-sizing: border-box;
     }

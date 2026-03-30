@@ -66,14 +66,9 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
             elif val_name == 'lon':
                 setattr(msg, val_name, random.uniform(18.50, 18.75))
             else:
-                setattr(msg, val_name, random.uniform(float(f_range[0]), float(f_range[1])) if f_range else random.uniform(-100.0, 100.0))
+                setattr(msg, val_name, random.uniform(float(f_range[0]), float(f_range[1] + 5.0)) if f_range else random.uniform(-100.0, 100.0))
         elif 'int' in field_type:
-            if 'status' in val_name:
-                setattr(msg, val_name, random.randint(0, 7))
-            elif val_name == 'state':
-                setattr(msg, val_name, random.randint(0, 5))
-            else:
-                setattr(msg, val_name, random.randint(f_range[0], f_range[1]) if f_range else random.randint(0, 100))
+            setattr(msg, val_name, random.randint(f_range[0], f_range[1] + 5) if f_range else random.randint(0, 100))
         elif field_type == 'bool':
             setattr(msg, val_name, random.choice([True, False]))
         else:
@@ -89,7 +84,7 @@ class DynamicNode(Node):
         self.msg_type_name = config['msg_type']
         self.msg_type = import_message_type(self.msg_type_name)
         self.publisher = self.create_publisher(self.msg_type, self.topic_name, 10)
-        self.timer = self.create_timer(random.uniform(0.3, 2.5), self.timer_callback)
+        self.timer = self.create_timer(random.uniform(0.1, 3.5), self.timer_callback)
 
     def build_message(self):
         msg = self.msg_type()
