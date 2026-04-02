@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from rclpy.executors import MultiThreadedExecutor
-from dotenv import dotenv_values, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 from fastapi.staticfiles import StaticFiles
 
 from src.node_handler import NodeHandler
@@ -20,15 +20,28 @@ from src.server_telemetry import ServerTelemetry
 from src.camera_handler import router as camera_router, start_all_camera_streams, BASE_HLS_DIR
 from database.influx_client import InfluxClient
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
+from xml_to_json import extract_enums
+
 if not rclpy.ok():
     rclpy.init()
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY
+from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY, SIMBA_XML_PATH
 
-env_values = dotenv_values(find_dotenv())
+load_dotenv(find_dotenv())
+
 with open(CONFIG_JSON_PATH, "r") as f:
     CONFIG = json.load(f)
+
+try:
+    enums = extract_enums(SIMBA_XML_PATH)
+    enums_output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "enums.json")
+    with open(enums_output_path, "w") as f:
+        json.dump(enums, f, indent=2)
+    logger.info(f"Generated enums.json at {enums_output_path}")
+except Exception as e:
+    logger.error(f"Failed to generate enums.json: {e}")
 
 db_client = InfluxClient()
 write_queue = queue.Queue()
@@ -97,6 +110,17 @@ app.mount("/camera", StaticFiles(directory=BASE_HLS_DIR), name="camera")
 @app.get("/config")
 async def get_config(): return JSONResponse(content=CONFIG)
 
+@app.get("/enums")
+async def get_enums():
+    """Serve enum mappings from the XML"""
+    try:
+        enums_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "enums.json")
+        with open(enums_path, "r") as f:
+            enums = json.load(f)
+        return enums
+    except FileNotFoundError:
+        return {"error": "enums.json not found. Ensure server has started successfully."}
+
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
 def get_tile(layer: str, z: int, x: int, y: int):
     tile_path = os.path.join(TILES_DIRECTORY, layer, str(z), str(x), f"{y}.png")
@@ -116,4 +140,4 @@ if os.path.exists(DIST_DIR):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=env_values.get("IP_ADDRESS", "0.0.0.0"), port=2137)
+    uvicorn.run(app, host=os.getenv("IP_ADDRESS", "0.0.0.0"), port=2137)

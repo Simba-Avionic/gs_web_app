@@ -318,7 +318,8 @@
                         0,
                         50
                     ],
-                    "display": "value"
+                    "display": "value",
+                    "transform": {"scale": 1, "offset": 1}
                 },
                 {
                     "type": "float32",
@@ -439,72 +440,6 @@
             ]
         },
         {
-            "id": 71,
-            "topic_name": "mavlink/simba_imu",
-            "msg_type": "SimbaImu",
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint64",
-                    "val_name": "timestamp"
-                },
-                {
-                    "type": "int16",
-                    "val_name": "acc_x",
-                    "transform": {"scale": 2000, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "acc_y",
-                    "transform": {"scale": 2000, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "acc_z",
-                    "transform": {"scale": 2000, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "gyro_x",
-                    "transform": {"scale": 10, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "gyro_y",
-                    "transform": {"scale": 10, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "gyro_z",
-                    "transform": {"scale": 10, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "roll",
-                    "transform": {"scale": 100, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "pitch",
-                    "transform": {"scale": 100, "offset": 0}
-                },
-                {
-                    "type": "int16",
-                    "val_name": "yaw",
-                    "transform": {"scale": 100, "offset": 0}
-                },
-                {
-                    "type": "int32",
-                    "val_name": "altitude",
-                    "unit": "m"
-                }
-            ]
-        },
-        {
             "id": 72,
             "topic_name": "mavlink/simba_gps",
             "msg_type": "SimbaGps",
@@ -527,7 +462,6 @@
                     "type": "int32",
                     "val_name": "alt",
                     "alt_name": "Altitude",
-                    "display": "value",
                     "unit": "m",
                     "range": [
                         0,
@@ -557,7 +491,8 @@
                     "alt_name": "Flight Computer State",
                     "display": "status",
                     "range": [1, 9],
-                    "rocket_display": { "group": "Avionics", "label": "State", "format": "status" }
+                    "rocket_display": { "group": "Avionics", "label": "State", "format": "status" },
+                    "enum": "SIMBA_ROCKET_STATE"
                 },
                 {
                     "type": "uint8",
@@ -565,7 +500,8 @@
                     "alt_name": "Engine Computer State",
                     "display": "status",
                     "range": [1, 9],
-                    "rocket_display": { "group": "Engine", "label": "State", "format": "status" }
+                    "rocket_display": { "group": "Engine", "label": "State", "format": "status" },
+                    "enum": "SIMBA_ROCKET_STATE"
                 },
                 {
                     "type": "uint8",
@@ -579,6 +515,15 @@
                         { "mask": 16, "group": "Recovery", "label": "Linecutter", "on": "ON", "off": "OFF" },
                         { "mask": 32, "group": "Avionics", "label": "Cameras", "on": "ON", "off": "OFF" }
                     ]
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "primer_state",
+                    "alt_name": "Primer State",
+                    "display": "status",
+                    "range": [0, 4],
+                    "rocket_display": { "group": "Engine", "label": "Primer State", "format": "status" },
+                    "enum": "SIMBA_PRIMER_STATE"
                 }
             ]
         },
@@ -595,14 +540,12 @@
                 {
                     "type": "uint16",
                     "val_name": "eb_temp",
-                    "unit": "\u00b0C",
-                    "rocket_display": { "group": "Engine", "label": "Computer Temperature", "unit": "°C" }
+                    "unit": "\u00b0C"
                 },
                 {
                     "type": "uint16",
                     "val_name": "mb_temp",
-                    "unit": "\u00b0C",
-                    "rocket_display": { "group": "Avionics", "label": "Computer Temperature", "unit": "°C" }
+                    "unit": "\u00b0C"
                 }
             ]
         },

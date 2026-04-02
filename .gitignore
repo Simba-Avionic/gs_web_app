@@ -11,3 +11,4 @@ temp
 tiles
 docker/**
 backend/static
+enums.json

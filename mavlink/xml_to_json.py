@@ -57,6 +57,29 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
 
     print(f"Converted {SIMBA_XML_PATH} to {output_json}")
 
+def extract_enums(xml_path):
+    """Extract all enums from the XML file"""
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+    
+    enums = {}
+    
+    for enum in root.findall(".//enum"):
+        enum_name = enum.get("name")
+        is_bitmask = enum.get("bitmask") == "true"
+        
+        enum_values = {}
+        for entry in enum.findall("entry"):
+            value = int(entry.get("value"))
+            name = entry.get("name")
+            enum_values[value] = name
+        
+        enums[enum_name] = {
+            "values": enum_values,
+            "is_bitmask": is_bitmask
+        }
+    
+    return enums
 
 if __name__ == "__main__":
     convert_xml_to_json(SIMBA_XML_PATH, output_json)

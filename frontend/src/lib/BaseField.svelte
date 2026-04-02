@@ -18,6 +18,7 @@
     let hasWarning = false;
     let sockets = {};
     let telemetryData = {};
+    let topicTimestamps = {};
 
     function toggleExpand() {
         isExpanded = !isExpanded;
@@ -26,11 +27,13 @@
     function setupWebSockets() {
         topicNames.map((topicName) => {
             topicStatusMap[topicName] = false;
+            topicTimestamps[topicName] = null;
 
-            const socket = new WebSocket(`ws://${window.location.host}/${topicName}`);
+            const socket = new WebSocket(
+                `ws://${window.location.host}/${topicName}`,
+            );
 
             socket.onopen = () => {
-                // console.log(`Connected to ${topicName}`);
                 topicStatusMap[topicName] = false;
             };
 
@@ -40,17 +43,32 @@
                     if (
                         data !== null &&
                         data !== undefined &&
-                        data.status !== 'timeout'
+                        data.status !== "timeout"
                     ) {
                         telemetryData[topicName] = data;
 
                         processData(topicName, data);
 
                         try {
-                            lastUpdated = {
+                            topicTimestamps[topicName] = {
                                 sec: data.header.stamp.sec,
                                 nanosec: data.header.stamp.nanosec,
                             };
+
+                            const mostRecentTime = Object.values(
+                                topicTimestamps,
+                            )
+                                .filter((t) => t !== null)
+                                .reduce((max, current) => {
+                                    const maxMs =
+                                        max.sec * 1000 + max.nanosec / 1e6;
+                                    const currentMs =
+                                        current.sec * 1000 +
+                                        current.nanosec / 1e6;
+                                    return currentMs > maxMs ? current : max;
+                                }, topicTimestamps[topicName]);
+
+                            lastUpdated = mostRecentTime;
                         } catch (e) {}
 
                         if (!topicStatusMap[topicName]) {

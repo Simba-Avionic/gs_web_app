@@ -6,6 +6,7 @@ import serial
 import serial.tools.list_ports
 import threading
 import xml.etree.ElementTree as ET
+from loguru import logger
 from rclpy.node import Node
 from concurrent.futures import ThreadPoolExecutor
 
@@ -42,22 +43,22 @@ class MavlinkBridge(Node):
         mavutil.mavlink = simba_dialect
 
         if mavlink_port:
-            self.get_logger().info(f"Using specified MAVLink port: {mavlink_port}")
+            logger.info(f"Using specified MAVLink port: {mavlink_port}")
             self.master = mavutil.mavlink_connection(mavlink_port, baud=baudrate, dialect="simba")
         else:
             self.master = self.find_mavlink_connection()
 
         self.master.mav = simba_dialect.MAVLink(self.master)
-        self.get_logger().info("Heartbeat received. Waiting for custom messages...")
+        logger.info("Heartbeat received. Waiting for custom messages...")
 
         self.gs_switches_publisher = self.create_publisher(gs_msgs.TankingCommands, 'tanking/commands', 10)
-        self.get_logger().info("Created publisher for tanking commands")
+        logger.info("Created publisher for tanking commands")
         
         self.abort_publisher = self.create_publisher(gs_msgs.TankingAbort, 'tanking/abort', 10)
-        self.get_logger().info("Created publisher for tanking abort")
+        logger.info("Created publisher for tanking abort")
 
         self.tare_publisher = self.create_publisher(gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
-        self.get_logger().info("Created publisher for tare commands")
+        logger.info("Created publisher for tare commands")
 
         self._last_rocket_flags = None
         self._running = True
@@ -70,21 +71,21 @@ class MavlinkBridge(Node):
         self.rocket_timer = self.create_timer(1, self._handle_rocket_switches)
         self.gs_timer = self.create_timer(0.25, self._handle_gs_switches)
         
-        self.get_logger().info("Timers initialized for Control Panel")
+        logger.info("Timers initialized for Control Panel")
 
     def _start_main_loop_thread(self):
         self._control_thread = threading.Thread(
             target=self._main_loop)
         self._control_thread.daemon = True
         self._control_thread.start()
-        self.get_logger().info("Started control panel handler thread")
+        logger.info("Started control panel handler thread")
 
     def _start_receiver_thread(self):
         self._receiver_thread = threading.Thread(
             target=self._receive_mav_msgs_thread)
         self._receiver_thread.daemon = True
         self._receiver_thread.start()
-        self.get_logger().info("Started MAVLink receiver thread")
+        logger.info("Started MAVLink receiver thread")
 
     def _read_panel_switches(self):
         """Dedicated timer callback to safely read control panel switches."""
@@ -92,7 +93,7 @@ class MavlinkBridge(Node):
             with self._panel_lock:
                 self._control_panel_reader.read_switches()
         except Exception as e:
-            self.get_logger().error(f"Error reading control panel: {e}")
+            logger.error(f"Error reading control panel: {e}")
 
     def find_mavlink_connection(self, baudrate=57600, dialect="simba", retry_delay=1):
         while True:
@@ -121,26 +122,26 @@ class MavlinkBridge(Node):
 
         for message in root.findall(".//message"):
             msg_name = utils.convert_message_name(message.get("name"))
-            self.get_logger().info(f"Processing message: {msg_name}")
+            logger.info(f"Processing message: {msg_name}")
 
             topic_name = f"mavlink/{message.get('name').lower()}"
             ros_msg_type = getattr(gs_msgs, msg_name, None)
 
             if ros_msg_type is None:
-                self.get_logger().error(
+                logger.error(
                     f"Message type {msg_name} not found in gs_interfaces.msg")
                 continue
 
             publishers[msg_name] = self.create_publisher(
                 ros_msg_type, topic_name, 10)
-            self.get_logger().info(
+            logger.info(
                 f"Created publisher for topic: {topic_name}")
 
         return publishers
 
     def _receive_mav_msgs_thread(self):
         """Thread function to receive MAVLink messages."""
-        self.get_logger().info("MAVLink receiver thread running")
+        logger.info("MAVLink receiver thread running")
         while self._running and rclpy.ok():
             try:
                 msg = self.master.recv_match(blocking=True, timeout=1.0)
@@ -154,13 +155,13 @@ class MavlinkBridge(Node):
                 if msg.get_type() == 'RADIO_STATUS':
                     # self._handle_radio_status(msg)
                     data = msg.to_dict()
-                    self.get_logger().info(f"{data}")
+                    logger.info(f"{data}")
                     continue
 
-                self.get_logger().info(f"Received MAVLink message: {msg}")
+                logger.info(f"Received MAVLink message: {msg}")
                 self.publish_ros_msg(msg)
             except Exception as e:
-                self.get_logger().error(f"Error in receiver thread: {e}")
+                logger.error(f"Error in receiver thread: {e}")
                 time.sleep(0.25)
 
     def _handle_radio_status(self, msg):
@@ -171,7 +172,7 @@ class MavlinkBridge(Node):
         noise = msg.noise
         remnoise = msg.remnoise
         
-        self.get_logger().info(
+        logger.info(
             f"\n[RADIO_STATUS]\n"
             f"  Local RSSI: {rssi} | Noise: {noise}\n"
             f"  Remote RSSI: {remrssi} | Noise: {remnoise}\n"
@@ -194,11 +195,11 @@ class MavlinkBridge(Node):
                     setattr(ros_msg, field_name, getattr(
                         mavlink_msg, field_name, None))
                 else:
-                    self.get_logger().warn(
+                    logger.warn(
                         f"Field {field_name} not found in ROS2 message {msg_type}")
 
             self._mavlink_publishers[msg_type].publish(ros_msg)
-            self.get_logger().info(
+            logger.info(
                 f"Published ROS2 message on topic: {msg_type}")
 
     def _handle_rocket_switches(self):
@@ -230,7 +231,7 @@ class MavlinkBridge(Node):
                 self._last_rocket_flags = flags
 
             if flags != self._last_rocket_flags:
-                self.get_logger().info(f"State change detected! Bursting 5 messages. Flags: {flags}")
+                logger.info(f"State change detected! Bursting 5 messages. Flags: {flags}")
                 
                 for _ in range(BURST_COUNT):
                     self.master.mav.simba_gs_heartbeat_send(
@@ -247,7 +248,7 @@ class MavlinkBridge(Node):
                 )
 
         except Exception as e:
-            self.get_logger().error(f"Error handling ROCKET switches: {e}")
+            logger.error(f"Error handling ROCKET switches: {e}")
 
 
     def _handle_gs_switches(self):
@@ -288,12 +289,12 @@ class MavlinkBridge(Node):
             self.abort_publisher.publish(abort_msg)
 
         except Exception as e:
-            self.get_logger().error(f"Error handling GS switches: {e}")
+            logger.error(f"Error handling GS switches: {e}")
 
                 
     def shutdown(self):
         """Clean shutdown of the MAVLink client."""
-        self.get_logger().info("Shutting down MAVLink client...")
+        logger.info("Shutting down MAVLink client...")
         self._running = False
         self._executor.shutdown(wait=True)
 

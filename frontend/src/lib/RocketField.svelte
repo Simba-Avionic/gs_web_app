@@ -24,7 +24,7 @@
         if (config.mask !== undefined) {
           finalVal = rawVal & config.mask ? config.onLabel : config.offLabel;
         } else if (config.format === "status") {
-          finalVal = getStateString(rawVal);
+          finalVal = getStateString(rawVal, config.enum);
         }
 
         extractedData[config.label] = {

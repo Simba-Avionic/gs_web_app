@@ -7,7 +7,6 @@ from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from loguru import logger
-from rosidl_runtime_py import message_to_ordereddict
 from fastapi import WebSocket, APIRouter, Query, HTTPException
 from database.influx_client import (
     InfluxNotAvailableException,
@@ -53,15 +52,28 @@ class NodeHandler(Node):
 
     def msg_callback(self, msg):
         now = datetime.now(timezone.utc)
-        ros_time = Time()
-        ros_time.sec = int(now.timestamp())
-        ros_time.nanosec = now.microsecond * 1000
-        msg.header.stamp = ros_time
+        
+        extracted_data = {
+            "header": {
+                "stamp": {
+                    "sec": int(now.timestamp()),
+                    "nanosec": now.microsecond * 1000
+                }
+            }
+        }
 
-        raw_dict = message_to_ordereddict(msg)
+        for field in self.msg_fields:
+            val_name = field.get("val_name")
+            
+            if val_name == "header":
+                continue
+                
+            if hasattr(msg, val_name):
+                raw_val = getattr(msg, val_name)
+                extracted_data[val_name] = self._extract_ros_value(raw_val)
 
         # Apply transformations & running averages
-        self.curr_msg = self.apply_transform(self.msg_type, raw_dict)
+        self.curr_msg = self.apply_transform(self.msg_type, extracted_data)
 
         # Enqueue for Influx writing (writer thread will call insert_data)
         if self.write_queue is not None:
@@ -69,6 +81,14 @@ class NodeHandler(Node):
                 self.write_queue.put_nowait((self.msg_type, self.curr_msg))
             except Exception as e:
                 logger.warning(f"Write queue put failed: {e}")
+    
+    def _extract_ros_value(self, val):
+            if hasattr(val, 'get_fields_and_field_types'):
+                return {
+                    k: self._extract_ros_value(getattr(val, k)) 
+                    for k in val.get_fields_and_field_types().keys()
+                }
+            return val
 
     def apply_transform(self, msg_type, msg_dict):
         """
@@ -168,7 +188,7 @@ class NodeHandler(Node):
     def stop(self):
         self.connected_clients.clear()
 
-    async def query(
+    def query(
         self,
         field_name: str = Query(..., description="Field key to query"),
         time_range: int = Query(1, ge=1, le=300),

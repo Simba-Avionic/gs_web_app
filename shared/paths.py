@@ -1,8 +1,9 @@
 import os
 
-# You might need to adjust the path based on where you cloned the repo
-ROOT_DIR = os.path.join(os.path.expanduser("~"), "gs_web_app")
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
 
 CONFIG_JSON_PATH = os.path.join(ROOT_DIR, "config.json")
-SIMBA_XML_PATH = os.path.join(ROOT_DIR, "mavlink/simba_mavlink/simba.xml")
-TILES_DIRECTORY = os.path.join(ROOT_DIR, "frontend/public/tiles")
+SIMBA_XML_PATH = os.path.join(ROOT_DIR, "mavlink", "simba_mavlink", "simba.xml")
+TILES_DIRECTORY = os.path.join(ROOT_DIR, "frontend", "public", "tiles")

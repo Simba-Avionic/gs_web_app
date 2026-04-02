@@ -1,19 +1,19 @@
 <script>
   // @ts-nocheck
   import { onMount } from "svelte";
-  import Dashboard from './Dashboard.svelte';
-  import Gradients from './lib/Gradients.svelte';
-  import NavBar from './NavBar.svelte';
-  import Map from './Map.svelte'
-  import Plots from './Plots.svelte';
-  import Cameras from './Cameras.svelte';
+  import { loadEnums } from "./stores/enums.js";
+  import Dashboard from "./Dashboard.svelte";
+  import Gradients from "./lib/Gradients.svelte";
+  import NavBar from "./NavBar.svelte";
+  import Map from "./Map.svelte";
+  import Plots from "./Plots.svelte";
+  import Cameras from "./Cameras.svelte";
 
-  let currentView = 'dashboard';
+  let currentView = "dashboard";
   const ip = process.env.IP_ADDRESS;
   const port = process.env.SERVER_PORT || 2137;
   const timezone = import.meta.env.VITE_TIMEZONE;
 
-  // const host = window.location.host;
 
   function handleNavigation(event) {
     currentView = event.detail;
@@ -21,19 +21,20 @@
 
   onMount(() => {
 
+    loadEnums();
+
     const hash = window.location.hash.slice(1);
-    if (['dashboard', 'inflight', 'map', 'plots', 'cameras'].includes(hash)) {
+    if (["dashboard", "inflight", "map", "plots", "cameras"].includes(hash)) {
       currentView = hash;
     }
 
-    window.addEventListener('hashchange', () => {
+    window.addEventListener("hashchange", () => {
       const hash = window.location.hash.slice(1);
-      if (['dashboard', 'inflight', 'map', 'plots', 'cameras'].includes(hash)) {
+      if (["dashboard", "inflight", "map", "plots", "cameras"].includes(hash)) {
         currentView = hash;
       }
     });
   });
-
 </script>
 
 <svelte:head>
@@ -42,13 +43,13 @@
 
 <main>
   <NavBar on:navigate={handleNavigation} {currentView} {timezone} />
-  {#if currentView === 'dashboard'}
-    <Dashboard/>
-  {:else if currentView === 'plots'}
-    <Plots/>
-  {:else if currentView === 'map'}
+  {#if currentView === "dashboard"}
+    <Dashboard />
+  {:else if currentView === "plots"}
+    <Plots />
+  {:else if currentView === "map"}
     <Map />
-  {:else if currentView === 'cameras'}
+  {:else if currentView === "cameras"}
     <Cameras />
   {/if}
   <Gradients />
@@ -56,4 +57,3 @@
 
 <style>
 </style>
-

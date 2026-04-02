@@ -169,17 +169,33 @@
         flushInterval = setInterval(() => {
             if (buffer.length === 0) return;
 
-            const last = buffer[buffer.length - 1];
+            buffer.sort((a, b) => Date.parse(a.t) - Date.parse(b.t));
+
+            const lastTimestamp =
+                xData.length > 0
+                    ? Date.parse(xData[xData.length - 1])
+                    : -Infinity;
+
+            for (const point of buffer) {
+                const pointTimestamp = Date.parse(point.t);
+                if (pointTimestamp >= lastTimestamp) {
+                    xData.push(point.t);
+                    yData.push(point.v);
+                    latestValue = point.v;
+                }
+            }
+
             buffer = [];
 
-            xData.push(last.t);
-            yData.push(last.v);
-            latestValue = last.v;
+            if (xData.length === 0) return;
 
+            const last = {
+                t: xData[xData.length - 1],
+                v: yData[yData.length - 1],
+            };
             const lastMs = Date.parse(last.t);
             const windowStartMs = lastMs - time_range * 60 * 1000;
 
-            // Trim arrays
             const cutoffMs = windowStartMs;
             while (xData.length > 0 && Date.parse(xData[0]) < cutoffMs) {
                 xData.shift();

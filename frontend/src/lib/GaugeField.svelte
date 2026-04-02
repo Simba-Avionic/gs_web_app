@@ -66,9 +66,10 @@
   >
     <div class="gauge-content" class:is-status={item.type === "status"}>
       {#if item.type === "status"}
+      
         <span class="status-text">
           {value !== null && value !== undefined
-            ? getStateString(value).replace(/_/g, "\n")
+            ? getStateString(value, item.enum).replace(/_/g, "\n")
             : "---"}
         </span>
       {:else}

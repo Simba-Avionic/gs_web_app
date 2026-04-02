@@ -1,4 +1,6 @@
 <script context="module">
+  import { enumMappings } from "../stores/enums";
+
   export function rosTimeToFormattedTime(iso = false, secs, nsecs) {
     if (typeof secs !== "number" || typeof nsecs !== "number") {
       console.error("Invalid ROS time:", secs, nsecs);
@@ -23,7 +25,7 @@
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      timeZone: import.meta.env.VITE_TIMEZONE
+      timeZone: import.meta.env.VITE_TIMEZONE,
     };
 
     // @ts-ignore
@@ -369,31 +371,22 @@
     }
   }
 
-  export function getStateString(statusCode) {
-    switch (statusCode) {
-      case 1:
-        return "INIT";
-      case 2:
-        return "DISARMED";
-      case 3:
-        return "ARMED";
-      case 4:
-        return "LAUNCH";
-      case 5:
-        return "FLIGHT";
-      case 6:
-        return "APOGEE";
-      case 7:
-        return "FIRT_PARACHUTE_FALL";
-      case 8:
-        return "SECOND_PARACHUTE_ACTIVATION";
-      case 9:
-        return "SECOND_PARACHUTE_FALL";
-      case 64:
-        return "ABORT";
-      default:
-        return "UNKNOWN_STATE";
+  export function getStateString(statusCode, enumName = "SIMBA_ROCKET_STATE") {
+    let mappings = {};
+    const unsubscribe = enumMappings.subscribe((e) => (mappings = e));
+    unsubscribe();
+
+    if (!mappings[enumName]) {
+      console.warn(`Enum ${enumName} not found`);
+      return String(statusCode);
     }
+
+    const enumDef = mappings[enumName];
+    const name = enumDef.values[statusCode];
+
+    if (!name) return "UNKNOWN_STATE";
+
+    return name.replace(new RegExp(`^${enumName}_`), "");
   }
 
   export function stripSimbaPrefix(str) {

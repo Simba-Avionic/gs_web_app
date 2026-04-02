@@ -150,11 +150,14 @@ function build_msgs() {
 }
 
 function run() {
+    trap 'echo -e "\nStopping all background processes..."; pkill $(jobs -p) 2>/dev/null; wait; exit' SIGINT SIGTERM
+
     source_venv
     source_ros
     run_db &
     run_mavlink_bridge &
     run_server &
+    
     wait
 }
 

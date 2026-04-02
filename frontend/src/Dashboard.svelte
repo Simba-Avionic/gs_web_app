@@ -218,6 +218,7 @@
             label: field.rocket_display.label,
             format: field.rocket_display.format,
             unit: field.rocket_display.unit || field.unit || "",
+            enum: field.enum || null,
           });
         }
 
@@ -256,6 +257,7 @@
           unit: f.unit ?? null,
           range: f.range ?? null,
           value: null,
+          enum: f.enum ?? null,
         })),
     );
 
