@@ -1,3 +1,4 @@
+import os
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.rest import ApiException
@@ -5,16 +6,21 @@ from typing import List, Any, Dict
 from influxdb_client.client.query_api import QueryApi
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
-from dotenv import dotenv_values, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 class InfluxClient:
 
     def __init__(self) -> None:
-        env_values = dotenv_values(find_dotenv())
-        self.bucket = env_values.get('BUCKET_NAME')
-        self.org = env_values.get('ORGANISATION')
-        self.token = env_values.get('INFLUXDB_TOKEN')
-        self.url = f"{env_values.get('IP_ADDRESS')}:{env_values.get('INFLUXDB_PORT')}"
+        load_dotenv(find_dotenv())
+        self.bucket = os.getenv('BUCKET_NAME')
+        self.org = os.getenv('ORGANISATION')
+        self.token = os.getenv('INFLUXDB_TOKEN')
+        # self.url = f"{os.getenv('IP_ADDRESS')}:{os.getenv('INFLUXDB_PORT')}"
+        
+        db_host = os.getenv('INFLUXDB_HOST', 'localhost')
+        db_port = os.getenv('INFLUXDB_PORT', '8086')
+        self.url = f"http://{db_host}:{db_port}"
+
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
         self.write_api = self._client.write_api(write_options=SYNCHRONOUS)
 

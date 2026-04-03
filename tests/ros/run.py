@@ -84,7 +84,7 @@ class DynamicNode(Node):
         self.msg_type_name = config['msg_type']
         self.msg_type = import_message_type(self.msg_type_name)
         self.publisher = self.create_publisher(self.msg_type, self.topic_name, 10)
-        self.timer = self.create_timer(random.uniform(0.1, 3.5), self.timer_callback)
+        self.timer = self.create_timer(random.uniform(0.5, 3.0), self.timer_callback)
 
     def build_message(self):
         msg = self.msg_type()
@@ -108,6 +108,11 @@ def main():
 
     node_threads = []
     for node_config in config['topics']:
+
+        # if random.random() < 0.25:
+        #     print(f"Simulating failure for node {node_config['msg_type']}")
+        #     continue
+
         node = DynamicNode(node_config)
         node_thread = threading.Thread(target=spin_node, args=(node,))
         node_threads.append(node_thread)  

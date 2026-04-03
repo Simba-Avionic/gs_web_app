@@ -1,13 +1,11 @@
 services:
   influxdb:
     image: influxdb:2.6.1
-    container_name: ${INFLUXDB_CONTAINER_NAME}
+    container_name: influxdb
     env_file:
       - .env
     volumes:
       - myInfluxVolume:/var/lib/influxdb2
-    ports:
-      - 8086:8086
     environment:
       INFLUXDB_DB: influx
       DOCKER_INFLUXDB_INIT_MODE: setup
@@ -17,11 +15,43 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
       DOCKER_INFLUXDB_INIT_ORG: ${ORGANISATION}
       DOCKER_INFLUXDB_INIT_BUCKET: ${BUCKET_NAME}
-    networks:
-      - net
+    ports:
+      - "8086:8086"
+    restart: unless-stopped
 
-networks:
-  net:
+  mavlink_bridge:
+    build: .
+    container_name: mavlink_bridge
+    command: /app/venv/bin/python3 backend/mavlink_bridge.py
+    env_file:
+      - .env
+    network_mode: "host"
+    depends_on:
+      - influxdb
+    restart: no
+    privileged: true
+
+  backend_server:
+    build: .
+    container_name: backend_server
+    command: /app/venv/bin/python3 backend/main.py
+    env_file:
+      - .env
+    ports:
+      - "2137:2137"
+    environment:
+      - INFLUXDB_HOST=influxdb
+    depends_on:
+      - influxdb
+      - mavlink_bridge
+    restart: unless-stopped
+
+  test_publisher:
+    build: .
+    command: /app/venv/bin/python3 tests/ros/run.py
+    env_file: [ .env ]
+    profiles: [ "testing" ]
+    depends_on: [ backend_server ]
 
 volumes:
   myInfluxVolume:

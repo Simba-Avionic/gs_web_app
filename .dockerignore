@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# ROS 2
+build/
+install/
+log/
+
+# Git & Secrets
+.git/
+.env
