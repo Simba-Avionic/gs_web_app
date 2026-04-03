@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import { theme } from "./js/theme.js";
+  import { theme } from "./config/theme.js";
 
   let currentTheme;
   theme.subscribe((value) => (currentTheme = value));

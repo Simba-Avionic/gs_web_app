@@ -1,6 +1,6 @@
 <script>
   import BaseField from "./BaseField.svelte";
-  import { getStateString } from "./Utils.svelte";
+  import { getStateString } from "../../Utils.svelte";
 
   export let title;
   export let fieldConfigs = [];

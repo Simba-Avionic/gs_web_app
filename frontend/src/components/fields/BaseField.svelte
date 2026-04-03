@@ -2,7 +2,7 @@
 <script>
     import { onMount, onDestroy, createEventDispatcher } from "svelte";
     import { slide } from "svelte/transition";
-    import { rosTimeToFormattedTime } from "./Utils.svelte";
+    import { rosTimeToFormattedTime } from "../../utils/time.js";
 
     export let dataWarning = false;
     export let className;

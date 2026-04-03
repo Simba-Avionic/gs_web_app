@@ -1,6 +1,6 @@
 <script>
   import BaseField from "./BaseField.svelte";
-  import { renderField, stripSimbaPrefix } from "./Utils.svelte";
+  import { renderField, stripSimbaPrefix } from "../../Utils.svelte";
 
   export let topic;
 

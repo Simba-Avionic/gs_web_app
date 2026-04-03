@@ -2,10 +2,23 @@
     // @ts-nocheck
     import { onMount, onDestroy } from "svelte";
     import Plotly from "plotly.js-basic-dist-min";
-    import { fetchConfig, rosTimeToFormattedTime } from "./lib/Utils.svelte";
-    import { theme } from "./js/theme.js";
-    import { cssVar, lightThemeColors, darkThemeColors } from "./js/colors.js";
-    import { getPlotLayout } from "./js/plot_config.js";
+    import {
+        formatTimestamp,
+        rosTimeToFormattedTime,
+    } from "../../utils/time.js";
+    import { theme } from "../../config/theme.js";
+    import {
+        cssVar,
+        lightThemeColors,
+        darkThemeColors,
+    } from "../../config/colors.js";
+    import { getPlotLayout } from "../../config/plot_config.js";
+    import { usePlotData, formatPlotTicks } from "../../hooks/usePlotData.js";
+    import { subscribeToTopic } from "../../services/websockets.js";
+    import {
+        FLUSH_INTERVAL,
+        PLOT_BUFFER_PADDING,
+    } from "../../config/constants.js";
 
     export let field;
     export let onRemove;
@@ -25,7 +38,6 @@
 
     $: $theme, updateTheme();
 
-    // Helper to calculate the buffered Y range
     function getBufferedYRange(data) {
         if (field.type === "bool") return [-0.1, 1.1];
         if (data.length === 0) return [0, 100];
@@ -34,7 +46,6 @@
         const max = Math.max(...data);
         const padding = (max - min) * 0.15; // 15% padding
 
-        // If value is constant (min === max), add fixed padding so it's not a flat line at the edge
         if (padding === 0) return [min - 1, max + 1];
 
         return [min - padding, max + padding];
@@ -83,36 +94,14 @@
 
     async function fetchData() {
         try {
-            const res = await fetch(
-                `http://${window.location.host}/${field.topic}/query?field_name=${field.parent ? `${field.parent}/${field.val_name}` : field.val_name}&time_range=${time_range}`,
+            const plotData = await usePlotData(
+                field,
+                time_range,
+                import.meta.env.VITE_TIMEZONE,
             );
-            const data = await res.json();
-
-            let rawX = data.records.map((entry) =>
-                new Date(entry._time).toISOString(),
-            );
-            let rawY = data.records.map((entry) => entry._value);
-
-            if (field.type === "bool") rawY = rawY.map((v) => (v ? 1 : 0));
-            latestValue = rawY.length > 0 ? rawY[rawY.length - 1] : "--";
-
-            const newestMs = rawX.length
-                ? Date.parse(rawX[rawX.length - 1])
-                : Date.now();
-            const windowStartMs = newestMs - time_range * 60 * 1000;
-
-            const paired = rawX.map((x, i) => ({
-                tMs: Date.parse(x),
-                tIso: x,
-                v: rawY[i],
-            }));
-            const filtered = paired.filter((p) => p.tMs >= windowStartMs);
-            const finalPairs = filtered.length
-                ? filtered
-                : paired.slice(-Math.max(1, Math.floor(time_range * 60)));
-
-            xData = finalPairs.map((p) => p.tIso);
-            yData = finalPairs.map((p) => p.v);
+            xData = plotData.xData;
+            yData = plotData.yData;
+            latestValue = plotData.latestValue;
 
             await Plotly.newPlot(
                 plotDiv,
@@ -125,18 +114,27 @@
                         line: { color: color, width: 1.5 },
                         name: field.val_name,
                         hoverinfo: "x+y",
+                        customdata: xData.map((x) =>
+                            formatTimestamp(x, import.meta.env.VITE_TIMEZONE),
+                        ),
+                        hovertemplate:
+                            "<b>%{customdata}</b><br>%{y:.1f}<extra></extra>",
                     },
                 ],
                 getPlotLayout(field),
                 { responsive: true, displayModeBar: false },
             );
 
-            if (xData.length) {
-                Plotly.relayout(plotDiv, {
-                    "xaxis.range": [xData[0], xData[xData.length - 1]],
-                    "yaxis.range": getBufferedYRange(yData), // Dynamic initial scale
-                });
-            }
+            const { tickvals, ticktext } = formatPlotTicks(
+                xData,
+                import.meta.env.VITE_TIMEZONE,
+            );
+            Plotly.relayout(plotDiv, {
+                "xaxis.range": [xData[0], xData[xData.length - 1]],
+                "xaxis.tickvals": tickvals,
+                "xaxis.ticktext": ticktext,
+                "yaxis.range": getBufferedYRange(yData),
+            });
 
             openWebSocket();
         } catch (error) {
@@ -203,11 +201,17 @@
             }
 
             try {
+                const { tickvals, ticktext } = formatPlotTicks(
+                    xData,
+                    import.meta.env.VITE_TIMEZONE,
+                );
                 const update = {
                     "xaxis.range": [
                         new Date(windowStartMs).toISOString(),
                         last.t,
                     ],
+                    "xaxis.tickvals": tickvals,
+                    "xaxis.ticktext": ticktext,
                 };
 
                 if (field.type !== "bool") {
@@ -223,11 +227,26 @@
                 }
 
                 Plotly.relayout(plotDiv, update);
-                Plotly.restyle(plotDiv, { x: [xData], y: [yData] }, [0]);
+                Plotly.restyle(
+                    plotDiv,
+                    {
+                        x: [xData],
+                        y: [yData],
+                        customdata: [
+                            xData.map((x) =>
+                                formatTimestamp(
+                                    x,
+                                    import.meta.env.VITE_TIMEZONE,
+                                ),
+                            ),
+                        ],
+                    },
+                    [0],
+                );
             } catch (err) {
                 console.warn("Plotly update error:", err);
             }
-        }, 500);
+        }, FLUSH_INTERVAL);
     }
 
     function closeWebSocket() {

@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import * as dotenv from 'dotenv'
 import { resolve } from 'path'
-import { visualizer } from "rollup-plugin-visualizer";
 
 dotenv.config({ path: resolve(__dirname, '../.env') });
 
@@ -19,10 +18,6 @@ export default defineConfig({
   },
   plugins: [
     svelte(),
-    // visualizer({ 
-    //   open: true, 
-    //   filename: 'bundle-stats.html' 
-    // }),
   ],
   build: {
     minify: 'esbuild',

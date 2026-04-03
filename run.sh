@@ -150,7 +150,7 @@ function build_msgs() {
 }
 
 function run() {
-    trap 'echo -e "\nStopping all background processes..."; pkill $(jobs -p) 2>/dev/null; wait; exit' SIGINT SIGTERM
+    trap 'echo -e "\nShutting down everything..."; trap - SIGINT SIGTERM; kill 0; stty sane; stty echo; exit 0' SIGINT SIGTERM
 
     source_venv
     source_ros

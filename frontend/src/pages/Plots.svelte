@@ -1,10 +1,10 @@
 <script>
   import { onMount, onDestroy } from "svelte";
-  import { fetchConfig } from "./lib/Utils.svelte";
-  import Plot from "./Plot.svelte";
-  import { fetchMessageDefs } from "./lib/Utils.svelte";
-  import { theme } from "./js/theme.js";
-  import { lightThemeColors, darkThemeColors } from "./js/colors.js";
+  import { fetchConfig } from "../services/api.js";
+  import Plot from "../components/plots/Plot.svelte";
+  import { fetchMessageDefs } from "../services/api.js";
+  import { theme } from "../config/theme.js";
+  import { lightThemeColors, darkThemeColors } from "../config/colors.js";
   import { slide } from "svelte/transition";
   import { fade, scale } from "svelte/transition";
   import { flip } from "svelte/animate";
@@ -90,15 +90,13 @@
         }));
       }
 
-      topics = (await fetchConfig(window.location.host)).map((t) => ({
+      topics = (await fetchConfig()).map((t) => ({
         ...t,
         status: "red",
         lastSeen: 0,
       }));
 
-      msg_defs = await fetchMessageDefs(window.location.host);
-
-      console.log(msg_defs);
+      msg_defs = await fetchMessageDefs();
 
       topics.forEach((topic) => {
         const ws = new WebSocket(
@@ -495,9 +493,12 @@
     }
   }
 
+  /*
   @media (min-width: 1920px) {
     .plots-grid {
-      /* grid-template-columns: repeat(3, 1fr); */
+       grid-template-columns: repeat(3, 1fr);
     }
   }
+  */
+  
 </style>

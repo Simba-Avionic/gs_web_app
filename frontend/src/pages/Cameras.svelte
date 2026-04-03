@@ -1,5 +1,5 @@
 <script>
-  import CameraView from "./lib/CameraView.svelte";
+  import CameraView from "../components/common/CameraView.svelte";
 </script>
 
 <div class="main-container">

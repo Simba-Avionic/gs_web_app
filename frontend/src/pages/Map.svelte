@@ -1,7 +1,7 @@
 <!-- MapWidget.svelte -->
 <script>
     import { onMount, onDestroy } from "svelte";
-    import TelemetryField from "./lib/TelemetryField.svelte";
+    import TelemetryField from "../components/fields/TelemetryField.svelte";
     // @ts-ignore
     import L from "leaflet";
 

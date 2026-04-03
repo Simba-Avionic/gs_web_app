@@ -1,17 +1,15 @@
 <script>
   import { onMount, onDestroy, tick } from "svelte";
-  import RocketField from "./lib/RocketField.svelte";
-  import GaugeField from "./lib/GaugeField.svelte";
-  import StatusField from "./lib/StatusField.svelte";
-  import { subscribeToTopic } from "./js/ws_manager.js";
+  import RocketField from "../components/fields/RocketField.svelte";
+  import GaugeField from "../components/fields/GaugeField.svelte";
+  import { subscribeToTopic } from "../services/websockets.js";
+  import { fetchConfig } from "../services/api.js";
 
   import {
     fetchSVG,
     createLine,
-    observeSVGRender,
-    fetchConfig,
     observeLines,
-  } from "./lib/Utils.svelte";
+  } from "../services/svg.js";
 
   let svgContent = "";
   let cleanup;
@@ -138,6 +136,8 @@
   }
 
   // TODO: Try to remove hardcoded if statements and so on...
+  // This is very specific to the current SVG and telemetry config, (in other words - shitty function)
+  // but ideally we would want a more flexible system that can adapt to different SVGs and telemetry configs without needing code changes
   function handleTelemetryChange(data, msg_type) {
     const telemetryData = data;
     if (!telemetryData) return;
@@ -152,9 +152,12 @@
       const fieldName = element.val_name; // e.g. "valve_feed_oxidizer"
       const svgId = element.controls; // e.g. "valve1"
       const value = telemetryData[fieldName];
+      
+      // @ts-ignore
       const svgElem = svg.getElementById(svgId);
 
       if (svgId == "oxidizer_liquid") {
+        // @ts-ignore
         const OXTank = svg.getElementById("tank_oxidizer");
 
         const visualMaxHeight = OXTank.getBBox().height;
@@ -177,6 +180,7 @@
         } else {
           label = value !== undefined && value !== null ? String(value) : "";
         }
+        // @ts-ignore
         const txtEl = svg.getElementById("valve_feed_oxidizer_txt");
         if (txtEl) {
           txtEl.textContent = label;
@@ -190,6 +194,7 @@
         } else {
           label = value !== undefined && value !== null ? String(value) : "";
         }
+        // @ts-ignore
         const txtEl = svg.getElementById("valve_vent_oxidizer_txt");
         if (txtEl) {
           txtEl.textContent = label;
@@ -200,14 +205,13 @@
 
   onMount(async () => {
     svgContent = await fetchSVG("/images/r7.svg");
-    topics = await fetchConfig(window.location.host);
+    topics = await fetchConfig();
 
-    // Build a temporary object first
     let tempGroups = {};
 
     topics.forEach((topic) => {
       topic.msg_fields.forEach((field) => {
-        // Parse standard fields
+
         if (field.rocket_display) {
           const group = field.rocket_display.group;
           if (!tempGroups[group]) tempGroups[group] = [];
@@ -222,7 +226,6 @@
           });
         }
 
-        // Parse bitwise fields
         if (field.rocket_display_bits) {
           field.rocket_display_bits.forEach((bitDef) => {
             const group = bitDef.group;
@@ -294,7 +297,6 @@
     lines.forEach((line) => {
       line.remove();
     });
-    // Object.values(wsConnections).forEach((ws) => ws.close());
     if (cleanup) cleanup();
   });
 </script>
@@ -385,6 +387,7 @@
   }
 
   #status-container {
+    padding-top: 1rem;
     display: grid;
     grid-template-columns: repeat(3, minmax(140px, 1fr));
     grid-template-rows: repeat(3, 1fr);

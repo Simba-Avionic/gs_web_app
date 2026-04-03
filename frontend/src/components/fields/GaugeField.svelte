@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
-  import { subscribeToTopic } from "../js/ws_manager.js";
-  import { getStateString } from "./Utils.svelte";
+  import { subscribeToTopic } from "../../services/websockets.js";
+  import { getStateString } from "../../Utils.svelte";
   import Gauge from "svelte-gauge";
 
   export let item;
