@@ -1,0 +1,37 @@
+Note - Changes in Environment Configuration
+
+While running the project in the WSL environment (Ubuntu 24.04), several configuration changes were required.
+
+1. Line Ending Conversion (CRLF → LF)
+
+Some scripts were saved with CRLF line endings (Windows format), which caused errors when executing them in a Linux environment.
+
+The line endings were converted to LF so that the scripts would be compatible with Linux/WSL.
+
+The change was applied to the following files:
+
+scripts/install.sh
+run.sh
+
+After the conversion, the scripts started executing correctly in the WSL environment.
+The same changes were applied to other scripts as well.
+
+2. IP Address Change in .env Configuration
+
+The issue was caused by an IP address that did not exist in the WSL environment.
+
+In the file:
+
+.env
+
+the configuration was modified.
+
+Before the change
+
+IP_ADDRESS=192.168.10.101
+
+After the change
+
+IP_ADDRESS=127.0.0.1
+
+This allowed the server to start correctly in the local environment.
