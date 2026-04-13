@@ -17,3 +17,4 @@ luma.oled
 luma.core
 requests
 netifaces
+pymavlink
