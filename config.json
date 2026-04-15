@@ -251,19 +251,19 @@
                     "val_name": "header"
                 },
                 {
-                    "type": "bool",
+                    "type": "uint8",
                     "val_name": "valve_feed_oxidizer",
                     "range": [
                         0,
-                        1
+                        2
                     ]
                 },
                 {
-                    "type": "bool",
+                    "type": "uint8",
                     "val_name": "valve_feed_pressurizer",
                     "range": [
                         0,
-                        1
+                        2
                     ]
                 },
                 {
@@ -597,6 +597,46 @@
                     "val_name": "eb_memory_usage",
                     "unit": "%",
                     "range": [0, 100]
+                }
+            ]
+        },
+        {
+            "id": 78,
+            "topic_name": "mavlink/radio_status",
+            "msg_type": "RadioStatus",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "rssi"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "remrssi"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "txbuf",
+                    "unit": "%"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "noise"
+                },
+                {
+                    "type": "uint8",
+                    "val_name": "remnoise"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "rxerrors"
+                },
+                {
+                    "type": "uint16",
+                    "val_name": "fixed"
                 }
             ]
         }

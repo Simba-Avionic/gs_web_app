@@ -27,7 +27,7 @@ except ImportError as e:
     sys.exit(1)
 
 BURST_COUNT = 5
-BURST_INTERVAL = 0.02  # 20ms between messages in a burst
+BURST_INTERVAL = 0.05
 
 class MavlinkBridge(Node):
 
@@ -38,6 +38,8 @@ class MavlinkBridge(Node):
 
         self._mavlink_publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
         self._control_panel_reader = ControlPanelReader(control_panel_port)
+        self._control_panel_reader.register_callback(self._on_switch_changed)
+        self._control_panel_reader.start_listening()
 
         ### IMPORTANT ###
         mavutil.mavlink = simba_dialect
@@ -51,6 +53,8 @@ class MavlinkBridge(Node):
         self.master.mav = simba_dialect.MAVLink(self.master)
         logger.info("Heartbeat received. Waiting for custom messages...")
 
+        # TODO: Mark topics that are not included in config.json as "internal" 
+        # and create publishers for them separately in here dynamically
         self.gs_switches_publisher = self.create_publisher(gs_msgs.TankingCommands, 'tanking/commands', 10)
         logger.info("Created publisher for tanking commands")
         
@@ -59,26 +63,24 @@ class MavlinkBridge(Node):
 
         self.tare_publisher = self.create_publisher(gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
         logger.info("Created publisher for tare commands")
+        # ----------------- #
 
         self._last_rocket_flags = None
         self._running = True
+
         self._receiver_thread = None
         self._start_receiver_thread()
 
         self._panel_lock = threading.Lock()
         
-        self.reader_timer = self.create_timer(0.1, self._read_panel_switches)
-        self.rocket_timer = self.create_timer(1, self._handle_rocket_switches)
-        self.gs_timer = self.create_timer(0.25, self._handle_gs_switches)
-        
+        self.gs_timer = self.create_timer(0.5, self._timer_gs_heartbeat)
+        self.rocket_timer = self.create_timer(1.0, self._timer_rocket_heartbeat)
         logger.info("Timers initialized for Control Panel")
 
-    def _start_main_loop_thread(self):
-        self._control_thread = threading.Thread(
-            target=self._main_loop)
-        self._control_thread.daemon = True
-        self._control_thread.start()
-        logger.info("Started control panel handler thread")
+    def _on_switch_changed(self, new_switches_state):
+        logger.info(f"State change detected from Control Panel - New state: {new_switches_state}")
+        self._process_rocket_data(new_switches_state, is_burst=True)
+        self._process_gs_data(new_switches_state)
 
     def _start_receiver_thread(self):
         self._receiver_thread = threading.Thread(
@@ -87,6 +89,12 @@ class MavlinkBridge(Node):
         self._receiver_thread.start()
         logger.info("Started MAVLink receiver thread")
 
+    def _timer_rocket_heartbeat(self):
+        self._process_rocket_data(self._control_panel_reader.latest_switches, is_burst=False)
+
+    def _timer_gs_heartbeat(self):
+        self._process_gs_data(self._control_panel_reader.latest_switches)
+
     def _read_panel_switches(self):
         """Dedicated timer callback to safely read control panel switches."""
         try:
@@ -94,21 +102,96 @@ class MavlinkBridge(Node):
                 self._control_panel_reader.read_switches()
         except Exception as e:
             logger.error(f"Error reading control panel: {e}")
+    
+    def _process_rocket_data(self, switches_state, is_burst=False):
+        try:
+            rocket_switches = self._control_panel_reader.get_rocket_actions(switches_state)
+            if not rocket_switches: return
+
+            is_armed = bool(rocket_switches.get(("arm_disarm", "rocket"), 0))
+            flags = simba_dialect.SIMBA_GS_FLAGS_ARM if is_armed else simba_dialect.SIMBA_GS_FLAGS_DISARM
+
+            TOGGLE_MAP = {
+                ("tank_vent", "rocket"): simba_dialect.SIMBA_GS_FLAGS_VENT_VALVE,
+                ("dump", "rocket"): simba_dialect.SIMBA_GS_FLAGS_DUMP_VALVE,
+                ("enable_cameras", "rocket"): simba_dialect.SIMBA_GS_FLAGS_CAMERAS,
+                ("ignition", "rocket"): simba_dialect.SIMBA_GS_FLAGS_LAUNCH,
+                ("abort", "abort"): simba_dialect.SIMBA_GS_FLAGS_ABORT,
+            }
+
+            for key, bit_val in TOGGLE_MAP.items():
+                if bool(rocket_switches.get(key, 0)):
+                    flags |= bit_val
+
+            self._last_rocket_flags = flags
+
+            with self._panel_lock:
+                if is_burst:
+                    for _ in range(BURST_COUNT):
+                        self.master.mav.simba_gs_heartbeat_send(int(time.time() * 1000), flags)
+                        time.sleep(BURST_INTERVAL)
+                else:
+                    self.master.mav.simba_gs_heartbeat_send(int(time.time() * 1000), flags)
+
+        except Exception as e:
+            logger.error(f"Error handling ROCKET switches: {e}")
+
+    def _process_gs_data(self, switches_state):
+        try:
+            gs_switches = self._control_panel_reader.get_gs_actions(switches_state)
+            if not gs_switches: return
+        
+            tank_msg = gs_msgs.TankingCommands()
+            tank_msg.header.stamp = self.get_clock().now().to_msg()
+            tank_msg.header.frame_id = "control_panel_gs"
+            
+            tank_msg.valve_feed_oxidizer = int(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
+            tank_msg.valve_feed_pressurizer = int(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
+            tank_msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
+            tank_msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
+            tank_msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
+            tank_msg.decoupler_pressurizer = bool(gs_switches.get(("decoupler_pressurizer", "gs"), 0))
+
+            self.gs_switches_publisher.publish(tank_msg)
+
+            tare_msg = gs_msgs.LoadCellsTare()
+            tare_msg.header.stamp = self.get_clock().now().to_msg()
+            tare_msg.header.frame_id = "control_panel_gs"
+            tare_msg.tare_rocket = bool(gs_switches.get(("tare_rocket", "gs"), 0))
+            tare_msg.tare_oxidizer = bool(gs_switches.get(("tare_oxidizer", "gs"), 0))
+            tare_msg.tare_pressurizer = bool(gs_switches.get(("tare_pressurizer", "gs"), 0))
+
+            self.tare_publisher.publish(tare_msg)
+
+            abort_msg = gs_msgs.TankingAbort()
+            abort_msg.header.stamp = self.get_clock().now().to_msg()
+            abort_msg.header.frame_id = "control_panel_gs"
+            abort_msg.abort = bool(gs_switches.get(("abort", "abort"), 0))
+            
+            self.abort_publisher.publish(abort_msg)
+
+            with self._panel_lock:
+                self.gs_switches_publisher.publish(tank_msg)
+                self.tare_publisher.publish(tare_msg)
+                self.abort_publisher.publish(abort_msg)
+
+        except Exception as e:
+            logger.error(f"Error handling GS switches: {e}")
 
     def find_mavlink_connection(self, baudrate=57600, dialect="simba", retry_delay=1):
         while True:
             ports = serial.tools.list_ports.comports()
             for port in ports:
                 try:
-                    self.get_logger.info(f"Trying port: {port.device}")
+                    self.logger.info(f"Trying port: {port.device}")
                     conn = mavutil.mavlink_connection(
                         port.device, baud=baudrate, dialect=dialect)
                     # conn.wait_heartbeat(timeout=timeout)
-                    self.get_logger.info(f"MAVLink heartbeat received on {port.device}")
+                    self.logger.info(f"MAVLink heartbeat received on {port.device}")
                     return conn
                 except Exception as e:
-                    self.get_logger.error(f"Failed on {port.device}: {e}")
-            self.get_logger.info(
+                    self.logger.error(f"Failed on {port.device}: {e}")
+            self.logger.info(
                 f"No MAVLink device found. Retrying in {retry_delay} seconds...")
             retry_delay *= 2
             time.sleep(retry_delay)
@@ -145,17 +228,8 @@ class MavlinkBridge(Node):
         while self._running and rclpy.ok():
             try:
                 msg = self.master.recv_match(blocking=True, timeout=1.0)
-                if not msg:
-                    continue
-
-                if msg.get_type() == 'BAD_DATA':
-                    continue
-
-                # Handle RADIO_STATUS
-                if msg.get_type() == 'RADIO_STATUS':
-                    # self._handle_radio_status(msg)
-                    data = msg.to_dict()
-                    logger.info(f"{data}")
+                
+                if not msg or msg.get_type() == 'BAD_DATA':
                     continue
 
                 logger.info(f"Received MAVLink message: {msg}")
@@ -195,103 +269,13 @@ class MavlinkBridge(Node):
                     setattr(ros_msg, field_name, getattr(
                         mavlink_msg, field_name, None))
                 else:
-                    logger.warn(
+                    logger.warning(
                         f"Field {field_name} not found in ROS2 message {msg_type}")
 
             self._mavlink_publishers[msg_type].publish(ros_msg)
             logger.info(
                 f"Published ROS2 message on topic: {msg_type}")
 
-    def _handle_rocket_switches(self):
-        try:
-            with self._panel_lock:
-                rocket_switches = self._control_panel_reader.get_rocket_actions()
-
-            if not rocket_switches:
-                return
-
-            # ARM / DISARM is a unique case in here
-            is_armed = bool(rocket_switches.get(("arm_disarm", "rocket"), 0))
-            flags = simba_dialect.SIMBA_GS_ARM if is_armed else simba_dialect.SIMBA_GS_DISARM
-
-            TOGGLE_MAP = {
-                ("tank_vent", "rocket"): simba_dialect.SIMBA_GS_VENT_VALVE,
-                ("dump", "rocket"): simba_dialect.SIMBA_GS_DUMP_VALVE,
-                ("enable_cameras", "rocket"): simba_dialect.SIMBA_GS_CAMERAS,
-                ("ignition", "rocket"): simba_dialect.SIMBA_GS_LAUNCH,
-                ("abort", "abort"): simba_dialect.SIMBA_GS_ABORT,
-            }
-
-            for key, bit_val in TOGGLE_MAP.items():
-                if bool(rocket_switches.get(key, 0)):
-                    flags |= bit_val
-
-            # Initialize on first run to prevent an immediate burst on startup
-            if self._last_rocket_flags is None:
-                self._last_rocket_flags = flags
-
-            if flags != self._last_rocket_flags:
-                logger.info(f"State change detected! Bursting 5 messages. Flags: {flags}")
-                
-                for _ in range(BURST_COUNT):
-                    self.master.mav.simba_gs_heartbeat_send(
-                        int(time.time() * 1000),
-                        flags
-                    )
-                    time.sleep(BURST_INTERVAL)
-                
-                self._last_rocket_flags = flags
-            else:
-                self.master.mav.simba_gs_heartbeat_send(
-                    int(time.time() * 1000),
-                    flags
-                )
-
-        except Exception as e:
-            logger.error(f"Error handling ROCKET switches: {e}")
-
-
-    def _handle_gs_switches(self):
-        try:
-            with self._panel_lock:
-                gs_switches = self._control_panel_reader.get_gs_actions()
-
-            if not gs_switches:
-                return
-        
-            tank_msg = gs_msgs.TankingCommands()
-            tank_msg.header.stamp = self.get_clock().now().to_msg()
-            tank_msg.header.frame_id = "control_panel_gs"
-            
-            tank_msg.valve_feed_oxidizer = bool(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
-            tank_msg.valve_feed_pressurizer = bool(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
-            tank_msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
-            tank_msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
-            tank_msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
-            tank_msg.decoupler_pressurizer = bool(gs_switches.get(("decoupler_pressurizer", "gs"), 0))
-
-            self.gs_switches_publisher.publish(tank_msg)
-
-            tare_msg = gs_msgs.LoadCellsTare()
-            tare_msg.header.stamp = self.get_clock().now().to_msg()
-            tare_msg.header.frame_id = "control_panel_gs"
-            tare_msg.tare_rocket = bool(gs_switches.get(("tare_rocket", "gs"), 0))
-            tare_msg.tare_oxidizer = bool(gs_switches.get(("tare_oxidizer", "gs"), 0))
-            tare_msg.tare_pressurizer = bool(gs_switches.get(("tare_pressurizer", "gs"), 0))
-
-            self.tare_publisher.publish(tare_msg)
-
-            abort_msg = gs_msgs.TankingAbort()
-            abort_msg.header.stamp = self.get_clock().now().to_msg()
-            abort_msg.header.frame_id = "control_panel_gs"
-            abort_msg.abort = bool(gs_switches.get(("abort", "abort"), 0))
-            
-            self.abort_publisher.publish(abort_msg)
-
-        except Exception as e:
-            logger.error(f"Error handling GS switches: {e}")
-
-                
     def shutdown(self):
         """Clean shutdown of the MAVLink client."""
         logger.info("Shutting down MAVLink client...")
