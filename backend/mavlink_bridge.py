@@ -109,14 +109,14 @@ class MavlinkBridge(Node):
             if not rocket_switches: return
 
             is_armed = bool(rocket_switches.get(("arm_disarm", "rocket"), 0))
-            flags = simba_dialect.SIMBA_GS_ARM if is_armed else simba_dialect.SIMBA_GS_DISARM
+            flags = simba_dialect.SIMBA_GS_FLAGS_ARM if is_armed else simba_dialect.SIMBA_GS_FLAGS_DISARM
 
             TOGGLE_MAP = {
-                ("tank_vent", "rocket"): simba_dialect.SIMBA_GS_VENT_VALVE,
-                ("dump", "rocket"): simba_dialect.SIMBA_GS_DUMP_VALVE,
-                ("enable_cameras", "rocket"): simba_dialect.SIMBA_GS_CAMERAS,
-                ("ignition", "rocket"): simba_dialect.SIMBA_GS_LAUNCH,
-                ("abort", "abort"): simba_dialect.SIMBA_GS_ABORT,
+                ("tank_vent", "rocket"): simba_dialect.SIMBA_GS_FLAGS_VENT_VALVE,
+                ("dump", "rocket"): simba_dialect.SIMBA_GS_FLAGS_DUMP_VALVE,
+                ("enable_cameras", "rocket"): simba_dialect.SIMBA_GS_FLAGS_CAMERAS,
+                ("ignition", "rocket"): simba_dialect.SIMBA_GS_FLAGS_LAUNCH,
+                ("abort", "abort"): simba_dialect.SIMBA_GS_FLAGS_ABORT,
             }
 
             for key, bit_val in TOGGLE_MAP.items():
@@ -145,8 +145,8 @@ class MavlinkBridge(Node):
             tank_msg.header.stamp = self.get_clock().now().to_msg()
             tank_msg.header.frame_id = "control_panel_gs"
             
-            tank_msg.valve_feed_oxidizer = bool(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
-            tank_msg.valve_feed_pressurizer = bool(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
+            tank_msg.valve_feed_oxidizer = int(gs_switches.get(("valve_feed_oxidizer", "gs"), 0))
+            tank_msg.valve_feed_pressurizer = int(gs_switches.get(("valve_feed_pressurizer", "gs"), 0))
             tank_msg.valve_vent_oxidizer = bool(gs_switches.get(("valve_vent_oxidizer", "gs"), 0))
             tank_msg.valve_vent_pressurizer = bool(gs_switches.get(("valve_vent_pressurizer", "gs"), 0))
             tank_msg.decoupler_oxidizer = bool(gs_switches.get(("decoupler_oxidizer", "gs"), 0))
@@ -183,15 +183,15 @@ class MavlinkBridge(Node):
             ports = serial.tools.list_ports.comports()
             for port in ports:
                 try:
-                    self.get_logger.info(f"Trying port: {port.device}")
+                    self.logger.info(f"Trying port: {port.device}")
                     conn = mavutil.mavlink_connection(
                         port.device, baud=baudrate, dialect=dialect)
                     # conn.wait_heartbeat(timeout=timeout)
-                    self.get_logger.info(f"MAVLink heartbeat received on {port.device}")
+                    self.logger.info(f"MAVLink heartbeat received on {port.device}")
                     return conn
                 except Exception as e:
-                    self.get_logger.error(f"Failed on {port.device}: {e}")
-            self.get_logger.info(
+                    self.logger.error(f"Failed on {port.device}: {e}")
+            self.logger.info(
                 f"No MAVLink device found. Retrying in {retry_delay} seconds...")
             retry_delay *= 2
             time.sleep(retry_delay)
@@ -269,7 +269,7 @@ class MavlinkBridge(Node):
                     setattr(ros_msg, field_name, getattr(
                         mavlink_msg, field_name, None))
                 else:
-                    logger.warn(
+                    logger.warning(
                         f"Field {field_name} not found in ROS2 message {msg_type}")
 
             self._mavlink_publishers[msg_type].publish(ros_msg)

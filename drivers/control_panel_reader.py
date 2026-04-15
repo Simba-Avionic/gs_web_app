@@ -8,21 +8,21 @@ class ControlPanelReader:
 
     # For exact bit structure look into https://github.com/Simba-Avionic/control_panel_software
     SWITCH_ACTIONS = {
-        ("valve_feed_oxidizer", "gs"): 0,       # bit 0
-        ("valve_vent_oxidizer", "gs"): 0,       # bit 1
-        ("decoupler_oxidizer", "gs"): 0,        # bit 2
-        ("valve_feed_pressurizer", "gs"): 0,    # bit 3
-        ("valve_vent_pressurizer", "gs"): 0,    # bit 4
-        ("decoupler_pressurizer", "gs"): 0,     # bit 5
-        ("arm_disarm", "rocket"): 0,            # bit 6
-        ("tank_vent", "rocket"): 0,             # bit 7
-        ("ignition", "rocket"): 0,              # bit 8
-        ("abort", "abort"): 0,                  # bit 9
-        ("dump", "rocket"): 0,                  # bit 10
-        ("enable_cameras", "rocket"): 0,        # bit 11
-        ("tare_rocket", "gs"): 0,               # bit 12
-        ("tare_oxidizer", "gs"): 0,             # bit 13
-        ("tare_pressurizer", "gs"): 0,          # bit 14
+        ("valve_feed_oxidizer", "gs"): 0,       # bit 0,1
+        ("valve_vent_oxidizer", "gs"): 0,       # bit 2
+        ("decoupler_oxidizer", "gs"): 0,        # bit 3
+        ("valve_feed_pressurizer", "gs"): 0,    # bit 4
+        ("valve_vent_pressurizer", "gs"): 0,    # bit 5
+        ("decoupler_pressurizer", "gs"): 0,     # bit 6
+        ("arm_disarm", "rocket"): 0,            # bit 7
+        ("tank_vent", "rocket"): 0,             # bit 8
+        ("ignition", "rocket"): 0,              # bit 9
+        ("abort", "abort"): 0,                  # bit 10
+        ("dump", "rocket"): 0,                  # bit 11
+        ("enable_cameras", "rocket"): 0,        # bit 12
+        ("tare_rocket", "gs"): 0,               # bit 13
+        ("tare_oxidizer", "gs"): 0,             # bit 14
+        ("tare_pressurizer", "gs"): 0,          # bit 15
     }
 
     def __init__(self, port=None, baudrate=57600, timeout=0.1, num_retries=3):
@@ -139,10 +139,20 @@ class ControlPanelReader:
 
             switch_value = int(switch_value)
             
+            bit_idx = 0
             # Map each bit to the corresponding key in SWITCH_ACTIONS
-            for i, key in enumerate(actions.keys()):
-                if i < 16:  # Only 16 bits in uint16_t
-                    actions[key] = (switch_value >> i) & 1
+            for key in actions.keys():
+                if bit_idx >= 16:  # Protection against over-shifting uint16_t
+                    break
+                    
+                if key == ("valve_feed_oxidizer", "gs"):
+                    # Extract 2 bits (mask 0b11) and shift index by 2
+                    actions[key] = (switch_value >> bit_idx) & 0b11
+                    bit_idx += 2
+                else:
+                    # Extract 1 bit (mask 1) and shift index by 1
+                    actions[key] = (switch_value >> bit_idx) & 1
+                    bit_idx += 1
 
             return actions
         except Exception as e:
