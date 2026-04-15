@@ -61,14 +61,14 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
             msg.header.stamp = stamp
             msg.header.frame_id = msg_type_name
         elif 'float' in field_type:
-            if val_name == 'lat':
-                setattr(msg, val_name, random.uniform(54.20, 54.45))
-            elif val_name == 'lon':
-                setattr(msg, val_name, random.uniform(18.50, 18.75))
-            else:
-                setattr(msg, val_name, random.uniform(float(f_range[0]), float(f_range[1] + 5.0)) if f_range else random.uniform(-100.0, 100.0))
+            setattr(msg, val_name, random.uniform(float(f_range[0]), float(f_range[1] + 5.0)) if f_range else random.uniform(-100.0, 100.0))
         elif 'int' in field_type:
-            setattr(msg, val_name, random.randint(f_range[0], f_range[1] + 5) if f_range else random.randint(0, 100))
+            if val_name == 'lat':
+                setattr(msg, val_name, int(random.uniform(54.19, 54.46) *  10000000))
+            elif val_name == 'lon':
+                setattr(msg, val_name, int(random.uniform(18.49, 18.76) *  10000000))
+            else:
+                setattr(msg, val_name, random.randint(f_range[0], f_range[1] + 5) if f_range else random.randint(0, 100))
         elif field_type == 'bool':
             setattr(msg, val_name, random.choice([True, False]))
         else:

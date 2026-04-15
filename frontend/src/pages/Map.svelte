@@ -1,9 +1,9 @@
-<!-- MapWidget.svelte -->
 <script>
     import { onMount, onDestroy } from "svelte";
     import TelemetryField from "../components/fields/TelemetryField.svelte";
     // @ts-ignore
     import L from "leaflet";
+    import { queryFieldData } from "../services/api.js";
 
     let topics = [];
 
@@ -22,7 +22,7 @@
     let selectedMap = localStorage.getItem("selectedMap") || "Tricity";
 
     const mapConfigs = {
-        "Tricity": {
+        Tricity: {
             url: `http://${window.location.host}/tiles/tricity/{z}/{x}/{y}.png`,
             center: [54.4034, 18.5166],
             minZoom: 10,
@@ -36,7 +36,7 @@
         },
         "Mojave Desert": {
             url: `http://${window.location.host}/tiles/mojave/{z}/{x}/{y}.png`,
-            center: [35.0846, -115.5242],
+            center: [35.27997, -117.813],
             minZoom: 10,
             maxZoom: 15,
         },
@@ -58,8 +58,7 @@
         });
 
         currentLayer.addTo(map);
-
-        map.setView(config.center, config.minZoom);
+        map.setView(config.center, config.maxZoom - 2);
 
         selectedMap = mapName;
         localStorage.setItem("selectedMap", mapName);
@@ -72,18 +71,60 @@
         popupAnchor: [0, -38],
     });
 
-    const loadPathFromLocalStorage = () => {
-        const savedPath = localStorage.getItem("markerPath");
-        return savedPath ? JSON.parse(savedPath) : [];
+    let timeRange = localStorage.getItem("map_time_range") || "1"; // 1 minute default
+
+    const setTimeRange = (range) => {
+        timeRange = range;
+        localStorage.setItem("map_time_range", range);
+        clearPath();
+        loadHistoricalPath();
     };
 
-    const savePathToLocalStorage = () => {
-        localStorage.setItem("markerPath", JSON.stringify(path));
+    const loadHistoricalPath = async () => {
+        try {
+            const rawLatData = await queryFieldData(
+                "mavlink/simba_gps",
+                "lat",
+                timeRange,
+            );
+            const rawLonData = await queryFieldData(
+                "mavlink/simba_gps",
+                "lon",
+                timeRange,
+            );
+
+            const latArray = rawLatData.records || [];
+            const lonArray = rawLonData.records || [];
+
+            if (
+                latArray.length > 0 &&
+                lonArray.length > 0 &&
+                latArray.length === lonArray.length
+            ) {
+                path = latArray.map((latPoint, i) => {
+                    const lat = latPoint._value;
+                    const lon = lonArray[i]._value;
+                    return [lat, lon];
+                });
+            } else {
+                console.warn(
+                    "Could not parse GPS data. Arrays were empty or lengths mismatched.",
+                );
+            }
+
+            if (path.length > 0) {
+                pathLine.setLatLngs(path);
+                const latestPoint = path[path.length - 1];
+                marker.setLatLng(latestPoint);
+            }
+        } catch (error) {
+            console.error("Error loading historical GPS path from DB:", error);
+        }
     };
 
     onMount(() => {
         fetchConfig();
-        
+
         map = L.map("map", {
             zoomControl: false,
             attributionControl: false,
@@ -96,8 +137,8 @@
         const initialCoords = mapConfigs[selectedMap].center;
         marker = L.marker(initialCoords, { icon: customIcon }).addTo(map);
 
-        path = loadPathFromLocalStorage();
         pathLine = L.polyline(path, { color: "orange" }).addTo(map);
+        loadHistoricalPath();
 
         gpsSocket = new WebSocket(
             `ws://${window.location.host}/mavlink/simba_gps`,
@@ -116,7 +157,7 @@
 
                     path.push(newLatLng);
                     pathLine.setLatLngs(path);
-                    savePathToLocalStorage();
+                    // LocalStorage save removed here
                 }
             } catch (e) {
                 console.error("Error processing GPS data:", e);
@@ -138,12 +179,8 @@
     });
 
     onDestroy(() => {
-        if (gpsSocket) {
-            gpsSocket.close();
-        }
-        if (maxAltitudeSocket) {
-            maxAltitudeSocket.close();
-        }
+        if (gpsSocket) gpsSocket.close();
+        if (maxAltitudeSocket) maxAltitudeSocket.close();
     });
 
     const togglePath = () => {
@@ -158,7 +195,6 @@
     const clearPath = () => {
         path = [];
         pathLine.setLatLngs([]);
-        localStorage.removeItem("markerPath");
     };
 
     async function fetchConfig() {
@@ -168,8 +204,6 @@
             );
             const data = await response.json();
 
-            // Filter topics to only include GPS and max altitude topics
-            // TODO: Do it in config.json
             const allowedTopics = [
                 "mavlink/simba_max_altitude",
                 "mavlink/simba_gps",
@@ -209,8 +243,36 @@
 
         <hr class="divider" />
 
+        <div class="time-menu">
+            <label>Path History:</label>
+            <div class="time-controls">
+                <button
+                    class:selected={timeRange === "1"}
+                    on:click={() => setTimeRange("1")}>1m</button
+                >
+                <button
+                    class:selected={timeRange === "10"}
+                    on:click={() => setTimeRange("10")}>10m</button
+                >
+                <button
+                    class:selected={timeRange === "30"}
+                    on:click={() => setTimeRange("30")}>30m</button
+                >
+                <button
+                    class:selected={timeRange === "60"}
+                    on:click={() => setTimeRange("60")}>1h</button
+                >
+                <button
+                    class:selected={timeRange === "120"}
+                    on:click={() => setTimeRange("120")}>2h</button
+                >
+            </div>
+        </div>
+
+        <hr class="divider" />
+
         <div class="buttons">
-            <button class="button" on:click={togglePath}>
+            <button class="button" on:click={togglePath} >
                 {showPath ? "Hide Path" : "Show Path"}
             </button>
             <button class="button" on:click={clearPath}>Clear Path</button>
@@ -234,7 +296,6 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-        margin-bottom: 15px;
     }
 
     .map-menu select {
@@ -249,8 +310,7 @@
     .divider {
         border: 0;
         border-top: 1px solid var(--border-color);
-        margin: 10px 0 20px 0;
-        opacity: 0.55;
+        margin: 20px 0 20px 0;
     }
 
     .buttons {
@@ -262,24 +322,27 @@
 
     .button {
         padding: 10px 16px;
-        border: none;
         border-radius: 0.2rem;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         font-weight: 500;
-        background: rgb(61, 113, 217);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
         width: 160px;
         justify-content: center;
         text-align: center;
         font-size: 1rem;
+        transition:
+            background-color 0.2s,
+            color 0.2s,
+            border-color 0.2s;
     }
 
-    .button:hover {
-        background-color: rgb(90, 134, 222);
-        transition:
-            background-color 0.3s,
-            color 0.3s;
+    .buttons button:hover:not(.selected) {
+        background-color: var(--snd-bg-color);
+        border: 1px solid #ff965f;
     }
 
     .fields-container {
@@ -294,9 +357,16 @@
     .info-widget {
         position: absolute;
         top: calc(var(--navbar-height) + 20px);
-        left: 75%;
-        width: 20%;
-        height: 40%;
+        right: 20px;
+        
+        width: 90%;
+        min-width: 280px;
+        max-width: 300px;
+
+        height: auto;
+        min-height: 350px;
+        max-height: calc(100vh - var(--navbar-height) - 40px);
+
         padding: 16px;
         border: 1px solid var(--border-color);
         border-radius: 0.75rem;
@@ -313,5 +383,42 @@
         width: 350px;
         left: auto;
         right: 20px;
+    }
+
+    .time-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .time-controls {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .time-controls button {
+        font-size: 0.8rem;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 4px 6px;
+        flex: 1;
+        text-align: center;
+        transition:
+            background-color 0.2s,
+            color 0.2s;
+    }
+
+    .time-controls button.selected {
+        background-color: #ff965f;
+        border-color: #ff965f;
+        color: #181b1f;
+    }
+
+    .time-controls button:hover:not(.selected) {
+        background-color: var(--snd-bg-color);
     }
 </style>
