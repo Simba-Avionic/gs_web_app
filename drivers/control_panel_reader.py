@@ -1,6 +1,7 @@
-import serial
 import glob
 import time
+import serial
+import threading
 from loguru import logger
 
 class ControlPanelReader:
@@ -25,18 +26,63 @@ class ControlPanelReader:
     }
 
     def __init__(self, port=None, baudrate=57600, timeout=0.1, num_retries=3):
-        self.baudrate = baudrate
-        self.num_retries = num_retries
-        self.ser = None
-        self.thread = None
+            self.baudrate = baudrate
+            self.num_retries = num_retries
+            self.ser = None
+            self.thread = None
+            self.running = False
+            
+            self.latest_switches = self.SWITCH_ACTIONS.copy()
+            self._callbacks = []
 
-        self.latest_switches = {}
+            if port:
+                self.ser = serial.Serial(port, baudrate, timeout=timeout)
+                logger.info(f"Using specified Control Panel port: {port} | baud: {baudrate}")
+            else:
+                self.scan_and_connect()
 
-        if port:
-            self.ser = serial.Serial(port, baudrate)
-            logger.info(f"Using specified Control Panel port: {port} | baud: {baudrate}")
-        else:
-            self.scan_and_connect()
+    def register_callback(self, callback_func):
+        self._callbacks.append(callback_func)
+
+    def start_listening(self):
+        if not self.ser:
+            logger.error("Cannot start listening: No serial connection.")
+            return
+
+        self.running = True
+        self.thread = threading.Thread(target=self._listen_loop, daemon=True)
+        self.thread.start()
+        logger.info("Control Panel reader background thread started.")
+
+    def _listen_loop(self):
+        while self.running:
+            new_actions = self.read_switches()
+            if new_actions is not None:
+                if new_actions != self.latest_switches:
+                    self.latest_switches = new_actions.copy()
+                    
+                    for callback in self._callbacks:
+                        try:
+                            callback(self.latest_switches)
+                        except Exception as e:
+                            logger.error(f"Error in callback execution: {e}")
+            time.sleep(0.05)
+
+    def get_rocket_actions(self, actions=None):
+        if actions is None: return None
+        return {key: value for key, value in actions.items() if key[1] == "rocket" or key[1] == "abort"}
+
+    def get_gs_actions(self, actions=None):
+        if actions is None: return None
+        return {key: value for key, value in actions.items() if key[1] == "gs" or key[1] == "abort"}
+
+    def close(self):
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=1.0)
+        if self.ser:
+            self.ser.close()
+            self.ser = None
 
     def scan_and_connect(self):
         available_ports = sorted(glob.glob('/dev/ttyACM*'))
@@ -102,41 +148,6 @@ class ControlPanelReader:
         except Exception as e:
             logger.error(f"Error reading switches: {e}")
             return actions
-
-    def get_rocket_actions(self):
-        """
-        Get only rocket-related actions.
-
-        Returns:
-            Dictionary of rocket-related actions
-        """
-        actions = self.read_switches()
-        if actions is None:
-            return None
-        return {key: value for key, value in actions.items()
-                if key[1] == "rocket" or key[1] == "abort"}
-
-    def get_gs_actions(self):
-        """
-        Get GS/abort actions as MAVLink bitmask for SIMBA_GS_HEARTBEAT.
-
-        Returns:
-            Integer bitmask (for MAVLink).get_gs_actions
-        """
-        actions = self.read_switches()
-        if actions is None:
-            return None
-        return {key: value for key, value in actions.items()
-                if key[1] == "gs" or key[1] == "abort"}
-
-    def close(self):
-        self.running = False
-        if self.thread:
-            self.thread.join(timeout=1.0)
-
-        if self.ser:
-            self.ser.close()
-            self.ser = None
 
 if __name__ == "__main__":
     reader = ControlPanelReader("/dev/ttyACM1", baudrate=57600)
