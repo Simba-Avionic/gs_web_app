@@ -6,134 +6,19 @@
   import { fetchConfig } from "../services/api.js";
 
   import {
-    fetchSVG,
-    createLine,
+    fetchSVG, 
+    createLines,
     observeLines,
   } from "../services/svg.js";
 
   let svgContent = "";
   let cleanup;
 
-  let lines = [];
+  let lines = []
   let topics = [];
   let statusItems = [];
   let svgItems = [];
   let rocketGroups = {};
-
-  function createLines() {
-    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_sensors"));
-    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_actuators"));
-    lines.push(createLine("engine", "#rocket-info #engine"));
-    lines.push(createLine("avionics", "#rocket-info #avionics"));
-    lines.push(createLine("recovery", "#rocket-info #recovery"));
-
-    const defaultOptions = {
-      color: "var(--text-color)",
-      size: 1,
-      hide: true,
-      startPlug: "behind",
-      endPlug: "behind",
-      showEffectName: "draw",
-    };
-
-    lines.push(
-      createLine("oxidizer_tank", "#valve_feed_oxidizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "top",
-        endSocket: "left",
-        startSocketGravity: [0, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    );
-
-    lines.push(
-      createLine("oxidizer_tank", "#valve_vent_oxidizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "top",
-        endSocket: "top",
-        startSocketGravity: [0, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    );
-
-    lines.push(
-      createLine("valve_feed_oxidizer", "#decoupler_oxidizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "right",
-        endSocket: "left",
-        startSocketGravity: [25, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    );
-
-    /* 
-    lines.push(
-      createLine("pressurizer_tank", "#valve_feed_pressurizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "top",
-        endSocket: "left",
-        startSocketGravity: [0, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    );
-
-    lines.push(
-      createLine("pressurizer_tank", "#valve_vent_pressurizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "top",
-        endSocket: "top",
-        startSocketGravity: [0, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    );
-
-    lines.push(
-      createLine("valve_feed_pressurizer", "#decoupler_pressurizer", {
-        ...defaultOptions,
-        path: "grid",
-        startSocket: "right",
-        endSocket: "left",
-        startSocketGravity: [25, 0],
-        endSocketGravity: [0, 0],
-        dash: {
-          animation: true,
-          len: 5,
-          gap: 3,
-        },
-      }),
-    ); 
-    */
-  }
 
   // TODO: Try to remove hardcoded if statements and so on...
   // This is very specific to the current SVG and telemetry config, (in other words - shitty function)
@@ -289,7 +174,7 @@
     });
 
     await tick();
-    createLines();
+    createLines(lines);
     cleanup = observeLines(lines);
   });
 
