@@ -30,34 +30,6 @@ export function createLine(
     return line;
 }
 
-export function observeSVGRender() {
-    const svgContainer = document.getElementById("svg-container");
-    const observer = new MutationObserver(() => {
-        let index = 0;
-
-        const signalPath = document.querySelectorAll("#_433_signal path");
-
-        if (signalPath) animatePath(signalPath, index);
-
-        observer.disconnect();
-    });
-    observer.observe(svgContainer, { childList: true, subtree: true });
-}
-
-function animatePath(paths, index) {
-    paths[index].animate([{ opacity: "0" }, { opacity: "1" }], {
-        duration: 1000,
-        easing: "ease-out",
-        fill: "forwards",
-    }).onfinish = () => {
-        index++;
-        if (index >= paths.length) {
-            index = 0;
-        }
-        animatePath(paths, index);
-    };
-}
-
 export function observeLines(lines) {
     if (!lines || !lines.length) return;
 
@@ -79,11 +51,11 @@ export function observeLines(lines) {
     const resizeObserver = new ResizeObserver(() => {
         scheduleUpdate();
     });
-
+    
     let animationInProgress = false;
     let animationFrame;
     let startTime;
-    const animationDuration = 333;
+    const animationDuration = 400;
 
     function animateLineUpdates() {
         if (animationInProgress) return;
@@ -102,6 +74,7 @@ export function observeLines(lines) {
                 animationFrame = requestAnimationFrame(animate);
             } else {
                 animationInProgress = false;
+                updateLinePositions();
             }
         }
 
@@ -143,12 +116,90 @@ export function observeLines(lines) {
         resizeObserver.observe(svgContainer);
     }
 
-    // Return cleanup function
+    const rocketInfo = document.getElementById("rocket-info");
+    
+    // When the user clicks anywhere in the sidebar, start the loop
+    const triggerAnimation = () => {
+        animateLineUpdates();
+    };
+
+    if (rocketInfo) {
+        rocketInfo.addEventListener("click", triggerAnimation);
+    }
+
     return () => {
         layoutObserver.disconnect();
         resizeObserver.disconnect();
+       if (rocketInfo) {
+            rocketInfo.removeEventListener("click", triggerAnimation);
+        }
         if (animationFrame) {
             cancelAnimationFrame(animationFrame);
         }
     };
 }
+
+  export function createLines(lines) {
+    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_sensors"));
+    lines.push(createLine("tank_oxidizer", "#rocket-info #tank_actuators"));
+    lines.push(createLine("engine", "#rocket-info #engine"));
+    lines.push(createLine("avionics", "#rocket-info #avionics"));
+    lines.push(createLine("recovery", "#rocket-info #recovery"));
+
+    const defaultOptions = {
+      color: "var(--text-color)",
+      size: 1,
+      hide: true,
+      startPlug: "behind",
+      endPlug: "behind",
+      showEffectName: "draw",
+    };
+
+    lines.push(
+      createLine("oxidizer_tank", "#valve_feed_oxidizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "top",
+        endSocket: "left",
+        startSocketGravity: [0, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+
+    lines.push(
+      createLine("oxidizer_tank", "#valve_vent_oxidizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "top",
+        endSocket: "top",
+        startSocketGravity: [0, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+
+    lines.push(
+      createLine("valve_feed_oxidizer", "#decoupler_oxidizer", {
+        ...defaultOptions,
+        path: "grid",
+        startSocket: "right",
+        endSocket: "left",
+        startSocketGravity: [25, 0],
+        endSocketGravity: [0, 0],
+        dash: {
+          animation: true,
+          len: 5,
+          gap: 3,
+        },
+      }),
+    );
+  }
