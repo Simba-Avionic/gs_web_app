@@ -5,16 +5,14 @@
   import { subscribeToTopic } from "../services/websockets.js";
   import { fetchConfig } from "../services/api.js";
 
-  import {
-    fetchSVG, 
-    createLines,
-    observeLines,
-  } from "../services/svg.js";
+  import { fetchSVG, createLines, observeLines } from "../services/svg.js";
+  import { get } from "svelte/store";
+  import { enumMappings, loadEnums } from "../stores/enums.js";
 
   let svgContent = "";
   let cleanup;
 
-  let lines = []
+  let lines = [];
   let topics = [];
   let statusItems = [];
   let svgItems = [];
@@ -37,7 +35,7 @@
       const fieldName = element.val_name; // e.g. "valve_feed_oxidizer"
       const svgId = element.controls; // e.g. "valve1"
       const value = telemetryData[fieldName];
-      
+
       // @ts-ignore
       const svgElem = svg.getElementById(svgId);
 
@@ -92,14 +90,24 @@
     svgContent = await fetchSVG("/images/r7.svg");
     topics = await fetchConfig();
 
+    if (Object.keys(get(enumMappings)).length === 0) {
+      await loadEnums();
+    }
+
+    const globalEnums = get(enumMappings);
+
     let tempGroups = {};
 
     topics.forEach((topic) => {
       topic.msg_fields.forEach((field) => {
-
         if (field.rocket_display) {
           const group = field.rocket_display.group;
           if (!tempGroups[group]) tempGroups[group] = [];
+
+          let resolvedEnumDef = null;
+          if (field.enum && globalEnums[field.enum]) {
+            resolvedEnumDef = globalEnums[field.enum];
+          }
 
           tempGroups[group].push({
             topic: topic.topic_name,
@@ -108,6 +116,7 @@
             format: field.rocket_display.format,
             unit: field.rocket_display.unit || field.unit || "",
             enum: field.enum || null,
+            enumDef: resolvedEnumDef,
           });
         }
 
@@ -189,7 +198,7 @@
 <div id="layout-container">
   <div id="status-container">
     {#each statusItems as item (item.id)}
-        <GaugeField {item} />
+      <GaugeField {item} />
     {/each}
   </div>
 
