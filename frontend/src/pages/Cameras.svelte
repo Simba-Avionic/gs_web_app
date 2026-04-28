@@ -5,19 +5,19 @@
 <div class="main-container">
   <div class="videos">
     <CameraView camera="camera1" hasPTZ={true} />
-    <CameraView camera="camera2" hasPTZ={false} />
+    <CameraView camera="camera2" hasPTZ={true} />
   </div>
 </div>
 
 <style>
   .main-container {
     display: flex;
-    gap: 30px; /* Increased from 20px */
+    gap: 30px;
     margin: 0 auto;
     margin-top: var(--navbar-height);
     height: calc(100vh - var(--navbar-height));
-    padding: 2rem; /* Increased from 1rem */
-    max-width: 1800px; /* Keeps it framed nicely on huge screens */
+    padding: 2rem;
+    max-width: 1800px;
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -25,15 +25,9 @@
   .videos {
     display: flex;
     flex-direction: row;
-    gap: 40px; /* Increased from 20px for clear separation between cameras */
+    gap: 40px;
     flex: 1;
     width: 100%;
     height: 100%;
   }
-
-  /* .videos > * {
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-  } */
 </style>

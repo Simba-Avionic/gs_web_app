@@ -319,7 +319,10 @@
                         50
                     ],
                     "display": "value",
-                    "transform": {"scale": 1, "offset": 1}
+                    "transform": {
+                        "scale": 1,
+                        "offset": 1
+                    }
                 },
                 {
                     "type": "float32",
@@ -381,8 +384,8 @@
         },
         {
             "id": 69,
-            "topic_name": "mavlink/simba_tank_temperature",
-            "msg_type": "SimbaTankTemperature",
+            "topic_name": "mavlink/simba_tank_sensors",
+            "msg_type": "SimbaTankSensors",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -393,35 +396,42 @@
                     "val_name": "upper_tank",
                     "alt_name": "Upper Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0},
-                    "rocket_display": { "group": "Tank Sensors", "label": "Upper Tank Temp" }
+                    "transform": {
+                        "scale": 0.1,
+                        "offset": 0
+                    },
+                    "rocket_display": {
+                        "group": "Tank Sensors",
+                        "label": "Upper Tank Temp"
+                    }
                 },
                 {
                     "type": "uint16",
                     "val_name": "middle_tank",
                     "alt_name": "Middle Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0},
-                    "rocket_display": { "group": "Tank Sensors", "label": "Middle Tank Temp" }
+                    "transform": {
+                        "scale": 0.1,
+                        "offset": 0
+                    },
+                    "rocket_display": {
+                        "group": "Tank Sensors",
+                        "label": "Middle Tank Temp"
+                    }
                 },
                 {
                     "type": "uint16",
                     "val_name": "lower_tank",
                     "alt_name": "Lower Tank",
                     "unit": "\u00b0C",
-                    "transform": {"scale": 0.1, "offset": 0},
-                    "rocket_display": { "group": "Tank Sensors", "label": "Lower Tank Temp" }
-                }
-            ]
-        },
-        {
-            "id": 70,
-            "topic_name": "mavlink/simba_tank_pressure",
-            "msg_type": "SimbaTankPressure",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
+                    "transform": {
+                        "scale": 0.1,
+                        "offset": 0
+                    },
+                    "rocket_display": {
+                        "group": "Tank Sensors",
+                        "label": "Lower Tank Temp"
+                    }
                 },
                 {
                     "type": "uint16",
@@ -432,9 +442,15 @@
                         0,
                         50
                     ],
-                    "transform": {"scale": 0.01, "offset": 0},
+                    "transform": {
+                        "scale": 0.01,
+                        "offset": 0
+                    },
                     "running_avg": 3,
-                    "rocket_display": { "group": "Tank Sensors", "label": "Pressure" },
+                    "rocket_display": {
+                        "group": "Tank Sensors",
+                        "label": "Pressure"
+                    },
                     "display": "value"
                 }
             ]
@@ -451,12 +467,18 @@
                 {
                     "type": "int32",
                     "val_name": "lat",
-                    "transform": {"scale": 1e-7, "offset": 0}
+                    "transform": {
+                        "scale": 1e-7,
+                        "offset": 0
+                    }
                 },
                 {
                     "type": "int32",
                     "val_name": "lon",
-                    "transform": {"scale": 1e-7, "offset": 0}
+                    "transform": {
+                        "scale": 1e-7,
+                        "offset": 0
+                    }
                 },
                 {
                     "type": "int32",
@@ -467,7 +489,10 @@
                         0,
                         4000
                     ],
-                    "transform": {"scale": 0.01, "offset": 0}
+                    "transform": {
+                        "scale": 0.01,
+                        "offset": 0
+                    }
                 }
             ]
         },
@@ -490,8 +515,15 @@
                     "val_name": "flight_computer_state",
                     "alt_name": "Flight Computer State",
                     "display": "status",
-                    "range": [1, 9],
-                    "rocket_display": { "group": "Avionics", "label": "State", "format": "status" },
+                    "range": [
+                        1,
+                        9
+                    ],
+                    "rocket_display": {
+                        "group": "Avionics",
+                        "label": "State",
+                        "format": "status"
+                    },
                     "enum": "SIMBA_ROCKET_STATE"
                 },
                 {
@@ -499,8 +531,15 @@
                     "val_name": "engine_computer_state",
                     "alt_name": "Engine Computer State",
                     "display": "status",
-                    "range": [1, 9],
-                    "rocket_display": { "group": "Engine", "label": "State", "format": "status" },
+                    "range": [
+                        1,
+                        9
+                    ],
+                    "rocket_display": {
+                        "group": "Engine",
+                        "label": "State",
+                        "format": "status"
+                    },
                     "enum": "SIMBA_ROCKET_STATE"
                 },
                 {
@@ -508,12 +547,41 @@
                     "val_name": "values",
                     "alt_name": "SIMBA_ACTUATOR_FLAGS",
                     "rocket_display_bits": [
-                        { "mask": 1, "group": "Tank Actuators", "label": "Main Valve", "on": "OPEN", "off": "CLOSED" },
-                        { "mask": 2, "group": "Tank Actuators", "label": "Tank Vent", "on": "OPEN", "off": "CLOSED" },
-                        { "mask": 4, "group": "Tank Actuators", "label": "Dump Valve", "on": "OPEN", "off": "CLOSED" },
-                        { "mask": 8, "group": "Recovery", "label": "Recovery Servo", "on": "ON", "off": "OFF" },
-                        { "mask": 16, "group": "Recovery", "label": "Linecutter", "on": "ON", "off": "OFF" },
-                        { "mask": 32, "group": "Avionics", "label": "Cameras", "on": "ON", "off": "OFF" }
+                        {
+                            "mask": 1,
+                            "group": "Tank Actuators",
+                            "label": "Main Valve",
+                            "on": "OPEN",
+                            "off": "CLOSED"
+                        },
+                        {
+                            "mask": 2,
+                            "group": "Tank Actuators",
+                            "label": "Tank Vent",
+                            "on": "OPEN",
+                            "off": "CLOSED"
+                        },
+                        {
+                            "mask": 4,
+                            "group": "Tank Actuators",
+                            "label": "Dump Valve",
+                            "on": "OPEN",
+                            "off": "CLOSED"
+                        },
+                        {
+                            "mask": 8,
+                            "group": "Recovery",
+                            "label": "Recovery Servo",
+                            "on": "ON",
+                            "off": "OFF"
+                        },
+                        {
+                            "mask": 16,
+                            "group": "Recovery",
+                            "label": "Linecutter",
+                            "on": "ON",
+                            "off": "OFF"
+                        }
                     ]
                 },
                 {
@@ -521,9 +589,27 @@
                     "val_name": "primer_state",
                     "alt_name": "Primer State",
                     "display": "status",
-                    "range": [0, 4],
-                    "rocket_display": { "group": "Engine", "label": "Primer State", "format": "status" },
+                    "range": [
+                        0,
+                        4
+                    ],
+                    "rocket_display": {
+                        "group": "Engine",
+                        "label": "Primer State",
+                        "format": "status"
+                    },
                     "enum": "SIMBA_PRIMER_STATE"
+                },
+                {
+                    "type": "uint32",
+                    "val_name": "apps_alive",
+                    "alt_name": "Active Services",
+                    "rocket_display": {
+                        "group": "Avionics",
+                        "label": "Services",
+                        "format": "matrix"
+                    },
+                    "enum": "SIMBA_ROCKET_SERVICE"
                 }
             ]
         },
@@ -578,25 +664,37 @@
                     "type": "uint8",
                     "val_name": "mb_cpu_usage",
                     "unit": "%",
-                    "range": [0, 100]
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "uint8",
                     "val_name": "mb_memory_usage",
                     "unit": "%",
-                    "range": [0, 100]
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "uint8",
                     "val_name": "eb_cpu_usage",
                     "unit": "%",
-                    "range": [0, 100]
+                    "range": [
+                        0,
+                        100
+                    ]
                 },
                 {
                     "type": "uint8",
                     "val_name": "eb_memory_usage",
                     "unit": "%",
-                    "range": [0, 100]
+                    "range": [
+                        0,
+                        100
+                    ]
                 }
             ]
         },

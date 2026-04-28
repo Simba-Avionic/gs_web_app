@@ -183,15 +183,15 @@ class MavlinkBridge(Node):
             ports = serial.tools.list_ports.comports()
             for port in ports:
                 try:
-                    self.logger.info(f"Trying port: {port.device}")
+                    logger.info(f"Trying port: {port.device}")
                     conn = mavutil.mavlink_connection(
                         port.device, baud=baudrate, dialect=dialect)
                     # conn.wait_heartbeat(timeout=timeout)
-                    self.logger.info(f"MAVLink heartbeat received on {port.device}")
+                    logger.info(f"MAVLink heartbeat received on {port.device}")
                     return conn
                 except Exception as e:
-                    self.logger.error(f"Failed on {port.device}: {e}")
-            self.logger.info(
+                    logger.error(f"Failed on {port.device}: {e}")
+            logger.info(
                 f"No MAVLink device found. Retrying in {retry_delay} seconds...")
             retry_delay *= 2
             time.sleep(retry_delay)

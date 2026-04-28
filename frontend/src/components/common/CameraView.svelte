@@ -2,23 +2,25 @@
   import Hls from "hls.js";
   import { onMount, onDestroy } from "svelte";
 
-  export let camera; // e.g. "camera1" or "camera2"
+  export let camera;
   export let hasPTZ = false;
 
   let host;
-  let containerEl; // new: wrapper element to observe
+  let containerEl;
   let videoEl;
   let hls;
   let streamUnavailable = false;
   let probeAbort = null;
   let setupInProgress = false;
-  let io = null; // IntersectionObserver
+  let io = null;
 
-  // PTZ state
   let ptzInterval = null;
   let isRecording = false;
 
   let showControls = false;
+  
+  // Stan przechowujący aktualnie wybrany poziom zoomu dla UI
+  let currentZoom = 1;
 
   async function probeStream(url, timeoutMs = 2500) {
     const controller = new AbortController();
@@ -48,7 +50,6 @@
     const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
 
     try {
-      // 1. Poll the backend until we get a 200 OK (not a 202)
       let ready = false;
       let attempts = 0;
 
@@ -61,7 +62,7 @@
           ready = true;
         } else {
           console.log(`Stream preparing for ${camera}, attempt: ${attempts}`);
-          await new Promise((r) => setTimeout(r, 1000)); // Wait 1 second
+          await new Promise((r) => setTimeout(r, 1000));
           attempts++;
         }
       }
@@ -98,21 +99,18 @@
   }
 
   function teardownVideo() {
-    // Abort probe if running
     if (probeAbort) {
       try {
         probeAbort.abort();
       } catch (err) {}
       probeAbort = null;
     }
-    // Destroy hls if attached
     if (hls) {
       try {
         hls.destroy();
       } catch (err) {}
       hls = null;
     }
-    // If a video src was set (native), clear it
     if (videoEl) {
       try {
         videoEl.pause();
@@ -123,19 +121,16 @@
   }
 
   onMount(() => {
-    // Setup IntersectionObserver to only probe/attach when visible in DOM
     host = window.location.host;
     try {
       io = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting && entry.intersectionRatio > 0) {
-              // element became visible -> attempt to setup
               doSetupVideo().catch((e) =>
                 console.warn("doSetupVideo error:", e),
               );
             } else {
-              // element not visible -> teardown to avoid background activity/errors
               teardownVideo();
             }
           });
@@ -145,7 +140,6 @@
 
       if (containerEl) io.observe(containerEl);
     } catch (err) {
-      // IntersectionObserver not available or failed — fall back to immediate setup
       console.debug(
         "IntersectionObserver unavailable; falling back to immediate camera setup",
         err,
@@ -155,7 +149,6 @@
   });
 
   onDestroy(() => {
-    // disconnect observer
     try {
       if (io && containerEl) {
         io.unobserve(containerEl);
@@ -181,9 +174,9 @@
     }
   }
 
-  function startPTZ(pan, tilt) {
+  function startPTZ(pan, tilt, zoom) {
     stopPTZ();
-    ptzInterval = setInterval(() => sendPTZ(pan, tilt), 100);
+    ptzInterval = setInterval(() => sendPTZ(pan, tilt, zoom), 100);
   }
 
   function stopPTZ() {
@@ -191,10 +184,15 @@
       clearInterval(ptzInterval);
       ptzInterval = null;
     }
+
     sendPTZ(0, 0, 0, 0).catch(() => {});
   }
 
-  // ---------------- Recording ----------------
+  async function setZoom(level) {
+    currentZoom = level;
+    sendPTZ(0, 0, level, 10);
+  }
+
   async function startRecording() {
     try {
       const res = await fetch(
@@ -263,8 +261,7 @@
 
   {#if showControls}
     <div class="controls dropdown">
-      <div class="ptz-record-wrapper">
-        {#if hasPTZ}
+      <div class="controls-layout">
           <div class="ptz-controls">
             <div class="row">
               <button
@@ -302,33 +299,40 @@
               >
             </div>
           </div>
-        {:else}
-          <div class="ptz-controls">
-            <div class="row">
-              <button on:click={() => sendPTZ(0, 20)}>▲</button>
+        <div class="side-controls">
+          {#if hasPTZ}
+            <div class="zoom-controls">
+              <div class="zoom-buttons">
+                <button
+                  on:mousedown={() => startPTZ(0, 0, 1)}
+                  on:mouseup={stopPTZ}
+                  on:mouseleave={stopPTZ}
+                  on:touchstart={() => startPTZ(0, 0, 1)}
+                  on:touchend={stopPTZ}>Zoom In
+                </button>
+                <button
+                  on:mousedown={() => startPTZ(0, 0, -1)}
+                  on:mouseup={stopPTZ}
+                  on:mouseleave={stopPTZ}
+                  on:touchstart={() => startPTZ(0, 0, -1)}
+                  on:touchend={stopPTZ}>Zoom Out
+                </button>
+              </div>
             </div>
-            <div class="row">
-              <button on:click={() => sendPTZ(-20, 0)}>◀</button>
-              <button on:click={() => sendPTZ(0, 0)}>■</button>
-              <button on:click={() => sendPTZ(20, 0)}>▶</button>
-            </div>
-            <div class="row">
-              <button on:click={() => sendPTZ(0, -20)}>▼</button>
-            </div>
-          </div>
-        {/if}
+          {/if}
 
-        <div class="record-controls">
-          <button
-            class="record-btn"
-            title="Start Recording"
-            on:click={startRecording}>Record</button
-          >
-          <button
-            class="stop-btn"
-            title="Stop Recording"
-            on:click={stopRecording}>Stop</button
-          >
+          <div class="record-controls">
+            <button
+              class="record-btn"
+              title="Start Recording"
+              on:click={startRecording}>Record</button
+            >
+            <button
+              class="stop-btn"
+              title="Stop Recording"
+              on:click={stopRecording}>Stop</button
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -338,13 +342,12 @@
 <style>
   .video-container {
     display: flex;
-    flex-direction: column; /* Stack video and controls vertically */
+    flex-direction: column;
     align-items: center;
     width: 100%;
     flex: 1;
   }
 
-  /* Force 16:9 ratio and handle bounds */
   .video-wrapper {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -370,7 +373,6 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    /* No border needed here anymore */
   }
 
   .stream-placeholder {
@@ -392,7 +394,6 @@
     color: var(--selection-color);
   }
 
-  /* Dropdown UI styling */
   .controls-toggle {
     width: 100%;
     display: flex;
@@ -411,8 +412,8 @@
   .controls.dropdown {
     margin-top: 16px;
     padding: 20px;
-    width: 100%;
-    max-width: 400px;
+    width: 80%;
+    max-width: 500px;
     background-color: var(--snd-bg-color, #222);
     border: 1px solid var(--border-color, #444);
     border-radius: 8px;
@@ -447,10 +448,18 @@
     }
   }
 
-  .ptz-record-wrapper {
+  .controls-layout {
     display: flex;
-    gap: 48px;
+    gap: 40px;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .side-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .ptz-controls {
@@ -463,6 +472,23 @@
     display: flex;
     gap: 8px;
     justify-content: center;
+  }
+
+  .zoom-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .zoom-buttons {
+    display: flex;
+    gap: 4px;
+  }
+
+  .zoom-buttons button {
+    font-size: 0.9rem;
+    padding: 0.4em 0.6em;
   }
 
   button {
@@ -482,7 +508,7 @@
 
   .record-controls {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 10px;
     justify-content: center;
   }
