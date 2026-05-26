@@ -9,3 +9,6 @@
 	path = mavlink/simba_mavlink
 	url = https://github.com/Simba-Avionic/simba_mavlink
 	branch = master
+[submodule "lora"]
+	path = lora
+	url = https://github.com/Simba-Avionic/lora_radio

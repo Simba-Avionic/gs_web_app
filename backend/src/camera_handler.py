@@ -136,8 +136,9 @@ def ptz_move(cam_id: str, cmd: PTZCommand):
 @router.post("/camera/{cam_id}/start_recording")
 def start_recording(cam_id: str):
     cam, proc = get_camera(cam_id)
-    if proc["recording"]:
-        return {"status": "already recording"}
+    
+    if proc["recording"] and proc["recording"].poll() is None:
+        return {"status": "recording started"}
 
     filename = os.path.join(cam["recordings_dir"], f"{cam_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4")
     proc["current_file"] = filename
@@ -164,3 +165,18 @@ def download_recording(cam_id: str):
     if not file_path or not os.path.exists(file_path):
         return JSONResponse(status_code=204, content={"detail": "Not ready"})
     return FileResponse(file_path, media_type="video/mp4")
+
+@router.get("/camera/{cam_id}/status")
+def get_camera_status(cam_id: str):
+    cam, proc = get_camera(cam_id)
+    
+    is_recording = proc["recording"] is not None and proc["recording"].poll() is None
+    
+    if proc["recording"] and proc["recording"].poll() is not None:
+        proc["recording"] = None
+        is_recording = False
+
+    return {
+        "camera_id": cam_id,
+        "is_recording": is_recording
+    }

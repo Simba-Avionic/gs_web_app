@@ -24,7 +24,9 @@ def load_main_config(path_to_conf):
         config = json.load(f)
         return config
 
-def import_message_type(msg_type):
+def import_message_type(msg_type_name):
+    if "/" in msg_type_name:
+        _, msg_type = msg_type_name.split('/')
     return getattr(gs_interfaces.msg, msg_type)
 
 def spin_node(node):
@@ -77,14 +79,17 @@ def populate_message_fields(msg, field_config, stamp, msg_type_name):
 
 class DynamicNode(Node):
     def __init__(self, config):
-        super().__init__(config['msg_type'])
+        super().__init__(config['msg_type'].split('/')[-1])
         
-        self.msg_fields = config['msg_fields']
-        self.topic_name = config['topic_name']
-        self.msg_type_name = config['msg_type']
-        self.msg_type = import_message_type(self.msg_type_name)
-        self.publisher = self.create_publisher(self.msg_type, self.topic_name, 10)
-        self.timer = self.create_timer(random.uniform(0.1, 3.5), self.timer_callback)
+        try:
+            self.msg_fields = config['msg_fields']
+            self.topic_name = config['topic_name']
+            self.msg_type_name = config['msg_type']
+            self.msg_type = import_message_type(self.msg_type_name)
+            self.publisher = self.create_publisher(self.msg_type, self.topic_name, 10)
+            self.timer = self.create_timer(random.uniform(0.1, 3.5), self.timer_callback)
+        except Exception as e:
+            print(f"Error in {config['msg_type'].split('/')[-1]}: {e}")
 
     def build_message(self):
         msg = self.msg_type()

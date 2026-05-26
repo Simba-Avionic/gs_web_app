@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # You can adjust the APP_PATH if app is installed in a different location
-APP_PATH="$HOME"
+APP_PATH="$HOME/Desktop"
 # echo "$APP_PATH"
 BASHRC="$HOME/.bashrc"
 LINE="source $APP_PATH/gs_web_app/build/install/setup.bash"
@@ -15,10 +15,23 @@ function source_venv() {
 }
 
 function source_ros() {
-    source $APP_PATH/gs_web_app/build/install/setup.bash
-    if [ $? -ne 0 ]; then
-        echo "Failed to source ROS 2 environment."
-        exit 1
+    # Ensure standard ROS2 underlay is sourced first, so colcon/isolated workspaces know underlying types
+    if [ -f "/opt/ros/humble/setup.bash" ]; then
+        source /opt/ros/humble/setup.bash
+    elif [ -f "/opt/ros/iron/setup.bash" ]; then
+        source /opt/ros/iron/setup.bash
+    elif [ -f "/opt/ros/rolling/setup.bash" ]; then
+        source /opt/ros/rolling/setup.bash
+    fi
+
+    if [ -f "$APP_PATH/gs_web_app/build/install/setup.bash" ]; then
+        source $APP_PATH/gs_web_app/build/install/setup.bash
+        if [ $? -ne 0 ]; then
+            echo "Failed to source local ROS 2 environment paths."
+            exit 1
+        fi
+    else
+        echo "Warning: Local ROS 2 setup.bash not found. Run 'build_msgs' first."
     fi
 }
 
@@ -33,11 +46,17 @@ function run_oled_display() {
 }
 
 function build_ros_msgs() {
-    echo "Building ROS 2 messages..."
+    echo "Building ROS 2 messages (gs_interfaces & lora_msgs)..."
 
-    colcon --log-base build/log build --packages-select gs_interfaces --build-base build/build --install-base build/install
+    # Explicitly point directly to the directories holding each package.xml
+    colcon --log-base build/log build \
+        --paths gs_interfaces lora/lora_ros_msgs \
+        --packages-select gs_interfaces lora_ros_msgs \
+        --build-base build/build \
+        --install-base build/install
+
     if [ $? -ne 0 ]; then
-        echo "Failed to build gs_interfaces package."
+        echo "Failed to build ROS 2 interface packages."
         exit 1
     fi
 
@@ -159,6 +178,8 @@ function run() {
     run_server &
     
     wait
+    stty sane
+    stty echo
 }
 
 function run_with_test_msgs() {
@@ -176,7 +197,7 @@ function show_help() {
     echo "  run_db [--cleanup]             Start InfluxDB container (with optional cleanup)"
     echo "  build_app                      Build the app (npm run build)"
     echo "  build_msgs                     Build MAVLink and ROS2 messages"
-    echo "  build_ros_msgs                 Build ROS2 messages (gs_interfaces package)"
+    echo "  build_ros_msgs                 Build ROS2 messages (gs_interfaces & lora_msgs)"
     echo "  build_mavlink_msgs             Generate MAVLink definitions using setup.sh"
     echo "  publish_ros_msgs               Run custom messages (python3 tests/ros/run.py)"
     echo "  help                           Show this help message"

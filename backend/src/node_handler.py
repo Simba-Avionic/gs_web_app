@@ -1,8 +1,10 @@
 import time
 import asyncio
+import importlib
 from datetime import datetime, timezone
 from collections import deque
 import gs_interfaces.msg
+import lora_ros_msgs.msg  # Explicitly imported for runtime safety inside the workspace
 from builtin_interfaces.msg import Time
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
@@ -18,11 +20,34 @@ from database.influx_client import (
 TIMEOUT_THRESHOLD = 5
 BROADCAST_INTERVAL = 1  # seconds
 
+def get_msg_class(type_string, default_pkg="gs_interfaces"):
+    """
+    Dynamically resolves a message class string like 'lora_ros_msgs/GpsShort' 
+    or 'LoadCells' to an actual ROS2 message class type.
+    """
+    if "/" in type_string:
+        pkg, msg_name = type_string.split('/')
+    else:
+        pkg = default_pkg
+        msg_name = type_string
+
+    try:
+        module_path = f"{pkg}.msg"
+        module = importlib.import_module(module_path)
+        return getattr(module, msg_name)
+    except (ModuleNotFoundError, AttributeError) as e:
+        logger.error(f"Cannot auto-import '{msg_name}' from package '{pkg}': {e}")
+        raise ImportError(f"Failed to load ROS2 message type: {type_string}")
+
+
 class NodeHandler(Node):
 
     def __init__(self, msg_config, app_loop=None, write_queue=None, influx_client=None):
         self.load_config(msg_config)
-        super().__init__(self.msg_type)
+        
+        # ROS2 Node name cannot contain forward slashes, so replace '/' with '_'
+        node_name = self.msg_type_raw.replace('/', '_')
+        super().__init__(node_name)
 
         self.router = APIRouter()
         self.router.add_api_websocket_route(
@@ -43,8 +68,12 @@ class NodeHandler(Node):
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1      # tylko 1 ostatnia wiadomość w kolejce
         )
+        
+        # DYNAMIC FIX: Resolve the true message class type dynamically
+        msg_class = get_msg_class(self.msg_type_raw)
+        
         self.subscription = self.create_subscription(
-            getattr(gs_interfaces.msg, self.msg_type), self.topic_name, self.msg_callback, qos)
+            msg_class, self.topic_name, self.msg_callback, qos)
 
         self.connected_clients = set()
         self.curr_msg = None
@@ -176,8 +205,13 @@ class NodeHandler(Node):
 
     def load_config(self, msg_config):
         self.msg_fields = msg_config["msg_fields"]
-        self.msg_type = msg_config["msg_type"]
         self.topic_name = msg_config["topic_name"]
+        
+        # Keep track of the raw string type (e.g., "lora_ros_msgs/GpsShort")
+        self.msg_type_raw = msg_config["msg_type"]
+        
+        # Retain only the trailing Message Name (e.g., "GpsShort") for your database/Flux lookup naming
+        self.msg_type = self.msg_type_raw.split('/')[-1]
 
         # Initialize running average buffers for fields that request it
         self.running_avg_buffers = {}

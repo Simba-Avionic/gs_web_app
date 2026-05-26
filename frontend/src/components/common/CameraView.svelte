@@ -43,6 +43,19 @@
     }
   }
 
+  async function checkRecordingStatus() {
+    try {
+      const res = await fetch(`http://${host}/camera/${camera}/status`);
+      if (res.ok) {
+        const data = await res.json();
+        // Maps directly to the 'is_recording' boolean from your Python script
+        isRecording = data.is_recording;
+      }
+    } catch (err) {
+      console.warn("Could not fetch camera recording status:", err);
+    }
+  }
+
   async function doSetupVideo() {
     if (setupInProgress) return;
     setupInProgress = true;
@@ -122,6 +135,10 @@
 
   onMount(() => {
     host = window.location.host;
+    
+    // Sync UI with backend recording state across subpage swaps and refreshes
+    checkRecordingStatus();
+
     try {
       io = new IntersectionObserver(
         (entries) => {
@@ -202,7 +219,9 @@
         },
       );
       const data = await res.json();
-      if (data.status === "recording started") isRecording = true;
+      if (data.status === "recording started" || data.status === "already recording") {
+        isRecording = true;
+      }
     } catch (err) {
       console.warn("startRecording failed:", err);
     }
@@ -325,11 +344,14 @@
             <button
               class="record-btn"
               title="Start Recording"
-              on:click={startRecording}>Record</button
-            >
+              disabled={isRecording}
+              on:click={startRecording}>
+              {isRecording ? "Recording..." : "Record"}
+            </button>
             <button
               class="stop-btn"
               title="Stop Recording"
+              disabled={!isRecording}
               on:click={stopRecording}>Stop</button
             >
           </div>
@@ -506,6 +528,13 @@
     background-color: var(--nav-hover, #444);
   }
 
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--snd-bg-color, #222);
+    border-color: var(--border-color, #444);
+  }
+
   .record-controls {
     display: flex;
     flex-direction: row;
@@ -518,8 +547,14 @@
     background-color: #c41934;
     border-color: #a0142a;
   }
-  .record-btn:hover {
+  
+  .record-btn:hover:not(:disabled) {
     background-color: #a0142a;
+  }
+
+  .record-btn:disabled {
+    background-color: #5a101c;
+    color: #999;
   }
 
   .stop-btn {

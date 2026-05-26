@@ -3,7 +3,7 @@
         {
             "id": 1,
             "topic_name": "tanking/load_cells",
-            "msg_type": "LoadCells",
+            "msg_type": "gs_interfaces/LoadCells",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -55,7 +55,7 @@
         {
             "id": 2,
             "topic_name": "tanking/load_cells/params",
-            "msg_type": "LoadCellsParams",
+            "msg_type": "gs_interfaces/LoadCellsParams",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -94,7 +94,7 @@
         {
             "id": 3,
             "topic_name": "tanking/valves/servos",
-            "msg_type": "TankingActuators",
+            "msg_type": "gs_interfaces/TankingActuators",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -139,7 +139,7 @@
         {
             "id": 4,
             "topic_name": "tanking/load_cells/tare",
-            "msg_type": "LoadCellsTare",
+            "msg_type": "gs_interfaces/LoadCellsTare",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -162,7 +162,7 @@
         {
             "id": 11,
             "topic_name": "tanking/uart_stats",
-            "msg_type": "UartStatistics",
+            "msg_type": "gs_interfaces/UartStatistics",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -225,7 +225,7 @@
         {
             "id": 12,
             "topic_name": "tanking/power",
-            "msg_type": "PowerTanking",
+            "msg_type": "gs_interfaces/PowerTanking",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -244,7 +244,7 @@
         {
             "id": 13,
             "topic_name": "tanking/commands",
-            "msg_type": "TankingCommands",
+            "msg_type": "gs_interfaces/TankingCommands",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -303,7 +303,7 @@
         {
             "id": 22,
             "topic_name": "tanking/sensors",
-            "msg_type": "TankingSensors",
+            "msg_type": "gs_interfaces/TankingSensors",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -351,7 +351,7 @@
         {
             "id": 14,
             "topic_name": "tanking/abort",
-            "msg_type": "TankingAbort",
+            "msg_type": "gs_interfaces/TankingAbort",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -366,7 +366,7 @@
         {
             "id": 15,
             "topic_name": "radiolink/telemetry",
-            "msg_type": "RadiolinkTelemetry",
+            "msg_type": "gs_interfaces/RadiolinkTelemetry",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -385,7 +385,7 @@
         {
             "id": 69,
             "topic_name": "mavlink/simba_tank_sensors",
-            "msg_type": "SimbaTankSensors",
+            "msg_type": "gs_interfaces/SimbaTankSensors",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -458,7 +458,7 @@
         {
             "id": 72,
             "topic_name": "mavlink/simba_gps",
-            "msg_type": "SimbaGps",
+            "msg_type": "gs_interfaces/SimbaGps",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -499,7 +499,7 @@
         {
             "id": 73,
             "topic_name": "mavlink/simba_rocket_heartbeat",
-            "msg_type": "SimbaRocketHeartbeat",
+            "msg_type": "gs_interfaces/SimbaRocketHeartbeat",
             "place": "rocket",
             "msg_fields": [
                 {
@@ -616,7 +616,7 @@
         {
             "id": 76,
             "topic_name": "mavlink/simba_computer_temperature",
-            "msg_type": "SimbaComputerTemperature",
+            "msg_type": "gs_interfaces/SimbaComputerTemperature",
             "place": "rocket",
             "msg_fields": [
                 {
@@ -638,7 +638,7 @@
         {
             "id": 75,
             "topic_name": "mavlink/simba_max_altitude",
-            "msg_type": "SimbaMaxAltitude",
+            "msg_type": "gs_interfaces/SimbaMaxAltitude",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -654,7 +654,7 @@
         {
             "id": 77,
             "topic_name": "mavlink/simba_computer_usage",
-            "msg_type": "SimbaComputerUsage",
+            "msg_type": "gs_interfaces/SimbaComputerUsage",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -701,7 +701,7 @@
         {
             "id": 78,
             "topic_name": "mavlink/radio_status",
-            "msg_type": "RadioStatus",
+            "msg_type": "gs_interfaces/RadioStatus",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -737,11 +737,57 @@
                     "val_name": "fixed"
                 }
             ]
+        },
+        {
+            "id": 79,
+            "topic_name": "mission_control/lora/status",
+            "msg_type": "lora_ros_msgs/LoraStatus",
+            "msg_fields": [
+                { "type": "std_msgs/Header", "val_name": "header" },
+                { "type": "float32", "val_name": "rssi" },
+                { "type": "float32", "val_name": "noise" },
+                { "type": "float32", "val_name": "snr" },
+                { "type": "float32", "val_name": "rem_rssi" },
+                { "type": "float32", "val_name": "rem_noise" },
+                { "type": "float32", "val_name": "rem_snr" },
+                { "type": "uint8", "val_name": "tx_buff" },
+                { "type": "uint16", "val_name": "rx_errors" },
+                { "type": "uint16", "val_name": "rx_fixed" }
+            ]
+        },
+        {
+            "id": 80,
+            "topic_name": "mission_control/lora/gnss",
+            "msg_type": "lora_ros_msgs/LoraGnss",
+            "msg_fields": [
+                { "type": "std_msgs/Header", "val_name": "header" },
+                { "type": "uint32", "val_name": "date" },
+                { "type": "uint32", "val_name": "time" },
+                { "type": "float64", "val_name": "latitude_deg" },
+                { "type": "float64", "val_name": "longitude_deg" },
+                { "type": "float32", "val_name": "speed_mps" },
+                { "type": "float32", "val_name": "course_deg" },
+                { "type": "float64", "val_name": "altitude_m" },
+                { "type": "uint8", "val_name": "satellites_visible" },
+                { "type": "float32", "val_name": "hdop" },
+                { "type": "uint32", "val_name": "sentences_with_fix" }
+            ]
+        },
+        {
+            "id": 81,
+            "topic_name": "rocket/lora/gps",
+            "msg_type": "lora_ros_msgs/GpsShort",
+            "msg_fields": [
+                { "type": "std_msgs/Header", "val_name": "header" },
+                { "type": "float64", "val_name": "latitude_deg" },
+                { "type": "float64", "val_name": "longitude_deg" },
+                { "type": "float64", "val_name": "altitude_m" }
+            ]
         }
     ],
     "msg_defs": [
         {
-            "msg_type": "LoadCell",
+            "msg_type": "gs_interfaces/LoadCell",
             "msg_fields": [
                 {
                     "type": "int32",
@@ -765,7 +811,7 @@
             ]
         },
         {
-            "msg_type": "Power",
+            "msg_type": "gs_interfaces/Power",
             "msg_fields": [
                 {
                     "type": "float32",
@@ -788,7 +834,7 @@
             ]
         },
         {
-            "msg_type": "WirelessTelemetry",
+            "msg_type": "gs_interfaces/WirelessTelemetry",
             "msg_fields": [
                 {
                     "type": "float32",
