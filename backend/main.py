@@ -5,6 +5,9 @@ import sys
 import os
 import threading
 import queue
+from pydantic import BaseModel
+from rclpy.node import Node
+from std_msgs.msg import Header
 from loguru import logger
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
@@ -19,6 +22,8 @@ from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
 from src.camera_handler import router as camera_router, start_all_camera_streams, BASE_HLS_DIR
 from database.influx_client import InfluxClient
+
+from gs_interfaces.msg import LoadCellsCalibrate
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
 from xml_to_json import extract_enums
@@ -51,6 +56,32 @@ TOPICS = []
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")
 
+class LeanAngleRequest(BaseModel):
+    angle: float
+
+class CalibrationPublisher(Node):
+    def __init__(self):
+        super().__init__('load_cells_calibration_publisher')
+        self.publisher_ = self.create_publisher(LoadCellsCalibrate, '/tanking/load_cells/calibrate', 10)
+
+    def publish_lean_angle(self, angle: float):
+        msg = LoadCellsCalibrate()
+        msg.header = Header()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        
+        msg.set_lean_angle = True
+        msg.lean_angle = float(angle)
+        
+        msg.set_scale_left = False
+        msg.scale_left = 0.0
+        msg.set_scale_right = False
+        msg.scale_right = 0.0
+
+        self.publisher_.publish(msg)
+        logger.info(f"Published LoadCellsCalibrate with lean_angle: {angle}")
+
+calibration_node = CalibrationPublisher()
+
 app = FastAPI()
 
 for msg in CONFIG["topics"]:
@@ -70,6 +101,8 @@ async def lifespan(app: FastAPI):
     for nh in TOPICS:
         nh.app_loop = loop
         executor.add_node(nh)
+
+    executor.add_node(calibration_node)
     
     try:
         st = ServerTelemetry(db_client)
@@ -127,6 +160,21 @@ def get_tile(layer: str, z: int, x: int, y: int):
     if os.path.isfile(tile_path):
         return FileResponse(tile_path, media_type="image/png")
     raise HTTPException(status_code=404)
+
+@app.post("/calibrate/lean_angle")
+async def set_lean_angle(req: LeanAngleRequest):
+    """
+    Receives a float angle and publishes it via ROS2 LoadCellsCalibrate message.
+    """
+    try:
+        calibration_node.publish_lean_angle(req.angle)
+        return {
+            "status": "success", 
+            "message": f"Lean angle {req.angle} published successfully."
+        }
+    except Exception as e:
+        logger.error(f"Failed to publish lean angle: {e}")
+        raise HTTPException(status_code=500, detail="Failed to publish calibration message.")
 
 if os.path.exists(DIST_DIR):
     app.mount("/assets", StaticFiles(directory=os.path.join(DIST_DIR, "assets")), name="assets")

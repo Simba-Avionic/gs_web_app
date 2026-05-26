@@ -120,6 +120,11 @@
       class={currentView === "cameras" ? "active" : ""}
       on:click|preventDefault={() => navigate("cameras")}>Cameras</a
     >
+    <a
+    href="#"
+    class={currentView === "SetAngle" ? "active" : ""}
+    on:click|preventDefault={() => navigate("SetAngle")}>SetAngle</a
+  >
   </div>
   <div class="navbar-right">
     <div class="navbar-telemetry">

@@ -9,5 +9,6 @@ export const VIEWS = {
     PLOTS: 'plots',
     MAP: 'map',
     CAMERAS: 'cameras',
-    INFLIGHT: 'inflight'
+    INFLIGHT: 'inflight',
+    SET_ANGLE: 'SetAngle'
 };

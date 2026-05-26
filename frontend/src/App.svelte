@@ -10,6 +10,7 @@
   import Cameras from "./pages/Cameras.svelte";
   import Dashboard from "./pages/Dashboard.svelte";
   import Gradients from "./components/common/Gradients.svelte";
+  import SetAngle from "./pages/SetAngle.svelte";
 
   let currentView = "dashboard";
   const ip = process.env.IP_ADDRESS;
@@ -67,6 +68,8 @@
     <Map />
   {:else if currentView === VIEWS.CAMERAS}
     <Cameras />
+  {:else if currentView === VIEWS.SET_ANGLE}
+    <SetAngle />
   {/if}
   <Gradients />
 </main>
