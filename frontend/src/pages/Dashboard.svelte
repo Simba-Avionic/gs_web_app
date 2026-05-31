@@ -117,6 +117,7 @@
             unit: field.rocket_display.unit || field.unit || "",
             enum: field.enum || null,
             enumDef: resolvedEnumDef,
+            animate: field.animate_on_change || false
           });
         }
 
@@ -133,6 +134,7 @@
               onLabel: bitDef.on,
               offLabel: bitDef.off,
               unit: "",
+              animate: field.animate_on_change || false
             });
           });
         }

@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.node_handler import NodeHandler
 from src.server_telemetry import ServerTelemetry
+from src.network_telemetry import NetworkTelemetry
 from src.camera_handler import router as camera_router, start_all_camera_streams, BASE_HLS_DIR
 from database.influx_client import InfluxClient
 
@@ -109,7 +110,14 @@ async def lifespan(app: FastAPI):
         app.include_router(st.router)
         logger.info("ServerTelemetry initialized with active loop.")
     except Exception as e:
-        logger.error(f"Telemetry error: {e}")
+        logger.error(f"ServerTelemetry error: {e}")
+
+    try:
+        nt = NetworkTelemetry(db_client)
+        app.include_router(nt.router)
+        logger.info("NetworkTelemetry initialized with active loop.")
+    except Exception as e:
+        logger.error(f"NetworkTelemetry error: {e}")
 
     def influx_writer():
         while True:

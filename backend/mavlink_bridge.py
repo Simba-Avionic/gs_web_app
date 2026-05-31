@@ -63,6 +63,9 @@ class MavlinkBridge(Node):
 
         self.tare_publisher = self.create_publisher(gs_msgs.LoadCellsTare, 'tanking/load_cells/tare', 10)
         logger.info("Created publisher for tare commands")
+
+        self.radio_status_publisher = self.create_publisher(gs_msgs.RadioStatus, 'mavlink/radio_status', 10)
+        logger.info("Created publisher for radio status")
         # ----------------- #
 
         self._last_rocket_flags = None
@@ -75,6 +78,7 @@ class MavlinkBridge(Node):
         
         self.gs_timer = self.create_timer(0.5, self._timer_gs_heartbeat)
         self.rocket_timer = self.create_timer(1.0, self._timer_rocket_heartbeat)
+        self.hb_timer = self.create_timer(2.0, self._heartbeat)
         logger.info("Timers initialized for Control Panel")
 
     def _on_switch_changed(self, new_switches_state):
@@ -102,7 +106,20 @@ class MavlinkBridge(Node):
                 self._control_panel_reader.read_switches()
         except Exception as e:
             logger.error(f"Error reading control panel: {e}")
-    
+
+    def _heartbeat(self):
+        try:
+            with self._panel_lock:
+                self.master.mav.heartbeat_send(
+                        type=6,                 # MAV_TYPE_GCS
+                        autopilot=8,            # MAV_AUTOPILOT_INVALID
+                        base_mode=0, 
+                        custom_mode=0, 
+                        system_status=4         # MAV_STATE_ACTIVE
+                    )
+        except Exception as e:
+            logger.error(f"Error sending standard MAVLink heartbeat: {e}")
+
     def _process_rocket_data(self, switches_state, is_burst=False):
         try:
             rocket_switches = self._control_panel_reader.get_rocket_actions(switches_state)
@@ -132,6 +149,7 @@ class MavlinkBridge(Node):
                         time.sleep(BURST_INTERVAL)
                 else:
                     self.master.mav.simba_gs_heartbeat_send(int(time.time() * 1000), flags)
+                logger.info(f"Send GS FLAGS: {flags.to_bytes(4, byteorder='big')}")
 
         except Exception as e:
             logger.error(f"Error handling ROCKET switches: {e}")
@@ -231,6 +249,10 @@ class MavlinkBridge(Node):
                 
                 if not msg or msg.get_type() == 'BAD_DATA':
                     continue
+                if msg.get_type() == 'RADIO_STATUS':
+                    self._handle_radio_status(msg)
+                else:
+                    self.publish_ros_msg(msg)
 
                 logger.info(f"Received MAVLink message: {msg}")
                 self.publish_ros_msg(msg)
@@ -239,19 +261,37 @@ class MavlinkBridge(Node):
                 time.sleep(0.25)
 
     def _handle_radio_status(self, msg):
-        """Logs radio signal metrics (RSSI and Noise)."""
-        # RSSI values are usually expressed as (value / 1.9) - 127 in dBm for SiK radios
-        rssi = msg.rssi
-        remrssi = msg.remrssi
-        noise = msg.noise
-        remnoise = msg.remnoise
-        
-        logger.info(
-            f"\n[RADIO_STATUS]\n"
-            f"  Local RSSI: {rssi} | Noise: {noise}\n"
-            f"  Remote RSSI: {remrssi} | Noise: {remnoise}\n"
-            f"  Tx Errors: {msg.txbuf}% buffer used"
-        )
+            """Logs radio signal metrics and publishes them as a ROS2 message."""
+            rssi = msg.rssi
+            remrssi = msg.remrssi
+            noise = msg.noise
+            remnoise = msg.remnoise
+            
+            logger.info(
+                f"\n[RADIO_STATUS]\n"
+                f"  Local RSSI: {rssi} | Noise: {noise}\n"
+                f"  Remote RSSI: {remrssi} | Noise: {remnoise}\n"
+                f"  Tx Errors: {msg.txbuf}% buffer used"
+            )
+
+            try:
+                ros_msg = gs_msgs.RadioStatus()
+                
+                if hasattr(ros_msg, 'header'):
+                    ros_msg.header.stamp = self.get_clock().now().to_msg()
+                    ros_msg.header.frame_id = "telemetry_radio"
+
+                ros_msg.rssi = int(rssi)
+                ros_msg.remrssi = int(remrssi)
+                ros_msg.noise = int(noise)
+                ros_msg.remnoise = int(remnoise)
+                ros_msg.txbuf = int(msg.txbuf)
+                
+                self.radio_status_publisher.publish(ros_msg)
+                logger.info("Published RADIO_STATUS to ROS2")
+
+            except Exception as e:
+                logger.error(f"Failed to publish RADIO_STATUS: {e}")
 
     def publish_ros_msg(self, mavlink_msg):
         """Publish MAVLink message as a ROS2 message."""
@@ -266,8 +306,13 @@ class MavlinkBridge(Node):
 
             for field_name in mavlink_msg.get_fieldnames():
                 if hasattr(ros_msg, field_name):
-                    setattr(ros_msg, field_name, getattr(
-                        mavlink_msg, field_name, None))
+
+                    val = getattr(mavlink_msg, field_name, None)
+
+                    if isinstance(val, (list, tuple)) and len(val) > 0:
+                        val = sum(val) / len(val)
+                    
+                    setattr(ros_msg, field_name, val)
                 else:
                     logger.warning(
                         f"Field {field_name} not found in ROS2 message {msg_type}")

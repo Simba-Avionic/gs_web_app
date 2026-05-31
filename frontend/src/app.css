@@ -10,6 +10,7 @@
   --bg-color: #111217;
   --snd-bg-color:#181b1f;
   --text-color: #ccccdc;
+  --text-color-light: #fff;
   --selection-color: #555;
   --border-color: rgba(204, 204, 220, 0.5);
   --timestamp-color: rgba(204, 204, 220, 0.65);
@@ -66,6 +67,7 @@
 [data-theme='light'] {
   --bg-color: #ccccdc;
   --text-color: #111217;
+  --text-color-light: #000;
   --snd-bg-color:#bbbbcc;
   --selection-color: #555;
   --border-color: rgba(138, 138, 148, 0.5);

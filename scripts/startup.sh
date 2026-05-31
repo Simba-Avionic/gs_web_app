@@ -12,8 +12,9 @@ while ! nc -z "$IP_ADDRESS" 2137; do
     sleep 1
 done
 
-chromium-browser --kiosk "http://$IP_ADDRESS:2137"
-
+# chromium-browser --kiosk "http://$IP_ADDRESS:2137"
+chromium-browser --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --kiosk "http://$IP_ADDRESS:2137"
+# firefox --kiosk "http://$IP_ADDRESS:2137"
 
 # grep -qxF 'dtoverlay=i2c-rtc,ds3231' /boot/firmware/config.txt || echo 'dtoverlay=i2c-rtc,ds3231' | sudo tee -a /boot/firmware/config.txt
 

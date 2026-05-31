@@ -208,7 +208,7 @@
                   ? 'green-status'
                   : 'red-status'}"
               ></div>
-              <span>{topic.msg_type}</span>
+              <span>{topic.msg_type.split('/')[1]}</span>
             </div>
             <span
               class="arrow {expandedMsgType === topic.msg_type

@@ -19,43 +19,6 @@
         const rawVal = data[config.fieldName];
         if (rawVal === undefined) continue;
 
-        if (config.format === "matrix" && config.enumDef) {
-          let bitMatrix = { EC: [], FC: [] };
-
-          const enumValuesDict = config.enumDef.values
-            ? config.enumDef.values
-            : config.enumDef;
-
-          let enumArray = Object.entries(enumValuesDict).map(([key, val]) => {
-            return { name: String(val), value: Number(key) };
-          });
-
-          enumArray.forEach((entry) => {
-            const val = entry.value;
-            const isActive = (rawVal & val) === val;
-
-            let cleanName = entry.name.replace(/^SIMBA_ROCKET_SERVICE_/, "");
-            let cat = "";
-
-            if (cleanName.startsWith("EC_")) {
-              cat = "EC";
-              cleanName = cleanName.substring(3);
-            } else if (cleanName.startsWith("FC_")) {
-              cat = "FC";
-              cleanName = cleanName.substring(3);
-            }
-
-            bitMatrix[cat].push({ name: cleanName, isActive });
-          });
-
-          extractedData[config.label] = {
-            type: "matrix",
-            display: config.label,
-            matrix: bitMatrix,
-          };
-          continue;
-        }
-
         let finalVal = rawVal;
 
         if (config.mask !== undefined) {
@@ -69,6 +32,7 @@
           value: finalVal,
           display: config.label,
           unit: config.unit || "",
+          animate: config.animate || false
         };
       } catch (e) {
         console.error(`Error processing ${config.label} from ${topicName}:`, e);
@@ -93,43 +57,30 @@
 >
   <div class="fields-column">
     {#each Object.entries(extractedData) as [label, fieldInfo]}
-      {#if fieldInfo.type === "matrix"}
-        <div class="matrix-container">
-          <span class="field-label matrix-title">{fieldInfo.display}:</span>
-          <div class="matrix-grid">
-            {#each ["EC", "FC"] as rowLabel}
-              {#if fieldInfo.matrix[rowLabel] && fieldInfo.matrix[rowLabel].length > 0}
-                <div class="matrix-row">
-                  <span class="row-label">{rowLabel}</span>
-                  <div class="led-group">
-                    {#each fieldInfo.matrix[rowLabel] as dot}
-                      <div class="led-wrapper" data-name={dot.name}>
-                        <div
-                          class="status-indicator {dot.isActive
-                            ? 'green-status'
-                            : 'red-status'}"
-                        ></div>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {/if}
-            {/each}
-          </div>
-        </div>
-      {:else}
         <div class="field-value">
           <span class="field-label">{fieldInfo.display}:</span>
           <span class="field-data">
-            {typeof fieldInfo.value === "number"
-              ? Number.isInteger(fieldInfo.value)
-                ? fieldInfo.value
-                : fieldInfo.value.toFixed(2)
-              : fieldInfo.value}
-            {fieldInfo.unit}
+            {#if fieldInfo.animate}
+              {#key fieldInfo.value}
+                <span class="value-flash">
+                  {typeof fieldInfo.value === "number"
+                    ? Number.isInteger(fieldInfo.value)
+                      ? fieldInfo.value
+                      : fieldInfo.value.toFixed(2)
+                    : fieldInfo.value}
+                  {fieldInfo.unit}
+                </span>
+              {/key}
+            {:else}
+              {typeof fieldInfo.value === "number"
+                ? Number.isInteger(fieldInfo.value)
+                  ? fieldInfo.value
+                  : fieldInfo.value.toFixed(2)
+                : fieldInfo.value}
+              {fieldInfo.unit}
+            {/if}
           </span>
         </div>
-      {/if}
     {/each}
   </div>
 </BaseField>
@@ -145,6 +96,7 @@
     width: 100%;
     padding: 0.1rem 0;
     border-bottom: 1px solid var(--nav-hover);
+    font-weight: bold;
   }
 
   .field-value:last-child {
@@ -265,6 +217,26 @@
     flex-shrink: 0;
     width: 14px !important;
     height: 14px !important;
+  }
+
+  @keyframes textFlash {
+    0% {
+      color: inherit;
+    }
+    15% {
+      color: var(--text-color-light);
+    }
+    85% {
+      color: var(--text-color-light);
+    }
+    100% {
+      color: inherit;
+    }
+  }
+
+  .value-flash {
+    display: inline-block;
+    animation: textFlash 0.6s ease forwards; 
   }
 
   :global(.rocket-telem-class .timestamp) {

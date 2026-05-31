@@ -23,9 +23,10 @@
                     "alt_name": "Combined Mass",
                     "range": [
                         0,
-                        20
+                        60
                     ],
-                    "unit": "kg"
+                    "unit": "kg",
+                    "display": "value"
                 },
                 {
                     "type": "float32",
@@ -34,7 +35,7 @@
                     "display": "value",
                     "range": [
                         0,
-                        30
+                        70
                     ],
                     "unit": "kg"
                 },
@@ -332,8 +333,7 @@
                     "range": [
                         -10,
                         50
-                    ],
-                    "display": "value"
+                    ]
                 },
                 {
                     "type": "float32",
@@ -343,8 +343,7 @@
                     "range": [
                         -10,
                         50
-                    ],
-                    "display": "value"
+                    ]
                 }
             ]
         },
@@ -394,7 +393,7 @@
                 {
                     "type": "uint16",
                     "val_name": "upper_tank",
-                    "alt_name": "Upper Tank",
+                    "alt_name": "Upper Tank Temp",
                     "unit": "\u00b0C",
                     "transform": {
                         "scale": 0.1,
@@ -403,12 +402,13 @@
                     "rocket_display": {
                         "group": "Tank Sensors",
                         "label": "Upper Tank Temp"
-                    }
+                    },
+                    "range": [0, 40]
                 },
                 {
                     "type": "uint16",
                     "val_name": "middle_tank",
-                    "alt_name": "Middle Tank",
+                    "alt_name": "Middle Tank Temp",
                     "unit": "\u00b0C",
                     "transform": {
                         "scale": 0.1,
@@ -417,7 +417,8 @@
                     "rocket_display": {
                         "group": "Tank Sensors",
                         "label": "Middle Tank Temp"
-                    }
+                    },
+                    "range": [0, 40]
                 },
                 {
                     "type": "uint16",
@@ -431,7 +432,8 @@
                     "rocket_display": {
                         "group": "Tank Sensors",
                         "label": "Lower Tank Temp"
-                    }
+                    },
+                    "range": [0, 40]
                 },
                 {
                     "type": "uint16",
@@ -451,7 +453,8 @@
                         "group": "Tank Sensors",
                         "label": "Pressure"
                     },
-                    "display": "value"
+                    "display": "value",
+                    "animate_on_change": true
                 }
             ]
         },
@@ -497,6 +500,29 @@
             ]
         },
         {
+            "id": 75,
+            "topic_name": "mavlink/simba_max_altitude",
+            "msg_type": "gs_interfaces/SimbaMaxAltitude",
+            "msg_fields": [
+                {
+                    "type": "std_msgs/Header",
+                    "val_name": "header"
+                },
+                {
+                    "type": "int32",
+                    "val_name": "altitude",
+                    "alt_name": "Altitude",
+                    "unit": "m",
+                    "transform": {
+                        "scale": 0.01,
+                        "offset": 0
+                    },
+                    "range": [0, 3000],
+                    "display": "value"
+                }
+            ]
+        },
+        {
             "id": 73,
             "topic_name": "mavlink/simba_rocket_heartbeat",
             "msg_type": "gs_interfaces/SimbaRocketHeartbeat",
@@ -524,7 +550,8 @@
                         "label": "State",
                         "format": "status"
                     },
-                    "enum": "SIMBA_ROCKET_STATE"
+                    "enum": "SIMBA_ROCKET_STATE",
+                    "animate_on_change": true
                 },
                 {
                     "type": "uint8",
@@ -540,7 +567,8 @@
                         "label": "State",
                         "format": "status"
                     },
-                    "enum": "SIMBA_ROCKET_STATE"
+                    "enum": "SIMBA_ROCKET_STATE",
+                    "animate_on_change": true
                 },
                 {
                     "type": "uint8",
@@ -581,8 +609,16 @@
                             "label": "Linecutter",
                             "on": "ON",
                             "off": "OFF"
+                        },
+                        {
+                            "mask": 32,
+                            "group": "Avionics",
+                            "label": "Cameras",
+                            "on": "ON",
+                            "off": "OFF"
                         }
-                    ]
+                    ],
+                    "animate_on_change": true
                 },
                 {
                     "type": "uint8",
@@ -603,58 +639,15 @@
                 {
                     "type": "uint32",
                     "val_name": "apps_alive",
-                    "alt_name": "Active Services",
-                    "rocket_display": {
-                        "group": "Avionics",
-                        "label": "Services",
-                        "format": "matrix"
-                    },
-                    "enum": "SIMBA_ROCKET_SERVICE"
+                    "alt_name": "Active Services"
                 }
             ]
         },
         {
             "id": 76,
-            "topic_name": "mavlink/simba_computer_temperature",
-            "msg_type": "gs_interfaces/SimbaComputerTemperature",
+            "topic_name": "mavlink/simba_computers_telemetry",
+            "msg_type": "gs_interfaces/SimbaComputersTelemetry",
             "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint16",
-                    "val_name": "eb_temp",
-                    "unit": "\u00b0C"
-                },
-                {
-                    "type": "uint16",
-                    "val_name": "mb_temp",
-                    "unit": "\u00b0C"
-                }
-            ]
-        },
-        {
-            "id": 75,
-            "topic_name": "mavlink/simba_max_altitude",
-            "msg_type": "gs_interfaces/SimbaMaxAltitude",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "int32",
-                    "val_name": "altitude",
-                    "unit": "m"
-                }
-            ]
-        },
-        {
-            "id": 77,
-            "topic_name": "mavlink/simba_computer_usage",
-            "msg_type": "gs_interfaces/SimbaComputerUsage",
             "msg_fields": [
                 {
                     "type": "std_msgs/Header",
@@ -695,6 +688,18 @@
                         0,
                         100
                     ]
+                },
+                {
+                    "type": "float32",
+                    "val_name": "eb_temperature",
+                    "unit": "\u00b0C",
+                    "range": [0, 60]
+                },
+                {
+                    "type": "float32",
+                    "val_name": "mb_temperature",
+                    "unit": "\u00b0C",
+                    "range": [0, 60]
                 }
             ]
         },

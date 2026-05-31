@@ -11,7 +11,9 @@
     let selectedMap = localStorage.getItem("selectedMap") || "Mojave Desert";
 
     // Load saved source names or fall back to defaults
-    const savedNames = JSON.parse(localStorage.getItem("gps_source_names") || "{}");
+    const savedNames = JSON.parse(
+        localStorage.getItem("gps_source_names") || "{}",
+    );
 
     let gpsSources = [
         {
@@ -28,7 +30,7 @@
             marker: null,
             polyline: null,
             socket: null,
-            currentCoords: { lat: "-", lon: "-", alt: "-", time: "-" }
+            currentCoords: { lat: "-", lon: "-", alt: "-", time: "-" },
         },
         {
             id: "backup_gps",
@@ -44,15 +46,17 @@
             marker: null,
             polyline: null,
             socket: null,
-            currentCoords: { lat: "-", lon: "-", alt: "-", time: "-" }
-        }
+            currentCoords: { lat: "-", lon: "-", alt: "-", time: "-" },
+        },
     ];
 
     let activeSourceId = gpsSources[0].id;
-    $: activeSource = gpsSources.find(s => s.id === activeSourceId);
+    $: activeSource = gpsSources.find((s) => s.id === activeSourceId);
 
     // --- Custom Markers State Engine ---
-    let customMarkers = JSON.parse(localStorage.getItem("custom_map_markers") || "[]");
+    let customMarkers = JSON.parse(
+        localStorage.getItem("custom_map_markers") || "[]",
+    );
     let isPlacingMarkerMode = false;
     let manualLat = "";
     let manualLon = "";
@@ -60,8 +64,6 @@
 
     let maxAltitudeSocket;
     let maxAltitudeData;
-
-    console.log(window.location.host);
 
     const mapConfigs = {
         Tricity: {
@@ -77,16 +79,20 @@
             maxZoom: 15,
         },
         "Mojave Desert": {
-            url: `http://${window.location.host}/tiles/mojave/{z}/{x}/{y}.png`,
-            center: [35.27997, -117.813],
-            minZoom: 10,
-            maxZoom: 15,
+            url: `http://${window.location.host}/tiles/mojave7/{z}/{x}/{y}.jpg`,
+            center: [35.3337997, -117.813],
+            minZoom: 13,
+            maxZoom: 17,
         },
-        "Lancaster": {
+        Lancaster: {
             url: `http://${window.location.host}/tiles/lancaster/{z}/{x}/{y}.png`,
-            center: [34.6975, -118.1445],
+            center: [34.70485, -118.079],
             minZoom: 11,
             maxZoom: 16,
+            bounds: [
+                [34.6, -118.15],
+                [34.78, -117.9],
+            ],
         },
     };
 
@@ -98,15 +104,21 @@
             map.removeLayer(currentLayer);
         }
 
-        currentLayer = L.tileLayer(config.url, {
+        map.setView(config.center, config.maxZoom - 2);
+
+        const layerOptions = {
             minZoom: config.minZoom,
             maxZoom: config.maxZoom,
             tileSize: 256,
             tms: false,
-        });
+        };
 
+        if (config.bounds) {
+            layerOptions.bounds = config.bounds;
+        }
+
+        currentLayer = L.tileLayer(config.url, layerOptions);
         currentLayer.addTo(map);
-        map.setView(config.center, config.maxZoom - 2);
 
         selectedMap = mapName;
         localStorage.setItem("selectedMap", mapName);
@@ -117,7 +129,7 @@
             className: "custom-gps-pin",
             html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
             iconSize: [14, 14],
-            iconAnchor: [7, 7]
+            iconAnchor: [7, 7],
         });
     };
 
@@ -128,7 +140,7 @@
                      <div style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); background: #2c3e50; color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 3px; white-space: nowrap;">Pin</div>
                    </div>`,
             iconSize: [12, 12],
-            iconAnchor: [6, 6]
+            iconAnchor: [6, 6],
         });
     };
 
@@ -137,42 +149,63 @@
     const setTimeRange = (range) => {
         timeRange = range;
         localStorage.setItem("map_time_range", range);
-        gpsSources.forEach(source => clearSourcePath(source));
+        gpsSources.forEach((source) => clearSourcePath(source));
         loadAllHistoricalPaths();
     };
 
     const loadAllHistoricalPaths = async () => {
         for (let source of gpsSources) {
             try {
-                const rawLatData = await queryFieldData(source.topic, source.latField, timeRange);
-                const rawLonData = await queryFieldData(source.topic, source.lonField, timeRange);
+                const rawLatData = await queryFieldData(
+                    source.topic,
+                    source.latField,
+                    timeRange,
+                );
+                const rawLonData = await queryFieldData(
+                    source.topic,
+                    source.lonField,
+                    timeRange,
+                );
 
                 const latArray = rawLatData.records || [];
                 const lonArray = rawLonData.records || [];
 
-                if (latArray.length > 0 && lonArray.length > 0 && latArray.length === lonArray.length) {
+                if (
+                    latArray.length > 0 &&
+                    lonArray.length > 0 &&
+                    latArray.length === lonArray.length
+                ) {
                     source.path = latArray.map((latPoint, i) => {
                         return [latPoint._value, lonArray[i]._value];
                     });
-                    
+
                     if (source.polyline && source.visible) {
                         source.polyline.setLatLngs(source.path);
                     }
                     if (source.marker && source.path.length > 0) {
-                        source.marker.setLatLng(source.path[source.path.length - 1]);
+                        source.marker.setLatLng(
+                            source.path[source.path.length - 1],
+                        );
                     }
-                    
+
                     const lastIdx = latArray.length - 1;
-                    source.currentCoords.lat = latArray[lastIdx]._value.toFixed(5);
-                    source.currentCoords.lon = lonArray[lastIdx]._value.toFixed(5);
-                    
+                    source.currentCoords.lat =
+                        latArray[lastIdx]._value.toFixed(5);
+                    source.currentCoords.lon =
+                        lonArray[lastIdx]._value.toFixed(5);
+
                     if (latArray[lastIdx]._time) {
                         const dateObj = new Date(latArray[lastIdx]._time);
-                        source.currentCoords.time = dateObj.toTimeString().split(' ')[0];
+                        source.currentCoords.time = dateObj
+                            .toTimeString()
+                            .split(" ")[0];
                     }
                 }
             } catch (error) {
-                console.error(`Error loading history for ${source.name}:`, error);
+                console.error(
+                    `Error loading history for ${source.name}:`,
+                    error,
+                );
             }
         }
         gpsSources = gpsSources;
@@ -195,7 +228,9 @@
 
     const handleNameChange = (source) => {
         const namesMap = {};
-        gpsSources.forEach(s => { namesMap[s.id] = s.name; });
+        gpsSources.forEach((s) => {
+            namesMap[s.id] = s.name;
+        });
         localStorage.setItem("gps_source_names", JSON.stringify(namesMap));
         gpsSources = gpsSources; // Trigger reactivity
     };
@@ -221,29 +256,39 @@
     // --- Custom Markers Leaflet Engine ---
     const addCustomMarkerToMap = (markerData) => {
         const m = L.marker([markerData.lat, markerData.lon], {
-            icon: createPinnedIcon()
+            icon: createPinnedIcon(),
         }).addTo(map);
-        
-        m.bindPopup(`<b>${markerData.label || 'Custom Location'}</b><br>Lat: ${markerData.lat}<br>Lon: ${markerData.lon}`);
+
+        m.bindPopup(
+            `<b>${markerData.label || "Custom Location"}</b><br>Lat: ${markerData.lat}<br>Lon: ${markerData.lon}`,
+        );
         markerData._leafletMarker = m;
     };
 
     const handleMapClick = (e) => {
         if (!isPlacingMarkerMode) return;
-        
+
         const { lat, lng } = e.latlng;
-        const label = prompt("Enter a label for this custom point:", `Marker ${customMarkers.length + 1}`);
+        const label = prompt(
+            "Enter a label for this custom point:",
+            `Marker ${customMarkers.length + 1}`,
+        );
         if (label === null) return; // Cancelled
 
         const newMarker = {
             id: Math.random().toString(36).substr(2, 9),
             lat: parseFloat(lat.toFixed(6)),
             lon: parseFloat(lng.toFixed(6)),
-            label: label || `Marker ${customMarkers.length + 1}`
+            label: label || `Marker ${customMarkers.length + 1}`,
         };
 
         customMarkers = [...customMarkers, newMarker];
-        localStorage.setItem("custom_map_markers", JSON.stringify(customMarkers.map(({_leafletMarker, ...rest}) => rest)));
+        localStorage.setItem(
+            "custom_map_markers",
+            JSON.stringify(
+                customMarkers.map(({ _leafletMarker, ...rest }) => rest),
+            ),
+        );
         addCustomMarkerToMap(newMarker);
         isPlacingMarkerMode = false;
     };
@@ -260,13 +305,20 @@
             id: Math.random().toString(36).substr(2, 9),
             lat: latVal,
             lon: lonVal,
-            label: manualLabel.trim() || `Manual Marker ${customMarkers.length + 1}`
+            label:
+                manualLabel.trim() ||
+                `Manual Marker ${customMarkers.length + 1}`,
         };
 
         customMarkers = [...customMarkers, newMarker];
-        localStorage.setItem("custom_map_markers", JSON.stringify(customMarkers.map(({_leafletMarker, ...rest}) => rest)));
+        localStorage.setItem(
+            "custom_map_markers",
+            JSON.stringify(
+                customMarkers.map(({ _leafletMarker, ...rest }) => rest),
+            ),
+        );
         addCustomMarkerToMap(newMarker);
-        
+
         // Clear manual inputs
         manualLat = "";
         manualLon = "";
@@ -274,14 +326,19 @@
     };
 
     const deleteCustomMarker = (id) => {
-        const index = customMarkers.findIndex(m => m.id === id);
+        const index = customMarkers.findIndex((m) => m.id === id);
         if (index !== -1) {
             if (customMarkers[index]._leafletMarker) {
                 map.removeLayer(customMarkers[index]._leafletMarker);
             }
             customMarkers.splice(index, 1);
             customMarkers = [...customMarkers];
-            localStorage.setItem("custom_map_markers", JSON.stringify(customMarkers.map(({_leafletMarker, ...rest}) => rest)));
+            localStorage.setItem(
+                "custom_map_markers",
+                JSON.stringify(
+                    customMarkers.map(({ _leafletMarker, ...rest }) => rest),
+                ),
+            );
         }
     };
 
@@ -301,46 +358,53 @@
             source.polyline = L.polyline([], {
                 color: source.color,
                 opacity: source.opacity,
-                weight: 4
+                weight: 4,
             }).addTo(map);
 
             source.marker = L.marker(initialCoords, {
-                icon: createCustomIcon(source.color)
+                icon: createCustomIcon(source.color),
             }).addTo(map);
         });
 
         loadAllHistoricalPaths();
 
         // Render Persistent Custom Markers on Mount
-        customMarkers.forEach(markerData => {
+        customMarkers.forEach((markerData) => {
             addCustomMarkerToMap(markerData);
         });
 
         map.on("click", handleMapClick);
 
         gpsSources.forEach((source, index) => {
-            source.socket = new WebSocket(`ws://${window.location.host}/${source.topic}`);
+            source.socket = new WebSocket(
+                `ws://${window.location.host}/${source.topic}`,
+            );
             source.socket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    if (data && data[source.latField] && data[source.lonField]) {
+                    if (
+                        data &&
+                        data[source.latField] &&
+                        data[source.lonField]
+                    ) {
                         const lat = data[source.latField];
                         const lon = data[source.lonField];
-                        const alt = data.alt || data.altitude || data.altitude_m || "-";
-                        
+                        const alt =
+                            data.alt || data.altitude || data.altitude_m || "-";
+
                         const newLatLng = [lat, lon];
                         const now = new Date();
-                        const timeString = now.toTimeString().split(' ')[0];
-                        
+                        const timeString = now.toTimeString().split(" ")[0];
+
                         source.currentCoords = {
                             lat: lat.toFixed(5),
                             lon: lon.toFixed(5),
-                            alt: typeof alt === 'number' ? alt.toFixed(1) : alt,
-                            time: timeString
+                            alt: typeof alt === "number" ? alt.toFixed(1) : alt,
+                            time: timeString,
                         };
 
                         source.path.push(newLatLng);
-                        
+
                         if (source.visible) {
                             source.polyline.setLatLngs(source.path);
                             source.marker.setLatLng(newLatLng);
@@ -348,24 +412,21 @@
                         gpsSources[index] = source;
                     }
                 } catch (e) {
-                    console.error(`Error processing WS stream for ${source.name}:`, e);
+                    console.error(
+                        `Error processing WS stream for ${source.name}:`,
+                        e,
+                    );
                 }
             };
         });
-
-        maxAltitudeSocket = new WebSocket(`ws://${window.location.host}/mavlink/simba_max_altitude`);
-        maxAltitudeSocket.onmessage = (event) => {
-            try { maxAltitudeData = JSON.parse(event.data); } catch (e) { console.error(e); }
-        };
 
         map.invalidateSize();
     });
 
     onDestroy(() => {
-        gpsSources.forEach(source => {
+        gpsSources.forEach((source) => {
             if (source.socket) source.socket.close();
         });
-        if (maxAltitudeSocket) maxAltitudeSocket.close();
         if (map) {
             map.off("click", handleMapClick);
         }
@@ -373,11 +434,15 @@
 
     async function fetchConfig() {
         try {
-            const response = await fetch(`http://${window.location.host}/config`);
+            const response = await fetch(
+                `http://${window.location.host}/config`,
+            );
             const data = await response.json();
-            const allowedTopics = ["mavlink/simba_max_altitude", ...gpsSources.map(s => s.topic)];
-            
-            topics = data.topics.filter((topic) => allowedTopics.includes(topic.topic_name || topic.name));
+            const allowedTopics = [...gpsSources.map((s) => s.topic)];
+
+            topics = data.topics.filter((topic) =>
+                allowedTopics.includes(topic.topic_name || topic.name),
+            );
             topics = topics.map((topic) => ({
                 id: topic.id || Math.random().toString(),
                 topic_name: topic.topic_name || topic.name,
@@ -394,7 +459,11 @@
         <div class="top-settings-grid">
             <div class="map-menu">
                 <label for="map-select">Active Map Base Layer:</label>
-                <select id="map-select" bind:value={selectedMap} on:change={() => switchMap(selectedMap)}>
+                <select
+                    id="map-select"
+                    bind:value={selectedMap}
+                    on:change={() => switchMap(selectedMap)}
+                >
                     {#each Object.keys(mapConfigs) as name}
                         <option value={name}>{name}</option>
                     {/each}
@@ -405,8 +474,11 @@
                 <label for="time-span-ui">Path History:</label>
                 <div id="time-span-ui" class="time-controls">
                     {#each ["1", "10", "30", "60", "120"] as range}
-                        <button class:selected={timeRange === range} on:click={() => setTimeRange(range)}>
-                            {range >= 60 ? `${range/60}h` : `${range}m`}
+                        <button
+                            class:selected={timeRange === range}
+                            on:click={() => setTimeRange(range)}
+                        >
+                            {range >= 60 ? `${range / 60}h` : `${range}m`}
                         </button>
                     {/each}
                 </div>
@@ -420,15 +492,23 @@
             {#each gpsSources as source}
                 <div class="source-item-row" class:muted={!source.visible}>
                     <div class="source-header">
-                        <span class="color-indicator" style="background-color: {source.color}"></span>
-                        <input 
-                            type="text" 
-                            class="source-name-input" 
-                            bind:value={source.name} 
-                            on:change={() => handleNameChange(source)} 
+                        <span
+                            class="color-indicator"
+                            style="background-color: {source.color}"
+                        ></span>
+                        <input
+                            type="text"
+                            class="source-name-input"
+                            bind:value={source.name}
+                            on:change={() => handleNameChange(source)}
                         />
-                        <span class="source-timestamp">[{source.currentCoords.time}]</span>
-                        <button class="visibility-btn" on:click={() => toggleSourceVisibility(source)}>
+                        <span class="source-timestamp"
+                            >[{source.currentCoords.time}]</span
+                        >
+                        <button
+                            class="visibility-btn"
+                            on:click={() => toggleSourceVisibility(source)}
+                        >
                             {source.visible ? "Hide" : "Show"}
                         </button>
                     </div>
@@ -447,14 +527,30 @@
 
         <div class="custom-markers-section">
             <label>Custom Map Markers:</label>
-            
+
             <div class="manual-marker-form">
-                <input type="text" placeholder="Label/Name" bind:value={manualLabel} />
+                <input
+                    type="text"
+                    placeholder="Label/Name"
+                    bind:value={manualLabel}
+                />
                 <div class="coords-row">
-                    <input type="number" step="0.000001" placeholder="Latitude" bind:value={manualLat} />
-                    <input type="number" step="0.000001" placeholder="Longitude" bind:value={manualLon} />
+                    <input
+                        type="number"
+                        step="0.000001"
+                        placeholder="Latitude"
+                        bind:value={manualLat}
+                    />
+                    <input
+                        type="number"
+                        step="0.000001"
+                        placeholder="Longitude"
+                        bind:value={manualLon}
+                    />
                 </div>
-                <button class="add-manual-btn" on:click={addManualMarker}>Drop Pin</button>
+                <button class="add-manual-btn" on:click={addManualMarker}
+                    >Drop Pin</button
+                >
             </div>
 
             {#if customMarkers.length > 0}
@@ -462,10 +558,14 @@
                     {#each customMarkers as marker}
                         <div class="marker-list-item">
                             <span class="marker-item-info">
-                                <strong>{marker.label}</strong> <br/>
+                                <strong>{marker.label}</strong> <br />
                                 <small>({marker.lat}, {marker.lon})</small>
                             </span>
-                            <button class="delete-marker-btn" on:click={() => deleteCustomMarker(marker.id)}>✕</button>
+                            <button
+                                class="delete-marker-btn"
+                                on:click={() => deleteCustomMarker(marker.id)}
+                                >✕</button
+                            >
                         </div>
                     {/each}
                 </div>
@@ -479,12 +579,19 @@
                 <summary class="style-summary">Line Styles & Overrides</summary>
                 <div class="style-panel">
                     <div class="style-selection-row">
-                        <select id="source-style-select" bind:value={activeSourceId}>
+                        <select
+                            id="source-style-select"
+                            bind:value={activeSourceId}
+                        >
                             {#each gpsSources as src}
                                 <option value={src.id}>{src.name}</option>
                             {/each}
                         </select>
-                        <button class="clear-btn" on:click={() => gpsSources.forEach(s => clearSourcePath(s))}>
+                        <button
+                            class="clear-btn"
+                            on:click={() =>
+                                gpsSources.forEach((s) => clearSourcePath(s))}
+                        >
                             Clear Paths
                         </button>
                     </div>
@@ -492,17 +599,39 @@
                     <div class="horizontal-controls">
                         <div class="control-item shrink-fix">
                             <span class="control-label">Line Color</span>
-                            <input type="color" bind:value={activeSource.color} on:input={() => updateStyle(activeSource)} />
+                            <input
+                                type="color"
+                                bind:value={activeSource.color}
+                                on:input={() => updateStyle(activeSource)}
+                            />
                         </div>
 
                         <div class="control-item">
-                            <span class="control-label">Opacity ({activeSource.opacity})</span>
-                            <input type="range" min="0.1" max="1.0" step="0.1" bind:value={activeSource.opacity} on:input={() => updateStyle(activeSource)} />
+                            <span class="control-label"
+                                >Opacity ({activeSource.opacity})</span
+                            >
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="1.0"
+                                step="0.1"
+                                bind:value={activeSource.opacity}
+                                on:input={() => updateStyle(activeSource)}
+                            />
                         </div>
 
                         <div class="control-item">
-                            <span class="control-label">Z-Index ({activeSource.zIndex})</span>
-                            <input type="range" min="100" max="2000" step="50" bind:value={activeSource.zIndex} on:input={() => updateStyle(activeSource)} />
+                            <span class="control-label"
+                                >Z-Index ({activeSource.zIndex})</span
+                            >
+                            <input
+                                type="range"
+                                min="100"
+                                max="2000"
+                                step="50"
+                                bind:value={activeSource.zIndex}
+                                on:input={() => updateStyle(activeSource)}
+                            />
                         </div>
                     </div>
                 </div>
@@ -525,13 +654,18 @@
         align-items: flex-start;
     }
 
-    .map-menu, .style-panel, .sources-dashboard, .time-menu, .custom-markers-section {
+    .map-menu,
+    .style-panel,
+    .sources-dashboard,
+    .time-menu,
+    .custom-markers-section {
         display: flex;
         flex-direction: column;
         gap: 5px;
     }
 
-    .map-menu select, .style-panel select {
+    .map-menu select,
+    .style-panel select {
         padding: 8px;
         background: var(--snd-bg-color);
         color: var(--text-color);
@@ -573,7 +707,8 @@
         padding: 2px 4px;
         border-radius: 3px;
     }
-    .source-name-input:focus, .source-name-input:hover {
+    .source-name-input:focus,
+    .source-name-input:hover {
         background: var(--bg-color);
         border-color: var(--border-color);
         outline: none;
@@ -591,7 +726,10 @@
         opacity: 0.6;
         white-space: nowrap;
     }
-    .visibility-btn, .clear-btn, .map-pick-btn, .add-manual-btn {
+    .visibility-btn,
+    .clear-btn,
+    .map-pick-btn,
+    .add-manual-btn {
         background: var(--snd-bg-color);
         border: 1px solid var(--border-color);
         color: var(--text-color);
