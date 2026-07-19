@@ -12,3 +12,4 @@ tiles
 docker/**
 backend/static
 enums.json
+.idea
