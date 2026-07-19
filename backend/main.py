@@ -27,7 +27,7 @@ from database.influx_client import InfluxClient
 from gs_interfaces.msg import LoadCellsCalibrate
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
-from xml_to_json import extract_enums
+from mavlink.xml_to_json import extract_enums
 
 if not rclpy.ok():
     rclpy.init()
