@@ -23,7 +23,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     ports:
       - "2137:2137"
@@ -34,25 +35,22 @@ services:
     networks:
       - webapp-network
 
-  mavlink:
-    build:
-      context: ./mavlink
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      - backend
-    networks:
-      - webapp-network
-
   frontend:
     build:
       context: ./frontend
     restart: unless-stopped
     ports:
-      - "8888:8888"
+      - "8888:2137"
     depends_on:
       - backend
+    networks:
+      - webapp-network
+
+  test:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    restart: unless-stopped
     networks:
       - webapp-network
 

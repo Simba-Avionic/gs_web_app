@@ -21,9 +21,9 @@ COPY backend .
 COPY mavlink ./mavlink
 COPY shared ./shared
 COPY config.json /simba_ws
+COPY tests ./tests
 
-EXPOSE 2137
 CMD bash -c "\
 source /opt/ros/humble/setup.bash && \
 source /simba_ws/install/setup.bash && \
-uvicorn main:app --host 0.0.0.0 --port 2137"
+python3 /simba_ws/tests/ros/run.py"
