@@ -79,7 +79,7 @@
             maxZoom: 15,
         },
         "Mojave Desert": {
-            url: `http://${window.location.host}/tiles/mojave7/{z}/{x}/{y}.jpg`,
+            url: `http://${window.location.host}/tiles/mojave/{z}/{x}/{y}.png`,
             center: [35.3337997, -117.813],
             minZoom: 13,
             maxZoom: 17,
