@@ -4,7 +4,7 @@ export const enumMappings = writable({});
 
 export async function loadEnums() {
     try {
-        const response = await fetch('/enums');
+        const response = await fetch(`http://${import.meta.env.VITE_BACKEND_URL}/enums`);
         const enums = await response.json();
         enumMappings.set(enums);
     } catch (error) {

@@ -1,4 +1,5 @@
-const API_BASE = `http://${window.location.host}`;
+// todo move to config
+const API_BASE = `http://localhost:2137`;
 let cachedTopics = null;
 
 export async function fetchConfig(forceRefresh = true) {

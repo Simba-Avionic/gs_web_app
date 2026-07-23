@@ -143,7 +143,7 @@
     }
 
     function openWebSocket() {
-        ws = new WebSocket(`ws://${window.location.host}/${field.topic}`);
+        ws = new WebSocket(`ws://${import.meta.env.VITE_BACKEND_URL}/${field.topic}`);
         ws.onmessage = (event) => {
             try {
                 const msg = JSON.parse(event.data);

@@ -5,7 +5,6 @@
   export let camera;
   export let hasPTZ = false;
 
-  let host;
   let containerEl;
   let videoEl;
   let hls;
@@ -45,7 +44,7 @@
 
   async function checkRecordingStatus() {
     try {
-      const res = await fetch(`http://${host}/camera/${camera}/status`);
+      const res = await fetch(`http://${import.meta.env.VITE_BACKEND_URL}/camera/${camera}/status`);
       if (res.ok) {
         const data = await res.json();
         // Maps directly to the 'is_recording' boolean from your Python script
@@ -60,7 +59,7 @@
     if (setupInProgress) return;
     setupInProgress = true;
 
-    const streamUrl = `http://${host}/camera/${camera}/stream.m3u8`;
+    const streamUrl = `http://${import.meta.env.VITE_BACKEND_URL}/camera/${camera}/stream.m3u8`;
 
     try {
       let ready = false;
@@ -134,8 +133,6 @@
   }
 
   onMount(() => {
-    host = window.location.host;
-    
     // Sync UI with backend recording state across subpage swaps and refreshes
     checkRecordingStatus();
 
@@ -181,7 +178,7 @@
   // ---------------- PTZ ----------------
   async function sendPTZ(pan, tilt, zoom = 0, speed = 10) {
     try {
-      await fetch(`http://${host}/ptz/${camera}/move`, {
+      await fetch(`http://${import.meta.env.VITE_BACKEND_URL}/ptz/${camera}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pan, tilt, zoom, speed }),
@@ -213,7 +210,7 @@
   async function startRecording() {
     try {
       const res = await fetch(
-        `http://${host}/camera/${camera}/start_recording`,
+        `http://${import.meta.env.VITE_BACKEND_URL}/camera/${camera}/start_recording`,
         {
           method: "POST",
         },
@@ -230,7 +227,7 @@
   async function stopRecording() {
     try {
       const res = await fetch(
-        `http://${host}/camera/${camera}/stop_recording`,
+        `http://${import.meta.env.VITE_BACKEND_URL}/camera/${camera}/stop_recording`,
         {
           method: "POST",
         },
@@ -240,7 +237,7 @@
       if (data.status === "recording stopped") {
         isRecording = false;
 
-        const downloadUrl = `http://${host}/camera/${camera}/download_recording`;
+        const downloadUrl = `http://${import.meta.env.VITE_BACKEND_URL}/camera/${camera}/download_recording`;
         const checkRes = await fetch(downloadUrl, { method: "HEAD" });
 
         if (checkRes.ok) {
