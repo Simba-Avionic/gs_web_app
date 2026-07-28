@@ -27,7 +27,7 @@ from database.influx_client import InfluxClient
 from gs_interfaces.msg import LoadCellsCalibrate
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
-from xml_to_json import extract_enums
+from mavlink.xml_to_json import extract_enums
 
 if not rclpy.ok():
     rclpy.init()
@@ -85,6 +85,9 @@ calibration_node = CalibrationPublisher()
 
 app = FastAPI()
 
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
 for msg in CONFIG["topics"]:
     try:
         nh = NodeHandler(msg, app_loop=None, write_queue=write_queue, influx_client=db_client)
@@ -141,9 +144,6 @@ async def lifespan(app: FastAPI):
     rclpy.shutdown()
 
 app.router.lifespan_context = lifespan
-
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
 app.include_router(camera_router)
 app.mount("/camera", StaticFiles(directory=BASE_HLS_DIR), name="camera")

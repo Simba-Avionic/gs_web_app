@@ -176,7 +176,7 @@
 
     svgItems.forEach((topic) => {
       const unsubscribe = subscribeToTopic(
-        window.location.host,
+        import.meta.env.VITE_BACKEND_URL,
         topic.topic_name,
         (data) => {
           handleTelemetryChange(data, topic.msg_type);

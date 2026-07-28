@@ -30,7 +30,7 @@
             topicTimestamps[topicName] = null;
 
             const socket = new WebSocket(
-                `ws://${window.location.host}/${topicName}`,
+                `ws://${import.meta.env.VITE_BACKEND_URL}/${topicName}`,
             );
 
             socket.onopen = () => {

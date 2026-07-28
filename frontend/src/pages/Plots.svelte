@@ -100,7 +100,7 @@
 
       topics.forEach((topic) => {
         const ws = new WebSocket(
-          `ws://${window.location.host}/${topic.topic_name}`,
+          `ws://${PUBLIC_BACKEND_URL}/${topic.topic_name}`,
         );
         sockets.push(ws);
 

@@ -64,7 +64,7 @@
   }
 
   function initializeWebSocket() {
-    socket = new WebSocket(`ws://${window.location.host}/server/telemetry`);
+    socket = new WebSocket(`ws://${import.meta.env.VITE_BACKEND_URL}/server/telemetry`);
 
     socket.onmessage = (event) => {
       temp = JSON.parse(event.data);
@@ -88,7 +88,7 @@
 
   function initializeNetworkWebSocket() {
     networkSocket = new WebSocket(
-      `ws://${window.location.host}/network/telemetry`,
+      `ws://${import.meta.env.VITE_BACKEND_URL}/network/telemetry`,
     );
 
     networkSocket.onmessage = (event) => {

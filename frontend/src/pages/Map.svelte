@@ -1,5 +1,6 @@
 <script>
     import { onMount, onDestroy } from "svelte";
+
     // @ts-ignore
     import L from "leaflet";
     import { queryFieldData } from "../services/api.js";
@@ -79,7 +80,7 @@
             maxZoom: 15,
         },
         "Mojave Desert": {
-            url: `http://${window.location.host}/tiles/mojave7/{z}/{x}/{y}.jpg`,
+            url: `http://${window.location.host}/tiles/mojave/{z}/{x}/{y}.png`,
             center: [35.3337997, -117.813],
             minZoom: 13,
             maxZoom: 17,
@@ -377,7 +378,7 @@
 
         gpsSources.forEach((source, index) => {
             source.socket = new WebSocket(
-                `ws://${window.location.host}/${source.topic}`,
+                `ws://${import.meta.env.VITE_BACKEND_URL}/${source.topic}`,
             );
             source.socket.onmessage = (event) => {
                 try {
@@ -435,7 +436,7 @@
     async function fetchConfig() {
         try {
             const response = await fetch(
-                `http://${window.location.host}/config`,
+                `http://${import.meta.env.VITE_BACKEND_URL}/config`,
             );
             const data = await response.json();
             const allowedTopics = [...gpsSources.map((s) => s.topic)];
