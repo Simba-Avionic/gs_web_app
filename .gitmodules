@@ -12,3 +12,6 @@
 [submodule "lora"]
 	path = lora
 	url = https://github.com/Simba-Avionic/lora_radio
+[submodule "gs_maps"]
+    path = frontend/public/gs_maps
+    url = https://github.com/Simba-Avionic/gs_maps

@@ -33,7 +33,7 @@ if not rclpy.ok():
     rclpy.init()
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY, SIMBA_XML_PATH
+from shared.paths import CONFIG_JSON_PATH, MAPS_DIRECTORY, SIMBA_XML_PATH
 
 load_dotenv(find_dotenv())
 
@@ -164,7 +164,7 @@ async def get_enums():
 
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
 def get_tile(layer: str, z: int, x: int, y: int):
-    tile_path = os.path.join(TILES_DIRECTORY, layer, str(z), str(x), f"{y}.png")
+    tile_path = os.path.join(MAPS_DIRECTORY, layer, str(z), str(x), f"{y}.png")
     if os.path.isfile(tile_path):
         return FileResponse(tile_path, media_type="image/png")
     raise HTTPException(status_code=404)
