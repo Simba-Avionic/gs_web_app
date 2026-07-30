@@ -1,5 +1,4 @@
-// todo move to config
-const API_BASE = `http://localhost:2137`;
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 let cachedTopics = null;
 
 export async function fetchConfig(forceRefresh = true) {
@@ -26,7 +25,7 @@ export async function fetchConfig(forceRefresh = true) {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/config`);
+        const response = await fetch(`http://${API_BASE}/config`);
         const data = await response.json();
         cachedTopics = data.topics;
         return data.topics;
@@ -38,7 +37,7 @@ export async function fetchConfig(forceRefresh = true) {
 
 export async function fetchMessageDefs() {
     try {
-        const response = await fetch(`${API_BASE}/config`);
+        const response = await fetch(`http://${API_BASE}/config`);
         const data = await response.json();
         return data.msg_defs || [];
     } catch (error) {
@@ -52,5 +51,5 @@ export async function queryFieldData(topic, fieldName, timeRange) {
         field_name: fieldName,
         time_range: timeRange
     });
-    return fetch(`${API_BASE}/${topic}/query?${params}`).then(r => r.json());
+    return fetch(`http://${API_BASE}/${topic}/query?${params}`).then(r => r.json());
 }
