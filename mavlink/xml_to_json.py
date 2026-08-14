@@ -8,6 +8,11 @@ import shared.utils as utils
 from shared.paths import SIMBA_XML_PATH
 
 output_json = "temp.json"  # Output JSON file
+OUTBOUND_ONLY_MESSAGES = {
+    "SIMBA_ACTUATOR_CMD",
+    "SIMBA_GS_HEARTBEAT",
+    "SIMBA_TANK_PRESSURE",
+}
 
 def convert_xml_to_json(SIMBA_XML_PATH, output_json):
     tree = ET.parse(SIMBA_XML_PATH)
@@ -16,9 +21,10 @@ def convert_xml_to_json(SIMBA_XML_PATH, output_json):
     config = {"topics": []}
 
     for message in root.findall(".//message"):
+        message_name = message.get("name")
         topic_name = f"mavlink/{message.get('name').lower()}"
-        if "_cmd" in topic_name:
-            continue  # Skip command messages
+        if "_cmd" in topic_name or message_name in OUTBOUND_ONLY_MESSAGES:
+            continue  # Skip outbound command/data messages
 
         topic = {
             "id": int(message.get("id")),

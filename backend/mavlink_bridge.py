@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import math
 import rclpy
 import serial
 import serial.tools.list_ports
@@ -28,6 +29,16 @@ except ImportError as e:
 
 BURST_COUNT = 5
 BURST_INTERVAL = 0.05
+OXIDIZER_PRESSURE_SEND_PERIOD = 0.5
+OXIDIZER_PRESSURE_SCALE = 100
+UINT16_MAX = 65535
+# control_panel_software encodes the right feed-oxidizer switch position as 1.
+MAIN_VALVE_OPEN_VALUE = 1
+OUTBOUND_ONLY_MAVLINK_MESSAGES = {
+    "SimbaActuatorCmd",
+    "SimbaGsHeartbeat",
+    "SimbaTankPressure",
+}
 
 class MavlinkBridge(Node):
 
@@ -35,6 +46,11 @@ class MavlinkBridge(Node):
         super().__init__('mavlink_bridge')
 
         self._executor = ThreadPoolExecutor(max_workers=5)
+        self._panel_lock = threading.Lock()
+        self._pressure_lock = threading.Lock()
+        self._last_oxidizer_pressure_bar = None
+        self._pressure_sender_warned = False
+        self._missing_gs_flag_warnings = set()
 
         self._mavlink_publishers = self.create_publishers_from_xml(SIMBA_XML_PATH)
         self._control_panel_reader = ControlPanelReader(control_panel_port)
@@ -66,6 +82,14 @@ class MavlinkBridge(Node):
 
         self.radio_status_publisher = self.create_publisher(gs_msgs.RadioStatus, 'mavlink/radio_status', 10)
         logger.info("Created publisher for radio status")
+
+        self.tanking_sensors_subscription = self.create_subscription(
+            gs_msgs.TankingSensors,
+            'tanking/sensors',
+            self._on_tanking_sensors,
+            10
+        )
+        logger.info("Created subscriber for tanking sensors")
         # ----------------- #
 
         self._last_rocket_flags = None
@@ -73,11 +97,13 @@ class MavlinkBridge(Node):
 
         self._receiver_thread = None
         self._start_receiver_thread()
-
-        self._panel_lock = threading.Lock()
         
         self.gs_timer = self.create_timer(0.5, self._timer_gs_heartbeat)
         self.rocket_timer = self.create_timer(1.0, self._timer_rocket_heartbeat)
+        self.oxidizer_pressure_timer = self.create_timer(
+            OXIDIZER_PRESSURE_SEND_PERIOD,
+            self._timer_oxidizer_pressure
+        )
         self.hb_timer = self.create_timer(2.0, self._heartbeat)
         logger.info("Timers initialized for Control Panel")
 
@@ -98,6 +124,29 @@ class MavlinkBridge(Node):
 
     def _timer_gs_heartbeat(self):
         self._process_gs_data(self._control_panel_reader.latest_switches)
+
+    def _timer_oxidizer_pressure(self):
+        with self._pressure_lock:
+            pressure_bar = self._last_oxidizer_pressure_bar
+
+        if pressure_bar is None:
+            return
+
+        self._send_oxidizer_pressure(pressure_bar)
+
+    def _on_tanking_sensors(self, msg):
+        try:
+            pressure_bar = float(msg.pressure_bar)
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid oxidizer pressure received: {e}")
+            return
+
+        if not math.isfinite(pressure_bar):
+            logger.error(f"Invalid oxidizer pressure received: {pressure_bar}")
+            return
+
+        with self._pressure_lock:
+            self._last_oxidizer_pressure_bar = pressure_bar
 
     def _read_panel_switches(self):
         """Dedicated timer callback to safely read control panel switches."""
@@ -124,6 +173,7 @@ class MavlinkBridge(Node):
         try:
             rocket_switches = self._control_panel_reader.get_rocket_actions(switches_state)
             if not rocket_switches: return
+            gs_switches = self._control_panel_reader.get_gs_actions(switches_state) or {}
 
             is_armed = bool(rocket_switches.get(("arm_disarm", "rocket"), 0))
             flags = simba_dialect.SIMBA_GS_FLAGS_ARM if is_armed else simba_dialect.SIMBA_GS_FLAGS_DISARM
@@ -140,6 +190,23 @@ class MavlinkBridge(Node):
                 if bool(rocket_switches.get(key, 0)):
                     flags |= bit_val
 
+            if self._is_main_valve_open(gs_switches):
+                flags = self._add_gs_flag(flags, "SIMBA_GS_FLAGS_MAIN_VALVE")
+
+            GS_TANKING_TOGGLE_MAP = {
+                ("valve_feed_pressurizer", "gs"): "SIMBA_GS_FLAGS_FEED_PRESSURIZER_VALVE",
+                ("valve_vent_pressurizer", "gs"): "SIMBA_GS_FLAGS_VENT_PRESSURIZER_VALVE",
+                ("decoupler_oxidizer", "gs"): "SIMBA_GS_FLAGS_DECOUPLER_OXIDIZER",
+                ("decoupler_pressurizer", "gs"): "SIMBA_GS_FLAGS_DECOUPLER_PRESSURIZER",
+                ("tare_rocket", "gs"): "SIMBA_GS_FLAGS_TARE_ROCKET",
+                ("tare_oxidizer", "gs"): "SIMBA_GS_FLAGS_TARE_OXIDIZER",
+                ("tare_pressurizer", "gs"): "SIMBA_GS_FLAGS_TARE_PRESSURIZER",
+            }
+
+            for key, flag_name in GS_TANKING_TOGGLE_MAP.items():
+                if bool(gs_switches.get(key, 0)):
+                    flags = self._add_gs_flag(flags, flag_name)
+
             self._last_rocket_flags = flags
 
             with self._panel_lock:
@@ -153,6 +220,46 @@ class MavlinkBridge(Node):
 
         except Exception as e:
             logger.error(f"Error handling ROCKET switches: {e}")
+
+    def _add_gs_flag(self, flags, flag_name):
+        flag = getattr(simba_dialect, flag_name, 0)
+        if flag:
+            return flags | flag
+
+        if flag_name not in self._missing_gs_flag_warnings:
+            logger.error(f"{flag_name} is missing in generated MAVLink dialect")
+            self._missing_gs_flag_warnings.add(flag_name)
+
+        return flags
+
+    def _is_main_valve_open(self, gs_switches):
+        try:
+            switch_value = int(gs_switches.get(("valve_feed_oxidizer", "gs"), -1))
+        except (TypeError, ValueError):
+            return False
+
+        return switch_value == MAIN_VALVE_OPEN_VALUE
+
+    def _send_oxidizer_pressure(self, pressure_bar):
+        pressure_sender = getattr(self.master.mav, "simba_tank_pressure_send", None)
+        if pressure_sender is None:
+            if not self._pressure_sender_warned:
+                logger.error("simba_tank_pressure_send is missing in generated MAVLink dialect")
+                self._pressure_sender_warned = True
+            return
+
+        pressure_scaled = self._pressure_bar_to_uint16(pressure_bar)
+
+        try:
+            with self._panel_lock:
+                pressure_sender(pressure_scaled)
+            logger.info(f"Sent oxidizer pressure: {pressure_bar:.2f} bar ({pressure_scaled})")
+        except Exception as e:
+            logger.error(f"Error sending oxidizer pressure: {e}")
+
+    def _pressure_bar_to_uint16(self, pressure_bar):
+        pressure_scaled = int(round(pressure_bar * OXIDIZER_PRESSURE_SCALE))
+        return max(0, min(UINT16_MAX, pressure_scaled))
 
     def _process_gs_data(self, switches_state):
         try:
@@ -224,6 +331,10 @@ class MavlinkBridge(Node):
         for message in root.findall(".//message"):
             msg_name = utils.convert_message_name(message.get("name"))
             logger.info(f"Processing message: {msg_name}")
+
+            if msg_name in OUTBOUND_ONLY_MAVLINK_MESSAGES:
+                logger.info(f"Skipping outbound-only MAVLink message: {msg_name}")
+                continue
 
             topic_name = f"mavlink/{message.get('name').lower()}"
             ros_msg_type = getattr(gs_msgs, msg_name, None)
