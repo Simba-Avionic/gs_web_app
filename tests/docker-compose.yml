@@ -1,0 +1,28 @@
+services:
+  ros-test:
+    build:
+      context: ./..
+      dockerfile: ./tests/ros/Dockerfile
+    restart: unless-stopped
+    networks:
+      - gs_web_app_webapp-network
+
+# TODO in future
+  #cameras-test:
+    #restart: unless-stopped
+    #networks:
+      #gs_web_app_webapp-network:
+        #- ipv4_address: 192.168.10.151
+        #- ipv4_address: 192.168.10.152
+
+# TODO in future
+  #lora-test:
+  #  restart: unless-stopped
+
+# TODO in future
+  #devices-test:
+  #  restart: unless-stopped
+
+networks:
+  gs_web_app_webapp-network:
+    external: true

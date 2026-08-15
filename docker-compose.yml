@@ -46,17 +46,15 @@ services:
     networks:
       - webapp-network
 
-  test:
-    build:
-      context: .
-      dockerfile: tests/Dockerfile
-    restart: unless-stopped
-    networks:
-      - webapp-network
-
 volumes:
   myInfluxVolume:
   influx-data:
 
 networks:
   webapp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.10.0/24
+
+# #ENTRYPOINT ["tail", "-f", "/dev/null"]
