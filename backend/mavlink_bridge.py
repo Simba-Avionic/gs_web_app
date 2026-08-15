@@ -36,8 +36,8 @@ UINT16_MAX = 65535
 MAIN_VALVE_OPEN_VALUE = 1
 OUTBOUND_ONLY_MAVLINK_MESSAGES = {
     "SimbaActuatorCmd",
+    "SimbaGsOxidizerTankPressure",
     "SimbaGsHeartbeat",
-    "SimbaTankPressure",
 }
 
 class MavlinkBridge(Node):
@@ -241,10 +241,16 @@ class MavlinkBridge(Node):
         return switch_value == MAIN_VALVE_OPEN_VALUE
 
     def _send_oxidizer_pressure(self, pressure_bar):
-        pressure_sender = getattr(self.master.mav, "simba_tank_pressure_send", None)
+        pressure_sender = getattr(
+            self.master.mav,
+            "simba_gs_oxidizer_tank_pressure_send",
+            None
+        )
         if pressure_sender is None:
             if not self._pressure_sender_warned:
-                logger.error("simba_tank_pressure_send is missing in generated MAVLink dialect")
+                logger.error(
+                    "simba_gs_oxidizer_tank_pressure_send is missing in generated MAVLink dialect"
+                )
                 self._pressure_sender_warned = True
             return
 

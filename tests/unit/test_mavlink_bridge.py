@@ -61,8 +61,8 @@ def install_import_stubs():
     for name in [
         "LoadCellsTare",
         "RadioStatus",
+        "SimbaComputersTelemetry",
         "SimbaRocketHeartbeat",
-        "SimbaTankingCommandAck",
         "TankingAbort",
         "TankingCommands",
         "TankingSensors",
@@ -132,7 +132,7 @@ class FakeMav:
     def simba_gs_heartbeat_send(self, timestamp, flags):
         self.heartbeats.append((timestamp, flags))
 
-    def simba_tank_pressure_send(self, pressure):
+    def simba_gs_oxidizer_tank_pressure_send(self, pressure):
         self.pressures.append(pressure)
 
 
@@ -240,15 +240,15 @@ class MavlinkBridgeTests(unittest.TestCase):
             """\
             <mavlink>
               <messages>
-                <message id="70" name="SIMBA_TANK_PRESSURE">
+                <message id="70" name="SIMBA_GS_OXIDIZER_TANK_PRESSURE">
                   <field type="uint16_t" name="pressure" />
                 </message>
                 <message id="74" name="SIMBA_GS_HEARTBEAT">
                   <field type="uint64_t" name="timestamp" />
                   <field type="uint16_t" name="values" />
                 </message>
-                <message id="148" name="SIMBA_TANKING_COMMAND_ACK">
-                  <field type="uint64_t" name="timestamp" />
+                <message id="77" name="SIMBA_COMPUTERS_TELEMETRY">
+                  <field type="uint8_t" name="mb_cpu_usage" />
                 </message>
               </messages>
             </mavlink>
@@ -263,8 +263,8 @@ class MavlinkBridgeTests(unittest.TestCase):
                 xml_file.name,
             )
 
-        self.assertEqual(created_topics, ["mavlink/simba_tanking_command_ack"])
-        self.assertEqual(set(publishers), {"SimbaTankingCommandAck"})
+        self.assertEqual(created_topics, ["mavlink/simba_computers_telemetry"])
+        self.assertEqual(set(publishers), {"SimbaComputersTelemetry"})
 
 
 if __name__ == "__main__":

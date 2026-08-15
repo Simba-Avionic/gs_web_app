@@ -20,12 +20,12 @@ class XmlToJsonTests(unittest.TestCase):
         self.assertEqual(get_type_mapping("uint8_t[3]"), "uint8")
         self.assertEqual(get_type_mapping("float[4]"), "float32")
 
-    def test_outbound_messages_are_skipped_and_ack_is_kept(self):
+    def test_outbound_messages_are_skipped_and_telemetry_is_kept(self):
         xml = textwrap.dedent(
             """\
             <mavlink>
               <messages>
-                <message id="70" name="SIMBA_TANK_PRESSURE">
+                <message id="70" name="SIMBA_GS_OXIDIZER_TANK_PRESSURE">
                   <field type="uint16_t" name="pressure" />
                 </message>
                 <message id="74" name="SIMBA_GS_HEARTBEAT">
@@ -35,12 +35,6 @@ class XmlToJsonTests(unittest.TestCase):
                 <message id="147" name="SIMBA_ACTUATOR_CMD">
                   <field type="uint8_t" name="actuator_id" />
                   <field type="uint8_t" name="value" />
-                </message>
-                <message id="148" name="SIMBA_TANKING_COMMAND_ACK">
-                  <field type="uint64_t" name="timestamp" />
-                  <field type="uint64_t" name="command_timestamp" />
-                  <field type="uint16_t" name="command" />
-                  <field type="uint8_t" name="status" />
                 </message>
                 <message id="77" name="SIMBA_COMPUTERS_TELEMETRY">
                   <field type="uint8_t[3]" name="mb_temperature" />
@@ -60,10 +54,9 @@ class XmlToJsonTests(unittest.TestCase):
 
         topics = {topic["topic_name"]: topic for topic in data["topics"]}
 
-        self.assertNotIn("mavlink/simba_tank_pressure", topics)
+        self.assertNotIn("mavlink/simba_gs_oxidizer_tank_pressure", topics)
         self.assertNotIn("mavlink/simba_gs_heartbeat", topics)
         self.assertNotIn("mavlink/simba_actuator_cmd", topics)
-        self.assertIn("mavlink/simba_tanking_command_ack", topics)
         self.assertIn("mavlink/simba_computers_telemetry", topics)
 
         computer_fields = {

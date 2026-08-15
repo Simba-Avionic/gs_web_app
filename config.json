@@ -704,62 +704,6 @@
             ]
         },
         {
-            "id": 148,
-            "topic_name": "mavlink/simba_tanking_command_ack",
-            "msg_type": "gs_interfaces/SimbaTankingCommandAck",
-            "place": "rocket",
-            "msg_fields": [
-                {
-                    "type": "std_msgs/Header",
-                    "val_name": "header"
-                },
-                {
-                    "type": "uint64",
-                    "val_name": "timestamp",
-                    "alt_name": "Ack Timestamp"
-                },
-                {
-                    "type": "uint64",
-                    "val_name": "command_timestamp",
-                    "alt_name": "Command Timestamp"
-                },
-                {
-                    "type": "uint16",
-                    "val_name": "command",
-                    "alt_name": "Command",
-                    "enum": "SIMBA_GS_FLAGS"
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "requested_value",
-                    "alt_name": "Requested Value",
-                    "range": [
-                        0,
-                        2
-                    ]
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "executed_value",
-                    "alt_name": "Executed Value",
-                    "range": [
-                        0,
-                        2
-                    ]
-                },
-                {
-                    "type": "uint8",
-                    "val_name": "status",
-                    "alt_name": "Ack Status",
-                    "range": [
-                        0,
-                        4
-                    ],
-                    "enum": "SIMBA_COMMAND_ACK_STATUS"
-                }
-            ]
-        },
-        {
             "id": 78,
             "topic_name": "mavlink/radio_status",
             "msg_type": "gs_interfaces/RadioStatus",

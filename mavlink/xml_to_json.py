@@ -10,8 +10,8 @@ from shared.paths import SIMBA_XML_PATH
 output_json = "temp.json"  # Output JSON file
 OUTBOUND_ONLY_MESSAGES = {
     "SIMBA_ACTUATOR_CMD",
+    "SIMBA_GS_OXIDIZER_TANK_PRESSURE",
     "SIMBA_GS_HEARTBEAT",
-    "SIMBA_TANK_PRESSURE",
 }
 
 def convert_xml_to_json(SIMBA_XML_PATH, output_json):
