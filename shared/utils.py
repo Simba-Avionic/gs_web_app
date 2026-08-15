@@ -14,6 +14,9 @@ TYPE_MAPPINGS = {
 
 # Convert MAVLink type to ROS message type
 def get_type_mapping(mavlink_type):
+    if "[" in mavlink_type:
+        mavlink_type = mavlink_type.split("[", 1)[0]
+
     if mavlink_type in TYPE_MAPPINGS:
         return TYPE_MAPPINGS.get(mavlink_type)
     else:
