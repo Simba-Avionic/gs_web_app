@@ -18,7 +18,7 @@
       isError = false;
   
       try {
-        const response = await fetch("/calibrate/lean_angle", {
+        const response = await fetch(`http://${import.meta.env.VITE_BACKEND_URL}/calibrate/lean_angle`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

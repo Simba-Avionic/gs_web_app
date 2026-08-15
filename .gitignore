@@ -8,7 +8,7 @@ __pycache__
 log
 install
 temp
-tiles
 docker/**
 backend/static
 enums.json
+.idea

@@ -6,15 +6,15 @@ from influxdb_client.client.query_api import QueryApi
 from urllib3.exceptions import NewConnectionError
 from database.schemas import BadQueryException, BucketNotFoundException, InfluxNotAvailableException
 from dotenv import dotenv_values, find_dotenv
+import os
 
 class InfluxClient:
 
     def __init__(self) -> None:
-        env_values = dotenv_values(find_dotenv())
-        self.bucket = env_values.get('BUCKET_NAME')
-        self.org = env_values.get('ORGANISATION')
-        self.token = env_values.get('INFLUXDB_TOKEN')
-        self.url = f"{env_values.get('IP_ADDRESS')}:{env_values.get('INFLUXDB_PORT')}"
+        self.bucket = os.getenv('BUCKET_NAME')
+        self.org = os.getenv('ORGANISATION')
+        self.token = os.getenv('INFLUXDB_TOKEN')
+        self.url = f"{os.getenv('INFLUXDB_URL')}:{os.getenv('INFLUXDB_PORT')}"
         self._client = InfluxDBClient(url=self.url, token=self.token, org=self.org)
         self.write_api = self._client.write_api(write_options=SYNCHRONOUS)
 

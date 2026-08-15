@@ -27,13 +27,13 @@ from database.influx_client import InfluxClient
 from gs_interfaces.msg import LoadCellsCalibrate
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
-from xml_to_json import extract_enums
+from mavlink.xml_to_json import extract_enums
 
 if not rclpy.ok():
     rclpy.init()
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from shared.paths import CONFIG_JSON_PATH, TILES_DIRECTORY, SIMBA_XML_PATH
+from shared.paths import CONFIG_JSON_PATH, MAPS_DIRECTORY, SIMBA_XML_PATH
 
 load_dotenv(find_dotenv())
 
@@ -84,6 +84,9 @@ class CalibrationPublisher(Node):
 calibration_node = CalibrationPublisher()
 
 app = FastAPI()
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
 for msg in CONFIG["topics"]:
     try:
@@ -142,9 +145,6 @@ async def lifespan(app: FastAPI):
 
 app.router.lifespan_context = lifespan
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-
 app.include_router(camera_router)
 app.mount("/camera", StaticFiles(directory=BASE_HLS_DIR), name="camera")
 
@@ -164,7 +164,7 @@ async def get_enums():
 
 @app.get("/tiles/{layer}/{z}/{x}/{y}.png")
 def get_tile(layer: str, z: int, x: int, y: int):
-    tile_path = os.path.join(TILES_DIRECTORY, layer, str(z), str(x), f"{y}.png")
+    tile_path = os.path.join(MAPS_DIRECTORY, layer, str(z), str(x), f"{y}.png")
     if os.path.isfile(tile_path):
         return FileResponse(tile_path, media_type="image/png")
     raise HTTPException(status_code=404)

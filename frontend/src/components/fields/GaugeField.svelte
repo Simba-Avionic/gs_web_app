@@ -34,7 +34,7 @@
   }
 
   onMount(() => {
-    unsubscribe = subscribeToTopic(window.location.host, item.topic, (data) => {
+    unsubscribe = subscribeToTopic(import.meta.env.VITE_BACKEND_URL, item.topic, (data) => {
       value = data[item.field];
     });
   });

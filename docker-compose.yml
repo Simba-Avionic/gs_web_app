@@ -1,11 +1,12 @@
 services:
   influxdb:
-    image: influxdb:2.6.1
+    image: influxdb:2.7
     container_name: ${INFLUXDB_CONTAINER_NAME}
     env_file:
       - .env
     volumes:
       - myInfluxVolume:/var/lib/influxdb2
+      - influx-data:/var/lib/influxdb2
     ports:
       - 8086:8086
     environment:
@@ -18,10 +19,44 @@ services:
       DOCKER_INFLUXDB_INIT_ORG: ${ORGANISATION}
       DOCKER_INFLUXDB_INIT_BUCKET: ${BUCKET_NAME}
     networks:
-      - net
+      - webapp-network
 
-networks:
-  net:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "2137:2137"
+    env_file:
+      - .env
+    depends_on:
+      - influxdb
+    networks:
+      - webapp-network
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8888:2137"
+    depends_on:
+      - backend
+    networks:
+      - webapp-network
+
+  test:
+    build:
+      context: .
+      dockerfile: tests/Dockerfile
+    restart: unless-stopped
+    networks:
+      - webapp-network
 
 volumes:
   myInfluxVolume:
+  influx-data:
+
+networks:
+  webapp-network:

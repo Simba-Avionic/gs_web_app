@@ -1,5 +1,6 @@
 <script>
     import { onMount, onDestroy } from "svelte";
+
     // @ts-ignore
     import L from "leaflet";
     import { queryFieldData } from "../services/api.js";
@@ -67,25 +68,25 @@
 
     const mapConfigs = {
         Tricity: {
-            url: `http://${window.location.host}/tiles/tricity/{z}/{x}/{y}.png`,
+            url: `http://${window.location.host}/gs_maps/tricity/{z}/{x}/{y}.png`,
             center: [54.4034, 18.5166],
             minZoom: 10,
             maxZoom: 15,
         },
         "Drawsko Pomorskie": {
-            url: `http://${window.location.host}/tiles/drawsko/{z}/{x}/{y}.png`,
+            url: `http://${window.location.host}/gs_maps/drawsko/{z}/{x}/{y}.png`,
             center: [53.4781, 15.727],
             minZoom: 10,
             maxZoom: 15,
         },
         "Mojave Desert": {
-            url: `http://${window.location.host}/tiles/mojave7/{z}/{x}/{y}.jpg`,
+            url: `http://${window.location.host}/gs_maps/mojave/{z}/{x}/{y}.png`,
             center: [35.3337997, -117.813],
             minZoom: 13,
             maxZoom: 17,
         },
         Lancaster: {
-            url: `http://${window.location.host}/tiles/lancaster/{z}/{x}/{y}.png`,
+            url: `http://${window.location.host}/gs_maps/lancaster/{z}/{x}/{y}.png`,
             center: [34.70485, -118.079],
             minZoom: 11,
             maxZoom: 16,
@@ -377,7 +378,7 @@
 
         gpsSources.forEach((source, index) => {
             source.socket = new WebSocket(
-                `ws://${window.location.host}/${source.topic}`,
+                `ws://${import.meta.env.VITE_BACKEND_URL}/${source.topic}`,
             );
             source.socket.onmessage = (event) => {
                 try {
@@ -435,7 +436,7 @@
     async function fetchConfig() {
         try {
             const response = await fetch(
-                `http://${window.location.host}/config`,
+                `http://${import.meta.env.VITE_BACKEND_URL}/config`,
             );
             const data = await response.json();
             const allowedTopics = [...gpsSources.map((s) => s.topic)];
