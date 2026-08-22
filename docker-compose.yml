@@ -26,15 +26,16 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: always
-    ports:
-      - "2137:2137"
-      - "8554:8554"
+    network_mode: "host"
+    ipc: "host"
+    privileged: true
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
     env_file:
       - .env
     depends_on:
       - influxdb
-    networks:
-      - webapp-network
 
   frontend:
     build:

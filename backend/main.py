@@ -24,6 +24,12 @@ from src.network_telemetry import NetworkTelemetry
 from src.camera_handler import router as camera_router, start_all_camera_streams, BASE_HLS_DIR
 from database.influx_client import InfluxClient
 
+try:
+    from mavlink_bridge import MavlinkBridge
+except ImportError as e:
+    logger.error(f"Failed to import MavlinkBridge: {e}")
+    MavlinkBridge = None
+
 from gs_interfaces.msg import LoadCellsCalibrate
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mavlink"))
@@ -83,6 +89,13 @@ class CalibrationPublisher(Node):
 
 calibration_node = CalibrationPublisher()
 
+bridge_node = None
+if MavlinkBridge:
+    try:
+        bridge_node = MavlinkBridge()
+        logger.info("MavlinkBridge node instantiated successfully.")
+    except Exception as e:
+        logger.error(f"Failed to instantiate MavlinkBridge: {e}")
 app = FastAPI()
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
@@ -107,7 +120,11 @@ async def lifespan(app: FastAPI):
         executor.add_node(nh)
 
     executor.add_node(calibration_node)
-    
+
+    if bridge_node:
+        executor.add_node(bridge_node)
+        logger.info("MavlinkBridge node registered within ROS2 Executor.")
+
     try:
         st = ServerTelemetry(db_client)
         app.include_router(st.router)

@@ -160,7 +160,7 @@ class ControlPanelReader:
             return actions
 
 if __name__ == "__main__":
-    reader = ControlPanelReader("/dev/ttyACM1", baudrate=57600)
+    reader = ControlPanelReader("/dev/ttyACM0", baudrate=57600)
     try:
         while True:
             logger.debug(reader.read_switches())

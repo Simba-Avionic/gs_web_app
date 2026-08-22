@@ -11,34 +11,79 @@ from loguru import logger
 from rclpy.node import Node
 from concurrent.futures import ThreadPoolExecutor
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
-sys.path.append(PROJECT_ROOT)
-sys.path.append(os.path.join(PROJECT_ROOT, "mavlink"))
+# Wstępna alokacja struktur obiektowych
+simba_dialect = None
+mavutil = None
+utils = None
+ControlPanelReader = None
+gs_msgs = None
 
+# Zgodnie z Dockerfile, głównym katalogiem aplikacji jest /simba_ws
+PROJECT_ROOT = "/simba_ws"
+
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+# Sztywne namierzanie ścieżek MAVLinka wewnątrz /simba_ws
+SIMBA_XML_PATH = os.path.join(PROJECT_ROOT, "mavlink", "simba_mavlink", "simba.xml")
+OUTPUT_DIALECT_DIR = os.path.join(PROJECT_ROOT, "mavlink", "src")
+OUTPUT_DIALECT_FILE = os.path.join(OUTPUT_DIALECT_DIR, "simba.py")
+
+# --- KROK 1: AUTOMATYCZNE WYGENEROWANIE DIALEKTU MAVLINK ---
 try:
-    from mavlink.src import mavutil
-    import mavlink.src.simba as simba_dialect  # Generated dialect
-    from drivers.control_panel_reader import ControlPanelReader
+    if not os.path.exists(OUTPUT_DIALECT_FILE):
+        logger.info(f"Dialect file missing. Initiating MAVLink compilation for: {SIMBA_XML_PATH}")
+        from pymavlink.generator import mavgen
+
+
+        class MavgenOptions(object):
+            def __init__(self):
+                self.language = 'Python'
+                self.wire_protocol = '2.0'
+                self.output = OUTPUT_DIALECT_FILE
+                self.error_limit = 10
+                self.strict_units = False
+                self.validate = True
+
+
+        opts = MavgenOptions()
+        mavgen.mavgen(opts, [SIMBA_XML_PATH])
+
+    if OUTPUT_DIALECT_DIR not in sys.path:
+        sys.path.insert(0, OUTPUT_DIALECT_DIR)
+
+    # --- KROK 2: POPRAWNE IMPORTY Z POZIOMU /simba_ws ---
+    from pymavlink import mavutil
+    import simba as simba_dialect
     import gs_interfaces.msg as gs_msgs
     import shared.utils as utils
-    from shared.paths import SIMBA_XML_PATH
-except ImportError as e:
-    print(f"Structure Error: {e}")
-    sys.exit(1)
 
+    # Skoro 'COPY backend .' wrzuca folder drivers bezpośrednio do /simba_ws:
+    from drivers.control_panel_reader import ControlPanelReader
+
+    logger.info("MAVLink environment, Drivers and Simba dialect initialized perfectly!")
+
+except Exception as e:
+    logger.error(f"Structure Error - MAVLink initialization failed: {e}")
+    try:
+        import shared.utils as utils
+        import gs_interfaces.msg as gs_msgs
+    except:
+        pass
+
+# --- REZOLUCJA PARAMETRÓW STRUKTURALNYCH ---
 BURST_COUNT = 5
 BURST_INTERVAL = 0.05
 OXIDIZER_PRESSURE_SEND_PERIOD = 0.5
 OXIDIZER_PRESSURE_SCALE = 100
 UINT16_MAX = 65535
-# control_panel_software encodes the right feed-oxidizer switch position as 1.
 MAIN_VALVE_OPEN_VALUE = 1
 OUTBOUND_ONLY_MAVLINK_MESSAGES = {
     "SimbaActuatorCmd",
     "SimbaGsOxidizerTankPressure",
     "SimbaGsHeartbeat",
 }
+
 
 class MavlinkBridge(Node):
 
@@ -456,8 +501,8 @@ class MavlinkBridge(Node):
 
 if __name__ == '__main__':
     rclpy.init()
-    # mavlink_receiver = MavlinkBridge(control_panel_port="/dev/ttyACM0", mavlink_port="/dev/ttyUSB0")
-    mavlink_receiver = MavlinkBridge()
+    mavlink_receiver = MavlinkBridge(control_panel_port="/dev/ttyACM0", mavlink_port="/dev/ttyUSB0")
+    #mavlink_receiver = MavlinkBridge()
 
     try:
         rclpy.spin(mavlink_receiver)
