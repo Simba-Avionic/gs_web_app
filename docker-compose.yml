@@ -1,11 +1,11 @@
 services:
   influxdb:
     image: influxdb:2.7
+    restart: always
     container_name: ${INFLUXDB_CONTAINER_NAME}
     env_file:
       - .env
     volumes:
-      - myInfluxVolume:/var/lib/influxdb2
       - influx-data:/var/lib/influxdb2
     ports:
       - 8086:8086
@@ -25,9 +25,10 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    restart: unless-stopped
+    restart: always
     ports:
       - "2137:2137"
+      - "8554:8554"
     env_file:
       - .env
     depends_on:
@@ -38,7 +39,7 @@ services:
   frontend:
     build:
       context: ./frontend
-    restart: unless-stopped
+    restart: always
     ports:
       - "8888:2137"
     depends_on:
@@ -47,14 +48,9 @@ services:
       - webapp-network
 
 volumes:
-  myInfluxVolume:
   influx-data:
 
 networks:
   webapp-network:
+    name: gs_web_app_webapp-network
     driver: bridge
-    ipam:
-      config:
-        - subnet: 192.168.10.0/24
-
-# #ENTRYPOINT ["tail", "-f", "/dev/null"]
