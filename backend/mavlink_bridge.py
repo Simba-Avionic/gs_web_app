@@ -11,25 +11,21 @@ from loguru import logger
 from rclpy.node import Node
 from concurrent.futures import ThreadPoolExecutor
 
-# Wstępna alokacja struktur obiektowych
 simba_dialect = None
 mavutil = None
 utils = None
 ControlPanelReader = None
 gs_msgs = None
 
-# Zgodnie z Dockerfile, głównym katalogiem aplikacji jest /simba_ws
 PROJECT_ROOT = "/simba_ws"
 
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Sztywne namierzanie ścieżek MAVLinka wewnątrz /simba_ws
 SIMBA_XML_PATH = os.path.join(PROJECT_ROOT, "mavlink", "simba_mavlink", "simba.xml")
 OUTPUT_DIALECT_DIR = os.path.join(PROJECT_ROOT, "mavlink", "src")
 OUTPUT_DIALECT_FILE = os.path.join(OUTPUT_DIALECT_DIR, "simba.py")
 
-# --- KROK 1: AUTOMATYCZNE WYGENEROWANIE DIALEKTU MAVLINK ---
 try:
     if not os.path.exists(OUTPUT_DIALECT_FILE):
         logger.info(f"Dialect file missing. Initiating MAVLink compilation for: {SIMBA_XML_PATH}")
@@ -52,13 +48,11 @@ try:
     if OUTPUT_DIALECT_DIR not in sys.path:
         sys.path.insert(0, OUTPUT_DIALECT_DIR)
 
-    # --- KROK 2: POPRAWNE IMPORTY Z POZIOMU /simba_ws ---
     from pymavlink import mavutil
     import simba as simba_dialect
     import gs_interfaces.msg as gs_msgs
     import shared.utils as utils
 
-    # Skoro 'COPY backend .' wrzuca folder drivers bezpośrednio do /simba_ws:
     from drivers.control_panel_reader import ControlPanelReader
 
     logger.info("MAVLink environment, Drivers and Simba dialect initialized perfectly!")
@@ -71,7 +65,6 @@ except Exception as e:
     except:
         pass
 
-# --- REZOLUCJA PARAMETRÓW STRUKTURALNYCH ---
 BURST_COUNT = 5
 BURST_INTERVAL = 0.05
 OXIDIZER_PRESSURE_SEND_PERIOD = 0.5
